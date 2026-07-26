@@ -11,6 +11,12 @@ sha1 of every artifact it produces, per language. Builds check it as the last
 stage and fail on any drift; `--record-reference` re-records it, which is the
 explicit way to say "this output change is intended".
 
+Some artifacts carry the build stamp on purpose: the title credits render the
+commit hash so a patch in the wild can be traced back to the tree that built
+it. Those cannot be pinned by hash across commits, so the record keeps the
+stamp it was taken at and reports stamped artifacts as not comparable when the
+stamp has moved, instead of failing. Everything else stays strict.
+
 This is a build-time validator like the SYSTEM contract check, not a test: it
 runs as part of the build and refuses to let it finish on a mismatch.
 """
@@ -20,6 +26,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from collections.abc import Iterable
 from pathlib import Path
 
 from lang5_project import ROOT
@@ -57,17 +64,23 @@ def check_or_record(release: str,
                     lang: str,
                     artifacts: dict[str, Path],
                     record: bool = False,
+                    stamp: str | None = None,
+                    stamped: Iterable[str] = (),
                     release_root: str | Path = DEFAULT_RELEASE_ROOT) -> None:
     """Verify (or record) the sha1 of this build's artifacts.
 
     `artifacts` maps a stable logical name to the produced file. Names, not
     paths, are the key: work paths carry a language suffix and may move, the
     logical role of the file does not.
+
+    `stamped` names the artifacts that embed `stamp` (the commit hash the
+    credits render). They are only compared while the stamp is unchanged.
     """
     path = reference_path(release, release_root)
     doc = _load(path, release)
     doc.setdefault("_comment", COMMENT)
     recorded = doc.setdefault("artifacts", {}).get(lang)
+    stamped = set(stamped)
 
     missing = sorted(name for name, p in artifacts.items() if not Path(p).exists())
     if missing:
@@ -75,8 +88,13 @@ def check_or_record(release: str,
             f"build reference: {release}/{lang} artifacts not produced: "
             + ", ".join(missing))
 
-    current = {name: {"sha1": digest(Path(p)), "size": Path(p).stat().st_size}
-               for name, p in sorted(artifacts.items())}
+    files = {}
+    for name, p in sorted(artifacts.items()):
+        entry = {"sha1": digest(Path(p)), "size": Path(p).stat().st_size}
+        if name in stamped:
+            entry["stamped"] = True
+        files[name] = entry
+    current = {"stamp": stamp, "files": files}
 
     if record or recorded is None:
         doc["artifacts"][lang] = current
@@ -86,18 +104,25 @@ def check_or_record(release: str,
                         encoding="utf-8")
         verb = "re-recorded" if record else "recorded"
         print(f"build reference {verb}: {release}/{lang} "
-              f"{len(current)} artifacts -> {path}")
+              f"{len(files)} artifacts -> {path}")
         return
 
+    was = recorded.get("files", {})
+    stamp_moved = stamp != recorded.get("stamp")
     drift = []
-    for name in sorted(set(current) | set(recorded)):
-        want = recorded.get(name)
-        got = current.get(name)
+    skipped = 0
+    for name in sorted(set(files) | set(was)):
+        want = was.get(name)
+        got = files.get(name)
         if want is None:
             drift.append(f"  + {name}: new artifact {got['sha1']}")
         elif got is None:
             drift.append(f"  - {name}: no longer built (was {want['sha1']})")
-        elif want["sha1"] != got["sha1"]:
+        elif want["sha1"] == got["sha1"]:
+            continue
+        elif stamp_moved and (want.get("stamped") or got.get("stamped")):
+            skipped += 1
+        else:
             drift.append(f"  ! {name}: {want['sha1']} -> {got['sha1']}"
                          f" (size {want['size']} -> {got['size']})")
     if drift:
@@ -105,7 +130,12 @@ def check_or_record(release: str,
             f"build reference mismatch for {release}/{lang} ({path}):\n"
             + "\n".join(drift)
             + "\nRe-run with --record-reference if the change is intended.")
-    print(f"build reference ok: {release}/{lang} {len(current)} artifacts match")
+    note = ""
+    if skipped:
+        note = (f", {skipped} stamped not comparable "
+                f"({recorded.get('stamp')} -> {stamp})")
+    print(f"build reference ok: {release}/{lang} "
+          f"{len(files) - skipped} artifacts match{note}")
 
 
 def default_release(game: str, platform: str, region: str = "jp") -> str:
@@ -132,6 +162,10 @@ def main() -> None:
     ap.add_argument("--release", required=True)
     ap.add_argument("--lang", required=True)
     ap.add_argument("--release-root", default=DEFAULT_RELEASE_ROOT)
+    ap.add_argument("--stamp", default=None,
+                    help="Build stamp the stamped artifacts embed.")
+    ap.add_argument("--stamped", action="append", default=[],
+                    help="Artifact name that embeds the build stamp.")
     add_reference_args(ap)
     ap.add_argument("artifact", nargs="+",
                     help="name=path pairs of produced artifacts.")
@@ -149,6 +183,7 @@ def main() -> None:
         return
     check_or_record(args.release, args.lang, artifacts,
                     record=args.record_reference,
+                    stamp=args.stamp, stamped=args.stamped,
                     release_root=args.release_root)
 
 

@@ -1,0 +1,19 @@
+{
+  "release": "l4-ps1-jp",
+  "label": "Langrisser IV: The Sword of Light (PlayStation, JP)",
+  "games": ["l4"],
+  "platform": "ps1",
+  "engine": "l45",
+  "region": "jp",
+  "serial": "SLPS-01818",
+  "media": {
+    "kind": "iso-mode2",
+    "image": "iso/ps1/4/SLPS-01818.bin",
+    "roots": { "l4": "/L4" },
+    "boot": { "l4": "/SLPS_018.18" }
+  },
+  "offsets": {
+    "system_scan_start": "0x9042"
+  },
+  "max_font_slot": 1820
+}

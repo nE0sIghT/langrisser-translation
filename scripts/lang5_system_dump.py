@@ -26,6 +26,7 @@ import struct
 from pathlib import Path
 
 from lang5_game import add_game_args, game_from_args
+from lang5_release import add_release_args, release_from_args
 from lang5_offsetgroups import (
     PS1,
     GroupConfig,
@@ -56,16 +57,19 @@ MAX_STEP = 0x30          # max plausible string length (+terminator) in words
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_game_args(ap)
+    add_release_args(ap)
     ap.add_argument("--system-bin", default="work/extracted/SYSTEM.BIN")
     ap.add_argument("--tbl", default=None,
                     help="JP token table (default: the game's font map).")
     ap.add_argument("--out", default="work/systemdump/system_strings.json")
     args = ap.parse_args()
 
-    # Each game's text groups start at their own offset; everything else in
+    # Each build's text groups start at their own offset; everything else in
     # the group model is shared.
     game = game_from_args(args)
-    cfg = GroupConfig(order=PS1.order, scan_start=game.system_scan_start)
+    release = release_from_args(args, platform="ps1")
+    cfg = GroupConfig(order=PS1.order,
+                      scan_start=release.offset("system_scan_start"))
     data = Path(args.system_bin).read_bytes()
     # The game's tracked font map is the slot->character source of truth; the
     # HHHH=text table stays available as an override.

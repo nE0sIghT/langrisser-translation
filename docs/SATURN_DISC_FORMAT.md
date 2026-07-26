@@ -284,7 +284,8 @@ Two hard consequences for the build:
   table/base pointers and half of the group 1 table pointer, and the game
   booted to an empty start menu and hung after the intro quiz reading garbage
   offset tables. Hence `max_font_slot: 1819` in
-  `data/platforms/saturn/manifest.json` and the final
+  `data/releases/l5-saturn-jp/manifest.json` — the ceiling follows this
+  build's own file layout, not the console — and the final
   `scripts/saturn_system_validate.py` write-contract check in
   `lang5_saturn_build.py` (directory byte-identical, groups unmoved, every
   write inside the glyph plane / group spans / Now Loading stream budget /

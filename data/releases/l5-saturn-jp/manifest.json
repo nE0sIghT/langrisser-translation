@@ -1,0 +1,31 @@
+{
+  "release": "l5-saturn-jp",
+  "label": "Langrisser V: The End of Legend (Sega Saturn, JP)",
+  "games": ["l5"],
+  "platform": "saturn",
+  "engine": "l45",
+  "region": "jp",
+  "serial": "T-2509G",
+  "reference": "l5-ps1-jp",
+  "media": {
+    "kind": "cue-multitrack",
+    "image": "iso/saturn/LANGRISSER_5.cue",
+    "roots": { "l5": "/" }
+  },
+  "offsets": {
+    "system_directory": "0x8000"
+  },
+  "max_font_slot": 1819,
+  "_max_font_slot_comment": "Slot 1820's 18 bytes cross file offset 0x8000, where SYSTEM.DAT keeps the group pointer directory.",
+  "verify": [
+    {
+      "role": "track1",
+      "source": "redump",
+      "note": "T-2509G v1.004 data track. Every file the patch touches lives on this track; the whole-image hash is not comparable across rips because a mixed-mode dump may or may not store the audio pregaps.",
+      "sectors": 61901,
+      "crc32": "ef034bde",
+      "md5": "37685a3ac74ac252abb2d01ea6987c73",
+      "sha1": "b90529e379efde5787693ffda6fff53fddd7c2ee"
+    }
+  ]
+}

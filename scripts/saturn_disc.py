@@ -18,6 +18,8 @@ from math import ceil
 from pathlib import Path
 from typing import Iterator
 
+from lang5_release import load_release
+
 
 SECTOR_RAW_SIZE = 2352
 MODE1_USER_OFFSET = 16
@@ -666,21 +668,20 @@ def cmd_remaster(args: argparse.Namespace) -> None:
     remaster_disc(cue, args.replace, Path(args.out_bin), Path(args.out_cue))
 
 
-# Redump entry for Langrisser V (T-2509G, v1.004), data track 1. Every file the
-# patch touches lives on this track, so it is the part worth verifying; the
-# whole-image hash is not comparable across rips because a mixed-mode dump may
-# or may not store the audio pregaps.
-REDUMP_TRACK1 = {
-    "sectors": 61901,
-    "crc32": "ef034bde",
-    "md5": "37685a3ac74ac252abb2d01ea6987c73",
-    "sha1": "b90529e379efde5787693ffda6fff53fddd7c2ee",
-}
-
-
 def cmd_verify(args: argparse.Namespace) -> None:
+    """Check the data track against the release's known-good fingerprint.
+
+    Only the data track is compared: every file the patch touches lives on it,
+    while the whole-image hash is not comparable across rips because a
+    mixed-mode dump may or may not store the audio pregaps.
+    """
     import hashlib
     import zlib
+
+    release = load_release(args.release)
+    want = release.verify_entry("track1")
+    if want is None:
+        raise SystemExit(f"release {release.code} records no track1 fingerprint")
 
     cue = parse_cue(Path(args.cue))
     track1 = cue.track(1)
@@ -695,20 +696,23 @@ def cmd_verify(args: argparse.Namespace) -> None:
         "md5": hashlib.md5(blob).hexdigest(),
         "sha1": hashlib.sha1(blob).hexdigest(),
     }
-    bad = {k: (v, REDUMP_TRACK1[k]) for k, v in have.items() if v != REDUMP_TRACK1[k]}
+    bad = {k: (v, want[k]) for k, v in have.items() if v != want[k]}
     for key, value in have.items():
         mark = "MISMATCH" if key in bad else "ok"
         print(f"  track 1 {key:8s}: {value}  [{mark}]")
     if bad:
         raise SystemExit(
-            "data track does not match the Redump entry for T-2509G v1.004; "
-            "the Saturn build needs an authentic disc")
-    print("data track 1 matches Redump (T-2509G, v1.004)")
+            f"data track does not match the recorded dump for {release.serial}; "
+            "the build needs an authentic disc")
+    source = want.get("source", "the recorded dump")
+    print(f"data track 1 matches {source} ({release.serial})")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--cue", default="iso/saturn/LANGRISSER_5.cue")
+    ap.add_argument("--release", default="l5-saturn-jp",
+                    help="Release whose dump fingerprint `verify` checks.")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("info")

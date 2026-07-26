@@ -25,11 +25,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-from lang5_build_reference import (add_reference_args, check_or_record,
-                                   default_release)
+from lang5_build_reference import add_reference_args, check_or_record
 from lang5_game import add_game_args, game_from_args
+from lang5_imgdat import git_short_hash
 from lang5_platform import add_platform_args, platform_from_args
 from lang5_project import add_language_args, language_from_args
+from lang5_release import add_release_args, release_from_args
 
 
 def run(*cmd: object) -> None:
@@ -65,8 +66,9 @@ def main() -> None:
                     help="PS1 SCEN2.DAT used for common validation/font-slot safety.")
     ap.add_argument("--ps1-system", default="work/extracted/SYSTEM.BIN",
                     help="PS1 SYSTEM.BIN used as the common SYSTEM source.")
-    ap.add_argument("--cue", default="iso/saturn/LANGRISSER_5.cue",
-                    help="source Saturn CUE for --remaster-disc")
+    ap.add_argument("--cue", default=None,
+                    help="source Saturn CUE for --remaster-disc "
+                         "(default: the release manifest's image)")
     ap.add_argument("--remaster-disc", action="store_true",
                     help="build a translated BIN/CUE in addition to extracted files")
     ap.add_argument("--out-bin", default=None,
@@ -77,14 +79,14 @@ def main() -> None:
                     help="Patch version substituted into the title credits.")
     ap.add_argument("--allow-unmapped", action="store_true",
                     help="Diagnostic mode: preserve unmapped Saturn SCEN/SYSTEM data.")
-    ap.add_argument("--release", default=None,
-                    help="Release slug the reference hashes are kept under.")
+    add_release_args(ap)
     add_reference_args(ap)
     args = ap.parse_args()
 
     game = game_from_args(args)
     lang = language_from_args(args)
     platform = platform_from_args(args)
+    release = release_from_args(args, platform=platform.code)
     if platform.code != "saturn":
         raise SystemExit(f"this builder only supports the saturn platform, got {platform.code}")
     scripts = Path(__file__).resolve().parent
@@ -177,7 +179,7 @@ def main() -> None:
         "--system-source", system_source,
         "--scen", args.ps1_scen,
         "--scen2", args.ps1_scen2,
-        "--max-slot", str(platform.max_font_slot),
+        "--max-slot", str(release.max_font_slot),
         "--exclude-slots", glyph_plan,
         "--extra-script-dir", lang.root / "platforms" / platform.code / "SCEN",
         "--extra-menu-strings", lang.root / "platforms" / platform.code / "system_strings.json",
@@ -192,7 +194,7 @@ def main() -> None:
         "--out-system-bin", system_font,
         "--out-tbl", tbl,
         "--font-size", str(lang.font_size),
-        "--max-slot", str(platform.max_font_slot),
+        "--max-slot", str(release.max_font_slot),
     ]
     if lang.font:
         font_cmd.extend(["--font", lang.font])
@@ -333,7 +335,7 @@ def main() -> None:
         out_cue = Path(args.out_cue) if args.out_cue else saturn / f"langrisser_v_{lang.suffix}_saturn.cue"
         remaster_cmd: list[object] = [
             scripts / "saturn_disc.py",
-            "--cue", args.cue,
+            "--cue", args.cue or release.image,
             "remaster",
             "--out-bin", out_bin,
             "--out-cue", out_cue,
@@ -345,9 +347,13 @@ def main() -> None:
     print(f"saturn build: system -> {system_out}, scen -> {scen_out}")
 
     if not args.skip_reference:
+        # The title screens render the commit hash, so they only compare
+        # while the tree has not moved; everything else is pinned outright.
         check_or_record(
-            args.release or default_release(game.code, platform.code),
-            args.lang, replaced, record=args.record_reference)
+            release.code, args.lang, replaced,
+            record=args.record_reference,
+            stamp=git_short_hash(),
+            stamped=("/TITLE1.DAT", "/TITLE2.DAT"))
 
 
 if __name__ == "__main__":

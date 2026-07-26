@@ -10,9 +10,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-from lang5_build_reference import (add_reference_args, check_or_record,
-                                   default_release)
+from lang5_build_reference import add_reference_args, check_or_record
 from lang5_game import add_game_args, game_from_args
+from lang5_imgdat import git_short_hash
+from lang5_release import add_release_args, release_from_args
 from lang5_project import add_language_args, language_from_args
 from ppf3 import write_ppf3
 
@@ -31,7 +32,8 @@ def has_target_text(path: Path) -> bool:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
-    ap.add_argument("--orig-bin", default="iso/SLPS-01818-9-B.bin")
+    ap.add_argument("--orig-bin", default=None,
+                    help="Source image (default: the release manifest's).")
     ap.add_argument("--translation-root", default=None,
                     help="Override the language pack's translated-text root.")
     ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
@@ -42,8 +44,7 @@ def main() -> None:
     ap.add_argument("--patch-version", default="dev")
     ap.add_argument("--work-bin", default=None)
     ap.add_argument("--out-ppf", default=None)
-    ap.add_argument("--release", default=None,
-                    help="Release slug the reference hashes are kept under.")
+    add_release_args(ap)
     add_reference_args(ap)
     args = ap.parse_args()
 
@@ -58,7 +59,12 @@ def main() -> None:
     shutil.copytree(translation_root, build_translation_root)
     tbl = lang.tbl
     game = game_from_args(args)
-    exe_name = game.exe.lstrip("/")
+    release = release_from_args(args, platform="ps1")
+    exe = release.boot(game.code)
+    exe_name = exe.lstrip("/")
+    orig_bin = Path(args.orig_bin) if args.orig_bin else release.image
+    if orig_bin is None:
+        raise SystemExit(f"release {release.code} declares no source image")
     suffix = lang.suffix
     work_bin_path = Path(args.work_bin) if args.work_bin else lang.work_bin
     out_ppf_path = Path(args.out_ppf) if args.out_ppf else lang.out_ppf
@@ -218,16 +224,16 @@ def main() -> None:
 
     work_bin = work_bin_path
     work_bin.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(args.orig_bin, work_bin)
+    shutil.copyfile(orig_bin, work_bin)
 
     injections = [
-        (game.iso_path("SCEN.DAT"), f"work/build/SCEN.{suffix}.DAT"),
-        (game.iso_path("SYSTEM.BIN"), f"work/build/SYSTEM.BIN.{suffix}"),
-        (game.iso_path("IMG.DAT"), f"work/build/IMG.DAT.{suffix}"),
-        (game.exe, f"work/build/{exe_name}.{suffix}"),
+        (release.media_path("SCEN.DAT", game.code), f"work/build/SCEN.{suffix}.DAT"),
+        (release.media_path("SYSTEM.BIN", game.code), f"work/build/SYSTEM.BIN.{suffix}"),
+        (release.media_path("IMG.DAT", game.code), f"work/build/IMG.DAT.{suffix}"),
+        (exe, f"work/build/{exe_name}.{suffix}"),
     ]
     if Path(args.scen2).exists():
-        injections.insert(1, (game.iso_path("SCEN2.DAT"),
+        injections.insert(1, (release.media_path("SCEN2.DAT", game.code),
                               f"work/build/SCEN2.{suffix}.DAT"))
     for iso_path, local in injections:
         # No --allow-grow: relocation is unsafe on this disc (the free tail
@@ -237,7 +243,7 @@ def main() -> None:
     out_ppf = out_ppf_path
     out_ppf.parent.mkdir(parents=True, exist_ok=True)
     records = write_ppf3(
-        Path(args.orig_bin).read_bytes(),
+        orig_bin.read_bytes(),
         work_bin.read_bytes(),
         out_ppf,
         lang.patch_description,
@@ -247,8 +253,14 @@ def main() -> None:
     if not args.skip_reference:
         artifacts = {iso_path: Path(local) for iso_path, local in injections}
         artifacts["patch.ppf"] = out_ppf
-        check_or_record(args.release or default_release(game.code, "ps1"),
-                        args.lang, artifacts, record=args.record_reference)
+        # IMG.DAT carries the title credits, which render the commit hash,
+        # and the PPF diff carries IMG.DAT; both only compare while the tree
+        # has not moved.
+        check_or_record(release.code, args.lang, artifacts,
+                        record=args.record_reference,
+                        stamp=git_short_hash(),
+                        stamped=(release.media_path("IMG.DAT", game.code),
+                                 "patch.ppf"))
 
 
 if __name__ == "__main__":

@@ -23,7 +23,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from lang5_game import add_game_args, game_from_args
+from lang5_game import add_game_args
+from lang5_release import add_release_args, release_from_args
 from lang5_offsetgroups import PS1, GroupConfig
 from lang5_project import add_language_args, language_from_args
 from lang5_scen import Codec, load_charmap_tbl
@@ -98,6 +99,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
     add_game_args(ap)
+    add_release_args(ap)
     ap.add_argument("--system-in", default="work/build/SYSTEM.BIN.font")
     ap.add_argument("--system-out", default=None)
     ap.add_argument("--strings", default=None)
@@ -121,7 +123,7 @@ def main() -> None:
                     help="Exit non-zero on any unencodable line or over-budget group.")
     args = ap.parse_args()
 
-    game = game_from_args(args)
+    release = release_from_args(args, platform="ps1")
     lang = language_from_args(args)
     strings_path = Path(args.strings) if args.strings else lang.system_strings
     layout_path = Path(args.layout) if args.layout else lang.system_layout
@@ -132,8 +134,8 @@ def main() -> None:
 
     codec = Codec(load_charmap_tbl(tbl))
     data = bytearray(Path(args.system_in).read_bytes())
-    groups = find_groups(data, GroupConfig(order=PS1.order,
-                                          scan_start=game.system_scan_start))
+    groups = find_groups(data, GroupConfig(
+        order=PS1.order, scan_start=release.offset("system_scan_start")))
     if not source_strings_path.exists():
         raise SystemExit(
             f"SYSTEM source dump not found: {source_strings_path}; "

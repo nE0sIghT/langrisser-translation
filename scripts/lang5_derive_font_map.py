@@ -27,6 +27,7 @@ from pathlib import Path
 
 from lang5_build_font import GLYPH_BYTES
 from lang5_game import add_game_args, load_game
+from lang5_release import add_release_args, release_from_args
 from lang5_project import ROOT
 
 
@@ -51,6 +52,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     add_game_args(ap, default="l4")
+    add_release_args(ap)
     ap.add_argument("--system", required=True,
                     help="This game's SYSTEM.BIN (or Saturn SYSTEM.DAT).")
     ap.add_argument("--reference-game", default="l5",
@@ -63,6 +65,7 @@ def main() -> None:
     args = ap.parse_args()
 
     game = load_game(args.game, args.game_root)
+    release = release_from_args(args, platform="ps1")
     reference = load_game(args.reference_game, args.game_root)
     data = Path(args.system).read_bytes()
     ref_data = Path(args.reference_system).read_bytes()
@@ -76,7 +79,7 @@ def main() -> None:
         if any(tile):
             by_bits.setdefault(tile, char)
 
-    last = plane_end(data, game.system_scan_start)
+    last = plane_end(data, release.offset("system_scan_start"))
     derived: dict[int, str] = {}
     unmatched: list[int] = []
     for slot in range(last + 1):

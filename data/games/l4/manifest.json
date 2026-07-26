@@ -1,10 +1,7 @@
 {
   "game": "l4",
   "label": "Langrisser IV: The Sword of Light",
-  "disc_dir": "/L4",
-  "exe": "/SLPS_018.18",
-  "system_scan_start": "0x9042",
+  "engine": "l45",
   "font_map": "font_map.csv",
-  "lang_root": "lang",
-  "platforms": ["ps1"]
+  "lang_root": "lang"
 }

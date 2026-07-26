@@ -3,55 +3,65 @@
   "_comment": "sha1 of every artifact this release builds, per language. Builds verify it as their last stage; re-record only when an output change is intended.",
   "artifacts": {
     "en": {
-      "/L5/IMG.DAT": {
-        "sha1": "1cf34ffcfda954d0b68e8132eb8d00453ed0c6e7",
-        "size": 3233792
-      },
-      "/L5/SCEN.DAT": {
-        "sha1": "4ace4c9d3a9e27d6d33c518c8279ac63670e1a2e",
-        "size": 23480320
-      },
-      "/L5/SCEN2.DAT": {
-        "sha1": "f30950e095379ab6917460f6995a526003f990c8",
-        "size": 23463936
-      },
-      "/L5/SYSTEM.BIN": {
-        "sha1": "6123976b1d32476dc7742e21142e00dce11db31e",
-        "size": 98320
-      },
-      "/SLPS_018.19": {
-        "sha1": "1246c431294e0a664f5953149dd6fd08e908733d",
-        "size": 833536
-      },
-      "patch.ppf": {
-        "sha1": "2906c864b45b1a32cffcad3763c055e49a18568a",
-        "size": 31532074
+      "stamp": "62655ee3",
+      "files": {
+        "/L5/IMG.DAT": {
+          "sha1": "cabb6c3500d539be9add1c834e005767d7c8cf32",
+          "size": 3233792,
+          "stamped": true
+        },
+        "/L5/SCEN.DAT": {
+          "sha1": "4ace4c9d3a9e27d6d33c518c8279ac63670e1a2e",
+          "size": 23480320
+        },
+        "/L5/SCEN2.DAT": {
+          "sha1": "f30950e095379ab6917460f6995a526003f990c8",
+          "size": 23463936
+        },
+        "/L5/SYSTEM.BIN": {
+          "sha1": "6123976b1d32476dc7742e21142e00dce11db31e",
+          "size": 98320
+        },
+        "/SLPS_018.19": {
+          "sha1": "1246c431294e0a664f5953149dd6fd08e908733d",
+          "size": 833536
+        },
+        "patch.ppf": {
+          "sha1": "06785ab5e115982031c30fd252f7230f214bb182",
+          "size": 31531906,
+          "stamped": true
+        }
       }
     },
     "ru": {
-      "/L5/IMG.DAT": {
-        "sha1": "3f68538b0270092500455bf1dc6dd4b8a9b96624",
-        "size": 3233792
-      },
-      "/L5/SCEN.DAT": {
-        "sha1": "ea626fbcb9c6a4b740165e439682b3cafbb48270",
-        "size": 23480320
-      },
-      "/L5/SCEN2.DAT": {
-        "sha1": "84abfc531ce4cf07daf40be09d8f0fe1fd061a56",
-        "size": 23463936
-      },
-      "/L5/SYSTEM.BIN": {
-        "sha1": "ea90e9e65bdf7f11aa8315dfef14f9ccf5fc0b80",
-        "size": 98320
-      },
-      "/SLPS_018.19": {
-        "sha1": "1c5a9c36dbd6e7011753a2cc874d1d36b698a660",
-        "size": 833536
-      },
-      "patch.ppf": {
-        "sha1": "be1d8d7ec8ba7b0472307f5d550102f190475c0b",
-        "size": 38838947
+      "stamp": "62655ee3",
+      "files": {
+        "/L5/IMG.DAT": {
+          "sha1": "87a394185ddd447a3072764ac6f7d5424d251dd0",
+          "size": 3233792,
+          "stamped": true
+        },
+        "/L5/SCEN.DAT": {
+          "sha1": "ea626fbcb9c6a4b740165e439682b3cafbb48270",
+          "size": 23480320
+        },
+        "/L5/SCEN2.DAT": {
+          "sha1": "84abfc531ce4cf07daf40be09d8f0fe1fd061a56",
+          "size": 23463936
+        },
+        "/L5/SYSTEM.BIN": {
+          "sha1": "ea90e9e65bdf7f11aa8315dfef14f9ccf5fc0b80",
+          "size": 98320
+        },
+        "/SLPS_018.19": {
+          "sha1": "1c5a9c36dbd6e7011753a2cc874d1d36b698a660",
+          "size": 833536
+        },
+        "patch.ppf": {
+          "sha1": "d7911911facd9cf5093ce38cfe2e2acca286b0c1",
+          "size": 38839099,
+          "stamped": true
+        }
       }
     }
   }

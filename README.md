@@ -13,14 +13,24 @@ Platform differences are data, not forks: `data/platforms/<code>/` holds the
 mappings that prove which entries the consoles share, and target text that
 exists only on one console lives in that pack's `platforms/<code>/` overlay.
 
-The same holds for the *game*. Langrisser IV and V ship as one two-disc PS1
-release and share every container format, so both are described by manifests
-under `data/games/<code>/` and driven by the same tools with `--game`:
+The same holds for the *game*. Langrisser IV and V share every container
+format, so both are described by manifests under `data/games/<code>/` and
+driven by the same tools with `--game`.
 
-| Game | Disc | State |
-| --- | --- | --- |
-| `l5` | `/L5`, `SLPS_018.19` (disc B) | complete: PS1 patch and Saturn build |
-| `l4` | `/L4`, `SLPS_018.18` (disc A) | base only: formats verified, font map derived, empty packs |
+What a game and a console cannot describe between them is a particular print,
+so there is a third axis: a **release** is one shipped build — a set of games,
+on a platform, in a region. It owns the medium, the disc paths, the boot
+executable, the file offsets, the font-plane ceiling and the known-good dump
+fingerprint, because every one of those differs between a game's ports. A
+release also names the release it is compared against, which is how the parity
+rule below is expressed. Tools take `--release`, or resolve it from `--game`
+and `--platform` when a game has exactly one release there.
+
+| Release | Games | Medium | State |
+| --- | --- | --- | --- |
+| `l5-ps1-jp` | `l5` | `SLPS-01819`, disc B of the two-disc set | complete: PS1 PPF patch |
+| `l5-saturn-jp` | `l5` | `T-2509G` | complete: remastered BIN/CUE |
+| `l4-ps1-jp` | `l4` | `SLPS-01818`, disc A | base only: formats verified, font map derived, empty packs |
 
 The repository contains only durable translation data and tooling. Original game
 assets, extracted files, generated Japanese dumps, build products and local
@@ -103,7 +113,9 @@ python3 scripts/saturn_disc.py --cue iso/saturn/LANGRISSER_5.cue verify
 | Path | Purpose |
 | --- | --- |
 | `data/common/` | shared maps, scenario map, UI constraints and JP table |
-| `data/games/<code>/manifest.json` | game descriptor: disc paths, glyph-plane map, group scan start, pack root |
+| `data/games/<code>/manifest.json` | game descriptor: glyph-plane map, curated table, pack root |
+| `data/releases/<slug>/manifest.json` | release descriptor: medium, paths, offsets, font ceiling, reference release, dump fingerprint |
+| `data/releases/<slug>/build_reference.json` | sha1 of every artifact the release builds, checked at the end of each build |
 | `data/games/l4/font_map.csv` | Langrisser IV glyph slot→character map (derived + read from the plane) |
 | `data/games/l4/lang/<lang>/` | Langrisser IV language packs |
 | `data/platforms/` | platform manifests and PS1/Saturn mapping metadata |
@@ -424,7 +436,8 @@ and its current translations — everything needed to author the platform record
 - The font atlas ends at glyph 1820 on PS1; later SYSTEM.BIN words are menu
   data. On Saturn the last writable slot is 1819 — slot 1820 would overwrite
   the `SYSTEM.DAT` group pointer directory at `0x8000`
-  (`max_font_slot` in the platform manifest).
+  (`max_font_slot` in the release manifest — the plane's own layout sets it,
+  not the console).
 - PS1 is a reference, never an override: a Saturn entry inherits a PS1
   translation only when both Japanese originals are provably identical as
   normalized text (kana/ASCII plus the derived Saturn kanji map). Everything

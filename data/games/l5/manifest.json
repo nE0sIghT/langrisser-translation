@@ -1,14 +1,8 @@
 {
   "game": "l5",
   "label": "Langrisser V: The End of Legend",
-  "disc_dir": "/L5",
-  "exe": "/SLPS_018.19",
-  "system_scan_start": "0x8052",
+  "engine": "l45",
   "font_map": "../../common/font_mapping/groups_report.csv",
   "text_table": "../../common/tables/lang5_jp.tbl",
-  "lang_root": "lang",
-  "platforms": [
-    "ps1",
-    "saturn"
-  ]
+  "lang_root": "lang"
 }

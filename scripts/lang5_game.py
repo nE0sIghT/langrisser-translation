@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 """Game manifest helpers.
 
-The toolkit targets more than one game: Langrisser IV and V ship as one
-two-disc PS1 release (and V also has a Saturn release). They share every
-container format — the SCEN chunk/record model, the SYSTEM offset-table
-groups, the IMG.DAT VRAM packets and the 12x12 1bpp glyph plane — but each
-game has its own disc paths, its own glyph plane contents and its own
-language packs.
+A *game* is the work itself, independent of how it was shipped: its glyph
+plane contents, its curated token table and its language packs. Everything
+about a particular print — media, disc paths, boot executable, file offsets,
+dump hashes — belongs to a release instead (`lang5_release`), because those
+differ between a game's ports and between region variants of one port.
 
-A game manifest captures exactly those per-game facts, the same way
-`lang5_platform` captures per-console ones. Platform stays orthogonal: a
-game manifest lists the platforms it has been ported to, and platform
-mapping data continues to live under `data/platforms/<code>/`.
+So a game manifest does not list its platforms: releases name the games they
+ship, and `GamePack.releases` reads that back. Storing the list on both sides
+would be the same fact written twice.
 """
 
 from __future__ import annotations
@@ -46,14 +44,9 @@ class GamePack:
         return str(self._data.get("label") or self.code)
 
     @property
-    def disc_dir(self) -> str:
-        """Directory holding the game's files on its own disc (`/L5`)."""
-        return str(self._data.get("disc_dir") or f"/{self.code.upper()}")
-
-    @property
-    def exe(self) -> str:
-        """Boot executable path on the disc (`/SLPS_018.19`)."""
-        return str(self._data["exe"])
+    def engine(self) -> str:
+        """Container family the game was built on."""
+        return str(self._data.get("engine") or "l45")
 
     @property
     def font_map(self) -> Path:
@@ -76,22 +69,21 @@ class GamePack:
         return _path(self.root, self._data.get("text_table"))
 
     @property
-    def system_scan_start(self) -> int:
-        """File offset where the SYSTEM text groups begin."""
-        return int(str(self._data.get("system_scan_start", "0x8052")), 0)
-
-    @property
     def lang_root(self) -> Path:
         """Directory holding this game's language packs."""
         return _path(self.root, str(self._data["lang_root"]))  # type: ignore[return-value]
 
     @property
-    def platforms(self) -> list[str]:
-        return [str(p) for p in (self._data.get("platforms") or ["ps1"])]
+    def releases(self) -> list[str]:
+        """Slugs of every release shipping this game, read from the releases."""
+        from lang5_release import releases_for
+        return [r.code for r in releases_for(self.code)]
 
-    def iso_path(self, name: str) -> str:
-        """Full on-disc path of a game file (`SCEN.DAT` -> `/L5/SCEN.DAT`)."""
-        return f"{self.disc_dir.rstrip('/')}/{name}"
+    @property
+    def platforms(self) -> list[str]:
+        """Consoles this game has been brought up on, via its releases."""
+        from lang5_release import releases_for
+        return sorted({r.platform for r in releases_for(self.code)})
 
 
 def load_game(game: str = DEFAULT_GAME,
