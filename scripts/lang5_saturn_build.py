@@ -28,6 +28,7 @@ from pathlib import Path
 from lang5_build_reference import add_reference_args, check_or_record
 from lang5_game import add_game_args, game_from_args
 from lang5_imgdat import git_short_hash
+from lang5_media import writer_for
 from lang5_platform import add_platform_args, platform_from_args
 from lang5_project import add_language_args, language_from_args
 from lang5_release import add_release_args, release_from_args
@@ -340,16 +341,9 @@ def main() -> None:
     if args.remaster_disc:
         out_bin = Path(args.out_bin) if args.out_bin else saturn / f"langrisser_v_{lang.suffix}_saturn.bin"
         out_cue = Path(args.out_cue) if args.out_cue else saturn / f"langrisser_v_{lang.suffix}_saturn.cue"
-        remaster_cmd: list[object] = [
-            scripts / "saturn_disc.py",
-            "--cue", args.cue or release.image,
-            "remaster",
-            "--out-bin", out_bin,
-            "--out-cue", out_cue,
-        ]
-        for iso_path, local in replaced.items():
-            remaster_cmd.extend(["--replace", f"{iso_path}={local}"])
-        run(*remaster_cmd)
+        source = Path(args.cue) if args.cue else release.image
+        # Which writer this is follows the release's medium, not this flow.
+        writer_for(release, out_cue=out_cue).write(source, out_bin, replaced)
 
     print(f"saturn build: system -> {system_out}, scen -> {scen_out}")
 

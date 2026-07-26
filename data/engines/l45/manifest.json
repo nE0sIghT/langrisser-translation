@@ -1,0 +1,16 @@
+{
+  "engine": "l45",
+  "label": "Langrisser IV/V container family",
+  "_comment": "The engine both games were built on, on every console they reached. Releases name it so tools know which loaders can read them; a Langrisser built on different code gets its own engine rather than flags on this one.",
+  "glyph": {
+    "width": 12,
+    "height": 12,
+    "bpp": 1,
+    "bytes_per_glyph": 18,
+    "plane_offset": 0,
+    "default_max_slot": 1820,
+    "_comment": "Rows are packed continuously, 12 bits per row MSB-first, so a glyph is 18 bytes and slot N starts at N*18 from the plane offset. Both the SYSTEM UI text and the SCEN dialogue index this one plane."
+  },
+  "containers": ["scen", "system_offset_groups", "imgdat"],
+  "codec": "slot_tokens"
+}

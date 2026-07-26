@@ -13,6 +13,7 @@ from pathlib import Path
 from lang5_build_reference import add_reference_args, check_or_record
 from lang5_game import add_game_args, game_from_args
 from lang5_imgdat import git_short_hash
+from lang5_media import writer_for
 from lang5_release import add_release_args, release_from_args
 from lang5_project import add_language_args, language_from_args
 from ppf3 import write_ppf3
@@ -222,23 +223,19 @@ def main() -> None:
     else:
         print("no now_loading text; preserving the original plate texture")
 
-    work_bin = work_bin_path
-    work_bin.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(orig_bin, work_bin)
-
-    injections = [
-        (release.media_path("SCEN.DAT", game.code), f"work/build/SCEN.{suffix}.DAT"),
-        (release.media_path("SYSTEM.BIN", game.code), f"work/build/SYSTEM.BIN.{suffix}"),
-        (release.media_path("IMG.DAT", game.code), f"work/build/IMG.DAT.{suffix}"),
-        (exe, f"work/build/{exe_name}.{suffix}"),
-    ]
+    injections = {
+        release.media_path("SCEN.DAT", game.code): Path(f"work/build/SCEN.{suffix}.DAT"),
+        release.media_path("SYSTEM.BIN", game.code): Path(f"work/build/SYSTEM.BIN.{suffix}"),
+        release.media_path("IMG.DAT", game.code): Path(f"work/build/IMG.DAT.{suffix}"),
+        exe: Path(f"work/build/{exe_name}.{suffix}"),
+    }
     if Path(args.scen2).exists():
-        injections.insert(1, (release.media_path("SCEN2.DAT", game.code),
-                              f"work/build/SCEN2.{suffix}.DAT"))
-    for iso_path, local in injections:
-        # No --allow-grow: relocation is unsafe on this disc (the free tail
-        # region overlaps the CD audio tracks). Sizes must stay unchanged.
-        run(scripts / "iso_mode2.py", str(work_bin), "inject", iso_path, local)
+        injections[release.media_path("SCEN2.DAT", game.code)] = Path(
+            f"work/build/SCEN2.{suffix}.DAT")
+    # The writer follows the release's medium and never grows the image:
+    # relocation is unsafe on this disc, whose free tail region overlaps the
+    # CD audio tracks, so file sizes must stay unchanged.
+    work_bin = writer_for(release).write(orig_bin, work_bin_path, injections)
 
     out_ppf = out_ppf_path
     out_ppf.parent.mkdir(parents=True, exist_ok=True)
@@ -251,7 +248,7 @@ def main() -> None:
     print(f"ppf_records={records} out={out_ppf}")
 
     if not args.skip_reference:
-        artifacts = {iso_path: Path(local) for iso_path, local in injections}
+        artifacts = dict(injections)
         artifacts["patch.ppf"] = out_ppf
         # IMG.DAT carries the title credits, which render the commit hash,
         # and the PPF diff carries IMG.DAT; both only compare while the tree

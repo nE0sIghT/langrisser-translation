@@ -1,7 +1,9 @@
 {
   "release": "l5-ps1-jp",
   "label": "Langrisser V: The End of Legend (PlayStation, JP)",
-  "games": ["l5"],
+  "games": [
+    "l5"
+  ],
   "platform": "ps1",
   "engine": "l45",
   "region": "jp",
@@ -10,11 +12,14 @@
   "media": {
     "kind": "iso-mode2",
     "image": "iso/SLPS-01818-9-B.bin",
-    "roots": { "l5": "/L5" },
-    "boot": { "l5": "/SLPS_018.19" }
+    "roots": {
+      "l5": "/L5"
+    },
+    "boot": {
+      "l5": "/SLPS_018.19"
+    }
   },
   "offsets": {
     "system_scan_start": "0x8052"
-  },
-  "max_font_slot": 1820
+  }
 }

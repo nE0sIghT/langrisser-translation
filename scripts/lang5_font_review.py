@@ -15,11 +15,13 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+from lang5_engine import load_engine
 from lang5_project import COMMON_FONT_FIXES, COMMON_FONT_MAP
 
-GLYPH_W = 12
-GLYPH_H = 12
-GLYPH_BYTES = 18
+_GLYPH = load_engine().glyph
+GLYPH_W = _GLYPH.width
+GLYPH_H = _GLYPH.height
+GLYPH_BYTES = _GLYPH.bytes_per_glyph
 
 FONT_CANDIDATES_JP = [
     "external/duckstation/data/resources/fonts/NotoSansJP-VariableFont_wght.ttf",

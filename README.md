@@ -120,6 +120,7 @@ python3 scripts/saturn_disc.py --cue iso/saturn/LANGRISSER_5.cue verify
 | `data/games/l4/font_map.csv` | Langrisser IV glyph slot→character map (derived + read from the plane) |
 | `data/games/l4/lang/<lang>/` | Langrisser IV language packs |
 | `data/platforms/<code>/` | console descriptors — the console itself, nothing game-specific |
+| `data/engines/<code>/manifest.json` | container family: glyph geometry, container list, text codec |
 | `data/releases/l5-saturn-jp/scen_mapping.json` | proven Saturn↔PS1 SCEN record correspondence |
 | `data/releases/l5-saturn-jp/system_mapping.json` | proven Saturn↔PS1 SYSTEM entry correspondence |
 | `data/releases/l5-saturn-jp/kanji_map.csv` | Saturn kanji slot→character map (its bank is reordered) |

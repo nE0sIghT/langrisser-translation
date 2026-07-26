@@ -18,9 +18,12 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-GLYPH_BYTES = 18
-CELL = 12
-MAX_SLOT = 1820
+from lang5_engine import load_engine
+
+_GLYPH = load_engine().glyph
+GLYPH_BYTES = _GLYPH.bytes_per_glyph
+CELL = _GLYPH.width
+MAX_SLOT = _GLYPH.default_max_slot
 
 
 def glyph_rows(data: bytes, index: int) -> list[str]:

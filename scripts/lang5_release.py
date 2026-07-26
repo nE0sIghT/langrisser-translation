@@ -151,16 +151,25 @@ class ReleasePack:
         return int(str(raw), 0)
 
     @property
+    def engine_pack(self):
+        """The container family this release was built on."""
+        from lang5_engine import load_engine
+        return load_engine(self.engine)
+
+    @property
     def max_font_slot(self) -> int:
         """Highest glyph slot this build's font plane may hold.
 
         A build-level fact, not a console one: it is the plane's own layout
         that decides. Saturn Langrisser V caps at 1819 because slot 1820's
         bytes cross file offset 0x8000, where its SYSTEM.DAT keeps the group
-        pointer directory (see docs/SATURN_DISC_FORMAT.md).
+        pointer directory (see docs/SATURN_DISC_FORMAT.md). A release that
+        does not narrow it gets the engine's own ceiling.
         """
         value = self._data.get("max_font_slot")
-        return int(value) if value is not None else 1820
+        if value is not None:
+            return int(value)
+        return self.engine_pack.glyph.default_max_slot
 
     @property
     def scen_mapping(self) -> Path | None:

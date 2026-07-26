@@ -12,11 +12,16 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+from lang5_engine import load_engine
 from lang5_project import COMMON_FONT_MAP, add_language_args, language_from_args
 
-GLYPH_W = 12
-GLYPH_H = 12
-GLYPH_BYTES = 18
+# Plane geometry is the engine's, not this module's: reading it from the
+# manifest is what lets a differently shaped plane be described rather than
+# hardcoded here and in every other font tool.
+_GLYPH = load_engine().glyph
+GLYPH_W = _GLYPH.width
+GLYPH_H = _GLYPH.height
+GLYPH_BYTES = _GLYPH.bytes_per_glyph
 
 # Spleen 6x12 is the English fallback. Language manifests may select another
 # 6x12 bitmap font, such as Terminus for Cyrillic; two glyphs then tile a
