@@ -3,10 +3,10 @@
   "_comment": "sha1 of every artifact this release builds, per language. Builds verify it as their last stage; re-record only when an output change is intended.",
   "artifacts": {
     "en": {
-      "stamp": "62655ee3",
+      "stamp": "891e6f98",
       "files": {
         "/L5/IMG.DAT": {
-          "sha1": "cabb6c3500d539be9add1c834e005767d7c8cf32",
+          "sha1": "90d84d46f7e6d40bdef5898977f902e0841ba898",
           "size": 3233792,
           "stamped": true
         },
@@ -27,17 +27,17 @@
           "size": 833536
         },
         "patch.ppf": {
-          "sha1": "06785ab5e115982031c30fd252f7230f214bb182",
-          "size": 31531906,
+          "sha1": "a7176aa74141579103b20375cb30d046019c7830",
+          "size": 31532068,
           "stamped": true
         }
       }
     },
     "ru": {
-      "stamp": "62655ee3",
+      "stamp": "891e6f98",
       "files": {
         "/L5/IMG.DAT": {
-          "sha1": "87a394185ddd447a3072764ac6f7d5424d251dd0",
+          "sha1": "0a4235f2c984f82a935d0d7c304ea12e1920f13e",
           "size": 3233792,
           "stamped": true
         },
@@ -58,8 +58,8 @@
           "size": 833536
         },
         "patch.ppf": {
-          "sha1": "d7911911facd9cf5093ce38cfe2e2acca286b0c1",
-          "size": 38839099,
+          "sha1": "19659a469a43648dfce8629b221522911e4f8e27",
+          "size": 38839059,
           "stamped": true
         }
       }
