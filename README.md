@@ -22,10 +22,9 @@ What a game and a console cannot describe between them is a particular print,
 so there is a third axis: a **release** is one shipped build — a set of games,
 on a platform, in a region. It owns the medium, the disc paths, the boot
 executable, the file offsets, the font-plane ceiling and the known-good dump
-fingerprint, because every one of those differs between a game's ports. A
-release also names the release it is compared against, which is how the parity
-rule below is expressed. Tools take `--release`, or resolve it from `--game`
-and `--platform` when a game has exactly one release there.
+fingerprint, because every one of those differs between a game's ports. Tools
+take `--release`, or resolve it from `--game` and `--platform` when a game has
+exactly one release there.
 
 | Release | Games | Medium | State |
 | --- | --- | --- | --- |
@@ -117,7 +116,7 @@ python3 -m langrisser.saturn_disc --cue iso/saturn/LANGRISSER_5.cue verify
 | `scripts/release.sh` | release build driver |
 | `data/common/` | shared maps, scenario map, UI constraints and JP table |
 | `data/games/<code>/manifest.json` | game descriptor: glyph-plane map, curated table, pack root |
-| `data/releases/<slug>/manifest.json` | release descriptor: medium, paths, offsets, font ceiling, reference release, dump fingerprint |
+| `data/releases/<slug>/manifest.json` | release descriptor: medium, paths, offsets, font ceiling, dump fingerprint |
 | `data/releases/<slug>/build_reference.json` | sha1 of every artifact the release builds, checked at the end of each build |
 | `data/games/l4/font_map.csv` | Langrisser IV glyph slot→character map (derived + read from the plane) |
 | `data/games/l4/lang/<lang>/` | Langrisser IV language packs |
@@ -410,8 +409,10 @@ python3 -m langrisser.saturn_build --lang ru --remaster-disc
 ```
 
 This also needs the PS1 base extracts (`work/l5/extracted/SCEN.DAT`, `SCEN2.DAT`,
-`SYSTEM.BIN`): the PS1 originals are the *reference* every Saturn
-correspondence is proven against. The builder runs, in order: platform text
+`SYSTEM.BIN`). Langrisser V was translated on PS1 first and the pack is keyed
+by PS1 ids, so building Saturn re-derives those ids from the PS1 files and
+re-proves, per record, that the Japanese matches before reusing the existing
+translation. The builder runs, in order: platform text
 overrides → native-glyph plan → Saturn-side slot usage scan → font → reflow
 and validation → SYSTEM pack (+ write-contract check) → name entry → Now
 Loading → SCEN insert → SCENARIO CLEAR, title credits and the prologue poem.
@@ -448,10 +449,11 @@ and its current translations — everything needed to author the platform record
   the `SYSTEM.DAT` group pointer directory at `0x8000`
   (`max_font_slot` in the release manifest — the plane's own layout sets it,
   not the console).
-- PS1 is a reference, never an override: a Saturn entry inherits a PS1
-  translation only when both Japanese originals are provably identical as
-  normalized text (kana/ASCII plus the derived Saturn kanji map). Everything
-  else needs a platform record, and the strict build fails without one.
+- Existing work is reused, never assumed: a Saturn entry takes the already
+  translated PS1 text only when both Japanese originals are provably identical
+  as normalized text (kana/ASCII plus the derived Saturn kanji map). Where they
+  differ, the Saturn text is its own and the strict build fails until it is
+  written.
 - Each console has its own budgets. A group packs into its own byte span and
   every line into its own cell width, so a shared translation may need a
   shorter platform form on one console (`space_override` in the SYSTEM

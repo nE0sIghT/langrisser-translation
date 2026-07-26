@@ -1,16 +1,19 @@
 {
   "release": "l5-saturn-jp",
   "label": "Langrisser V: The End of Legend (Sega Saturn, JP)",
-  "games": ["l5"],
+  "games": [
+    "l5"
+  ],
   "platform": "saturn",
   "engine": "l45",
   "region": "jp",
   "serial": "T-2509G",
-  "reference": "l5-ps1-jp",
   "media": {
     "kind": "cue-multitrack",
     "image": "iso/saturn/LANGRISSER_5.cue",
-    "roots": { "l5": "/" }
+    "roots": {
+      "l5": "/"
+    }
   },
   "offsets": {
     "system_directory": "0x8000"

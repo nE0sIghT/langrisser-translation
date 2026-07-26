@@ -1101,10 +1101,12 @@ the block — in game the first battle lost its unit icons and hung, and the
 attract demos froze near the menu. The in-place growth mostly fits inside the
 0x800 sector slack, so the Russian file grows by only a few KB.
 
-### Alignment — PS1 is a reference, never an override
+### Alignment — reuse the PS1 work only where it provably fits
 
-A Saturn entry takes a PS1 record's translation **only** when both JP
-originals provably match. Raw token ids in the reordered kanji bank
+Langrisser V was translated on PS1 first, so the Saturn build reuses that work
+rather than redoing it. A Saturn entry takes a PS1 record's translation
+**only** when both JP originals provably match; where they differ, the Saturn
+text is its own. Raw token ids in the reordered kanji bank
 (`>= 0x185`) are incomparable across consoles — but *normalized to text*
 through the tracked `data/releases/l5-saturn-jp/kanji_map.csv` (same CSV convention
 as the common `groups_report.csv`, holding *only* the reordered kanji bank —

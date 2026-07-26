@@ -1,12 +1,12 @@
 {
   "_comment": [
-    "Saturn SYSTEM mapping data for this release. This file stores structure only:",
-    "no extracted Japanese text. An entry may map to a stable id in the reference",
-    "release, to a language-specific override under the pack's releases/<slug>/,",
-    "or preserve its original token stream when it is non-text or patched by a",
-    "separate Saturn adapter."
+    "Saturn SYSTEM mapping data for this release. Structure only: no extracted",
+    "Japanese text. The stable ids below are the PS1 SYSTEM dump's, which the",
+    "language pack is keyed by. An entry maps to one of those ids, to a",
+    "language-specific override under the pack's releases/<slug>/, or preserves",
+    "its original token stream when it is non-text or patched by a separate",
+    "Saturn adapter."
   ],
-  "reference": "l5-ps1-jp",
   "unresolved_groups": {},
   "groups": {
     "0": {

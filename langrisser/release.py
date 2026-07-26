@@ -16,15 +16,10 @@ platform: they are properties of a single shipped build.
 What each axis owns:
 
 * game     - the work: glyph plane map, curated table, language packs
-* release  - this shipped build: media, paths, offsets, dump hashes, reference
+* release  - this shipped build: media, paths, offsets, dump hashes
 * platform - the console itself: nothing game-specific
 * engine   - the container family shared by releases built on the same code
 
-Releases also carry the parity graph. `reference` names the release a port is
-compared against - Saturn Langrisser V against its PS1 twin - replacing the
-old `base_platform` field, which pretended the relation was a property of the
-console. It is not: a Mega Drive Langrisser has no PS1 to compare with, and
-its English reference would be the Warsong release instead.
 """
 
 from __future__ import annotations
@@ -84,16 +79,6 @@ class ReleasePack:
     def serial(self) -> str:
         """Catalogue number printed on the medium, when it has one."""
         return str(self._data.get("serial") or self.code)
-
-    @property
-    def reference(self) -> str | None:
-        """Release this one is compared against for parity, if any.
-
-        A reference is read-only: it proves what the original said, it never
-        overrides what this release ships.
-        """
-        value = self._data.get("reference")
-        return str(value) if value else None
 
     @property
     def media(self) -> dict[str, Any]:
@@ -183,7 +168,7 @@ class ReleasePack:
     def kanji_map(self) -> Path | None:
         """Token->character map for this build's reordered kanji bank.
 
-        Derived from record pairs matched against the reference release; lets
+        Derived from record pairs matched against the already-mapped build; lets
         both token streams be normalized to text and compared directly.
         """
         return _path(self.root, self._data.get("kanji_map"))

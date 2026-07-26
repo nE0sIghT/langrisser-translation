@@ -1,12 +1,12 @@
 {
   "_comment": [
-    "Saturn SCEN mapping data for this release. This file stores structure only:",
-    "no extracted Japanese text. Chunks not listed here are eligible for automatic",
-    "identity or proven stable-token alignment against the reference release's",
-    "script. Chunks listed as empty are known service/name-pool blocks and are",
-    "preserved, not translated."
+    "Saturn SCEN mapping data for this release. Structure only: no extracted",
+    "Japanese text. The chunk and record numbers below are the PS1 script's,",
+    "because Langrisser V was translated on PS1 first and the language pack is",
+    "keyed by them. Chunks not listed here are eligible for automatic identity",
+    "or proven stable-token alignment; chunks listed as empty are known",
+    "service/name-pool blocks and are preserved, not translated."
   ],
-  "reference": "l5-ps1-jp",
   "empty_chunks": [],
   "unresolved_chunks": {},
   "chunks": {

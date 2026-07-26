@@ -2,8 +2,8 @@
 """Platform manifest helpers.
 
 A platform is the console itself and nothing more. Anything that varies
-between two games on the same console — mapping data, offsets, font ceilings,
-which release a port is compared against — belongs to a release instead
+between two games on the same console — mapping data, offsets, font ceilings —
+belongs to a release instead
 (`langrisser.release`); keeping it here made Langrisser V's Saturn data look like a
 property of the Saturn.
 """
