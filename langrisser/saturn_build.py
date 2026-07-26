@@ -102,7 +102,7 @@ def main() -> None:
         if not path.exists():
             raise SystemExit(
                 f"missing {path}; extract it first: "
-                f"python3 scripts/saturn_disc.py extract {path.name} {path}"
+                f"python3 -m langrisser.saturn_disc extract {path.name} {path}"
             )
     for path in (Path(args.ps1_scen), Path(args.ps1_scen2), Path(args.ps1_system)):
         if not path.exists():
