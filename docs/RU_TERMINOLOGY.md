@@ -100,7 +100,7 @@
 Команда:
 
 ```bash
-python3 scripts/lang5_validate_terms.py --lang ru --require-complete --require-speakers --max-plate-chars 10
+python3 -m langrisser.validate_terms --lang ru --require-complete --require-speakers --max-plate-chars 10
 ```
 
 Валидатор проверяет:

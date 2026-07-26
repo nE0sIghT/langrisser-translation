@@ -19,7 +19,7 @@ be broken.
 - **Control words are sacred.** Every `<$XXXX>` tag ≥ `0xE000` (except the
   soft breaks `FFFC`/`FFFD` and highlight toggles `FFF4`/`FFF3`) and every
   argument word of `F600`/`FBxx` must survive translation in order.
-  `lang5_validate_translation.py --lang <lang>` enforces this — keep it green.
+  `langrisser/validate_translation.py --lang <lang>` enforces this — keep it green.
 - **SCEN and SCEN2 text blocks are byte-identical.** Translate
   `data/games/<game>/lang/<lang>/SCEN/` only; the inserter reuses that dump when rebuilding
   `SCEN2.DAT`.
@@ -27,21 +27,21 @@ be broken.
   Untranslated kanji whose glyph slots were sacrificed for target-language
   glyphs fail the encode step and break the build. Work-in-progress lives in
   `work/wip_<lang>/`
-  (`lang5_tm_prefill.py` writes there).
+  (`langrisser/tm_prefill.py` writes there).
 
 ## Mandatory checks before claiming success
 
 ```bash
-python3 scripts/lang5_verify_roundtrip.py   # byte-identical no-edit pipeline
-python3 scripts/lang5_rewrap.py --lang en             # window-width line wrapping
-python3 scripts/lang5_check_speakers.py --lang en     # speaker plates vs the in-game test set
-python3 scripts/lang5_validate_terms.py --lang en --require-complete
-python3 scripts/lang5_validate_terms.py --lang ru --require-complete --require-speakers --max-plate-chars 10
-python3 scripts/lang5_validate_translation.py --lang en        # tags, encodability, budgets
-python3 scripts/lang5_build_ppf.py --lang en          # full build must succeed
+python3 -m langrisser.verify_roundtrip   # byte-identical no-edit pipeline
+python3 -m langrisser.rewrap --lang en             # window-width line wrapping
+python3 -m langrisser.check_speakers --lang en     # speaker plates vs the in-game test set
+python3 -m langrisser.validate_terms --lang en --require-complete
+python3 -m langrisser.validate_terms --lang ru --require-complete --require-speakers --max-plate-chars 10
+python3 -m langrisser.validate_translation --lang en        # tags, encodability, budgets
+python3 -m langrisser.build_ppf --lang en          # full build must succeed
 ```
 
-Speaker/author correctness is **mandatory**: `lang5_check_speakers.py` must print
+Speaker/author correctness is **mandatory**: `langrisser/check_speakers.py` must print
 `OK`. It verifies that `semantic_plate_slots` resolves each record in
 `docs/SPEAKER_TEST_SET.md` to the in-game–verified speaker; a wrong speaker means
 a wrong plate reserve and wrong wrapping. A failure is a bug in the extractor —
@@ -98,11 +98,11 @@ game, add a row to `docs/SPEAKER_TEST_SET.md`.
 - Keep code, comments and documentation in English. Target-language text belongs
   only under the corresponding `data/games/<game>/lang/<lang>/` pack.
 - `work/`, `iso/`, `patches/`, `archive/`, `external/` are not in git;
-  everything under `data/` and `scripts/` is.
+  everything under `data/`, `langrisser/` and `scripts/` is.
 - Work scenario by scenario, not by raw chunk number:
-  `lang5_scenario.py --lang <lang> list/chunks/dump/prefill` maps scenario K
+  `langrisser/scenario.py --lang <lang> list/chunks/dump/prefill` maps scenario K
   to its chunks (scene `44+K`, battle `K`, scene `86+K`; see
   `data/common/scenario_map.json`).
 - After translating a chunk: rewrap → validate → build → regenerate review
-  pages (`lang5_review_html.py`) → commit the `SCEN` chunk and any related
+  pages (`langrisser/review_html.py`) → commit the `SCEN` chunk and any related
   durable data/docs together.

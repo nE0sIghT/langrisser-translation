@@ -33,51 +33,51 @@ Read-only tooling added for this investigation:
 
 | Tool | Purpose |
 | --- | --- |
-| `scripts/saturn_disc.py` | Parse/extract/remaster the Saturn mixed-mode BIN/CUE and summarize track-2 XA sectors |
-| `scripts/saturn_system_dump.py` | Dump Saturn `SYSTEM.DAT` text groups using the confirmed on-disc word order |
-| `scripts/saturn_scen_scan.py` | Scan Saturn `SCEN.DAT` catalog, chunk headers, record indices and token streams |
-| `scripts/saturn_scen_text.py` | Dump the full Saturn `SCEN.DAT` scenario text pool with stable `(chunk, entry)` ids |
-| `scripts/saturn_font.py` | Render Saturn `SYSTEM.DAT` glyph slots and diff them against the PS1 font |
-| `scripts/saturn_scen.py` | Shared SCEN.DAT read/rebuild model (catalog, block header, field_3c text pool) |
-| `scripts/lang5_saturn_apply.py` | Apply the universal language-pack translation to the Saturn SCEN text pool |
-| `scripts/lang5_saturn_system_pack.py` | Pack the SYSTEM UI translation into the Saturn `SYSTEM.DAT` groups |
-| `scripts/saturn_system_validate.py` | Validate the packed `SYSTEM.DAT` write contract (pointer directory, group spans) |
-| `scripts/lang5_saturn_build.py` | Build-time Saturn flow: font + SYSTEM text + SCEN text + decoded graphics |
-| `scripts/saturn_poem_translate.py` | Re-pack the shared prologue-poem render into `OPEN.DAT[2]` VDP1 runs |
-| `scripts/saturn_now_loading.py` | Re-pack the Saturn compressed `SYSTEM.DAT` Now Loading plate |
-| `scripts/saturn_name_entry.py` | Patch the Saturn name-entry display grid and input table in `SYSTEM.DAT` |
-| `scripts/saturn_apply_text_overrides.py` | Normalize the build copies with the platform record overrides (Saturn pad buttons etc.) |
-| `scripts/saturn_fix_native_glyphs.py` | Plan/apply the native symbol remap onto the real Saturn glyph slots |
-| `scripts/saturn_title_credits.py` | Stamp the translator credits onto the `TITLE1`/`TITLE2` overlay tilemaps |
+| `langrisser/saturn_disc.py` | Parse/extract/remaster the Saturn mixed-mode BIN/CUE and summarize track-2 XA sectors |
+| `langrisser/saturn_system_dump.py` | Dump Saturn `SYSTEM.DAT` text groups using the confirmed on-disc word order |
+| `langrisser/saturn_scen_scan.py` | Scan Saturn `SCEN.DAT` catalog, chunk headers, record indices and token streams |
+| `langrisser/saturn_scen_text.py` | Dump the full Saturn `SCEN.DAT` scenario text pool with stable `(chunk, entry)` ids |
+| `langrisser/saturn_font.py` | Render Saturn `SYSTEM.DAT` glyph slots and diff them against the PS1 font |
+| `langrisser/saturn_scen.py` | Shared SCEN.DAT read/rebuild model (catalog, block header, field_3c text pool) |
+| `langrisser/saturn_apply.py` | Apply the universal language-pack translation to the Saturn SCEN text pool |
+| `langrisser/saturn_system_pack.py` | Pack the SYSTEM UI translation into the Saturn `SYSTEM.DAT` groups |
+| `langrisser/saturn_system_validate.py` | Validate the packed `SYSTEM.DAT` write contract (pointer directory, group spans) |
+| `langrisser/saturn_build.py` | Build-time Saturn flow: font + SYSTEM text + SCEN text + decoded graphics |
+| `langrisser/saturn_poem_translate.py` | Re-pack the shared prologue-poem render into `OPEN.DAT[2]` VDP1 runs |
+| `langrisser/saturn_now_loading.py` | Re-pack the Saturn compressed `SYSTEM.DAT` Now Loading plate |
+| `langrisser/saturn_name_entry.py` | Patch the Saturn name-entry display grid and input table in `SYSTEM.DAT` |
+| `langrisser/saturn_apply_text_overrides.py` | Normalize the build copies with the platform record overrides (Saturn pad buttons etc.) |
+| `langrisser/saturn_fix_native_glyphs.py` | Plan/apply the native symbol remap onto the real Saturn glyph slots |
+| `langrisser/saturn_title_credits.py` | Stamp the translator credits onto the `TITLE1`/`TITLE2` overlay tilemaps |
 
-The Saturn tools share the platform-agnostic core: `lang5_binfmt` (byte order),
-`lang5_offsetgroups` (the SYSTEM group model), `lang5_build_font` (glyph slot
-rewrite), `lang5_poem_render` (poem text rasterisation/layout), and the PS1
+The Saturn tools share the platform-agnostic core: `langrisser.binfmt` (byte order),
+`langrisser.offsetgroups` (the SYSTEM group model), `langrisser.build_font` (glyph slot
+rewrite), `langrisser.poem_render` (poem text rasterisation/layout), and the PS1
 token codec/dump loader, so no common logic is duplicated between the PS1 and
 Saturn tooling.
 
 ### Build-time platform selection
 
 Platform is chosen at build time; the `data/games/<game>/lang/<code>` pack is unchanged.
-`lang5_saturn_build.py` runs the reused stages against the extracted Saturn
+`langrisser/saturn_build.py` runs the reused stages against the extracted Saturn
 files:
 
 ```bash
-python3 scripts/saturn_disc.py extract SYSTEM.DAT work/build/saturn/SYSTEM.DAT
-python3 scripts/saturn_disc.py extract SCEN.DAT   work/build/saturn/SCEN.DAT
-python3 scripts/lang5_saturn_build.py --lang ru \
+python3 -m langrisser.saturn_disc extract SYSTEM.DAT work/build/saturn/SYSTEM.DAT
+python3 -m langrisser.saturn_disc extract SCEN.DAT   work/build/saturn/SCEN.DAT
+python3 -m langrisser.saturn_build --lang ru \
   --assignments work/build/font_slot_assignments.ru.csv
 ```
 
 The stages, all reusing shared logic:
 
-- `lang5_build_font` writes the Cyrillic alphabet into `SYSTEM.DAT` glyph slots
+- `langrisser.build_font` writes the Cyrillic alphabet into `SYSTEM.DAT` glyph slots
   `0..1820` (text region untouched) and emits the `.tbl`.
-- `lang5_saturn_system_pack` rebuilds the SYSTEM UI groups with the translated
+- `langrisser.saturn_system_pack` rebuilds the SYSTEM UI groups with the translated
   text via the shared group model (BE), using
   `data/releases/l5-saturn-jp/system_mapping.json` for direct PS1 ids, sparse
   platform overlays, and verified preserved entries. It packs all 16/16 groups.
-- `lang5_saturn_apply` inserts translated scenario text through
+- `langrisser.saturn_apply` inserts translated scenario text through
   `data/releases/l5-saturn-jp/scen_mapping.json`: 125/131 SCEN blocks are translated,
   and the 6 service/name-pool blocks are explicitly preserved.
 - Graphic steps run when the corresponding Saturn files are extracted:
@@ -113,7 +113,7 @@ Confirmed sector user-data offsets:
 | `MODE1/2352` | `2352` | `16` | `2048` |
 | `MODE2/2352` XA audio | `2352` | raw sector required | Form2 audio sectors, keep subheaders |
 
-The current PS1 `scripts/iso_mode2.py` assumes a single `MODE2/2352` data track
+The current PS1 `langrisser/iso_mode2.py` assumes a single `MODE2/2352` data track
 with 2048-byte user data at offset 24. It is not suitable for Saturn track 1
 or track 2 without a new track-aware backend.
 
@@ -209,9 +209,9 @@ confirms the directory-to-track mapping.
 Reproducible commands:
 
 ```bash
-python3 scripts/saturn_disc.py info
-python3 scripts/saturn_disc.py list --json > work/build/saturn/iso_entries.json
-python3 scripts/saturn_disc.py xainfo > work/build/saturn/xa_info.json
+python3 -m langrisser.saturn_disc info
+python3 -m langrisser.saturn_disc list --json > work/build/saturn/iso_entries.json
+python3 -m langrisser.saturn_disc xainfo > work/build/saturn/xa_info.json
 ```
 
 ## Key File Mapping vs PS1
@@ -286,8 +286,8 @@ Two hard consequences for the build:
   offset tables. Hence `max_font_slot: 1819` in
   `data/releases/l5-saturn-jp/manifest.json` — the ceiling follows this
   build's own file layout, not the console — and the final
-  `scripts/saturn_system_validate.py` write-contract check in
-  `lang5_saturn_build.py` (directory byte-identical, groups unmoved, every
+  `langrisser/saturn_system_validate.py` write-contract check in
+  `langrisser/saturn_build.py` (directory byte-identical, groups unmoved, every
   write inside the glyph plane / group spans / Now Loading stream budget /
   name-entry input table).
 
@@ -322,7 +322,7 @@ This means the existing PS1 SYSTEM translation (unit/class names, menu labels,
 descriptions) ports to Saturn by group+index alignment, exactly like the SCEN
 text pool ports by `(chunk, entry)` alignment.
 
-Implication for tooling: `lang5_system_dump.py` / `lang5_system_pack.py` can be
+Implication for tooling: `langrisser/system_dump.py` / `langrisser/system_pack.py` can be
 ported by adding an endian-aware mode and Saturn scan start/table offsets. The
 PS1 runtime proof about `SYSTEM.BIN` index addressing does not automatically
 apply to Saturn; the Saturn executable must be checked before allowing repack.
@@ -330,8 +330,8 @@ apply to Saturn; the Saturn executable must be checked before allowing repack.
 Reproducible command:
 
 ```bash
-python3 scripts/saturn_disc.py extract SYSTEM.DAT work/build/saturn/SYSTEM.DAT
-python3 scripts/saturn_system_dump.py \
+python3 -m langrisser.saturn_disc extract SYSTEM.DAT work/build/saturn/SYSTEM.DAT
+python3 -m langrisser.saturn_system_dump \
   --system work/build/saturn/SYSTEM.DAT \
   --out work/build/saturn/system_strings.json
 ```
@@ -508,7 +508,7 @@ This is the scenario text pool. It is now confirmed as the store that holds
 every speaker name and every dialogue/event line for the block, in reading
 order, using the same broad control-word grammar as the PS1 script (`FFFC`
 soft break, `FFFD`/`FFFE`/`FFFF` terminators, `FFF3`–`FFF8` inline markup,
-`FB00`+speaker-byte name control). `scripts/saturn_scen_text.py` walks all
+`FB00`+speaker-byte name control). `langrisser/saturn_scen_text.py` walks all
 blocks and emits every entry with a stable `(chunk_index, entry_index)` id.
 
 | Property | Value |
@@ -542,7 +542,7 @@ resource grammars.
 Reproducible command:
 
 ```bash
-python3 scripts/saturn_scen_text.py \
+python3 -m langrisser.saturn_scen_text \
   --scen work/build/saturn/SCEN.DAT \
   --out work/build/saturn/scen_text.json \
   --out-csv work/build/saturn/scen_text.csv
@@ -662,7 +662,7 @@ unrelated kanji. The build therefore runs a symbol-class-only (non-CJK,
 non-kana) *glyph plan* around the font build:
 
 - `remap` — the exact PS1 bitmap exists in the original Saturn plane: the
-  `.tbl` is rewritten to that slot, and `lang5_assign_font_slots
+  `.tbl` is rewritten to that slot, and `langrisser.assign_font_slots
   --exclude-slots` keeps the slot out of the sacrificial pool (inherited
   assignments on it are reassigned);
 - `assign` — the Saturn font has no such glyph (`×`: the Saturn originals
@@ -704,7 +704,7 @@ Kana, punctuation and the early shared range (slots `0x00..0xC9` and the
 decode correctly. The large `0x0185+` kanji region is reordered/replaced.
 
 Implication for tooling: the glyph format and slot layout match PS1 exactly, so
-`lang5_build_font.py`'s slot-rewrite approach is directly portable to Saturn
+`langrisser/build_font.py`'s slot-rewrite approach is directly portable to Saturn
 `SYSTEM.DAT` — but capped at slot `1819` (`--max-slot`, from the platform
 manifest): slot `1820` would overwrite the group pointer directory at `0x8000`
 (see above).
@@ -712,8 +712,8 @@ manifest): slot `1820` would overwrite the group pointer directory at `0x8000`
 Reproducible command:
 
 ```bash
-python3 scripts/saturn_disc.py extract SCEN.DAT work/build/saturn/SCEN.DAT
-python3 scripts/saturn_scen_scan.py \
+python3 -m langrisser.saturn_disc extract SCEN.DAT work/build/saturn/SCEN.DAT
+python3 -m langrisser.saturn_scen_scan \
   --scen work/build/saturn/SCEN.DAT \
   --out work/build/saturn/scen_scan.json
 ```
@@ -816,7 +816,7 @@ its big pixel payload):
   image palette the background is pure black (index 255 = `(0,0,0)`) and the art
   is coherent (stone "LANGRISSER / THE END OF LEGEND" logo; blue star nebula on
   CAST); the sprite palette renders the image as colour noise. Big-endian BGR555,
-  reusing `lang5_imgdat.rgb555_to_rgb888`.
+  reusing `langrisser.imgdat.rgb555_to_rgb888`.
 - **Big sub-asset `[1]`** — the full-screen image, stored as **VDP2 8x8 cells**
   (its header `tex_off`/`tex_size` are `0`). Rendered linearly it shears with the
   diagonal-streak signature of tiled data; de-tiling with the mini-container's
@@ -868,13 +868,13 @@ Each run is a red-text fragment blitted at `(x, y)`; the original `y` values ste
 by 20 px (`25, 45, 65, ...`, eight lines per poem block — matching the PS1
 `TOP_MARGIN ~24` / pitch 20). The atlas is the same ink model as the PS1 poem:
 background index 0, **outline index `0xd4` = 212 — identical to the PS1
-`lang5_poem_render.OUTLINE_INDEX`** — and a red fill ramp (`89 -> 176 -> 209`,
+`langrisser.poem_render.OUTLINE_INDEX`** — and a red fill ramp (`89 -> 176 -> 209`,
 verified to be the same red shades in the Saturn CLUT). This cross-validates
 that both platforms share the poem art style, although Saturn stores it as VDP1
 runs rather than a PS1 bitmap.
 
-`scripts/saturn_poem_translate.py` re-encodes this sub-asset fixed-size. It
-uses the shared `lang5_poem_render.py` renderer (same text loading, palette
+`langrisser/saturn_poem_translate.py` re-encodes this sub-asset fixed-size. It
+uses the shared `langrisser/poem_render.py` renderer (same text loading, palette
 indices, centering, line stamps and vertical layout as PS1), then packs the
 320x768 indexed canvas as VDP1 runs, writes a new run table, and pads unused
 run-table/atlas space. The output `OPEN.<lang>.DAT` preserves the original
@@ -901,15 +901,15 @@ u32 texture_offset   (0x378)
 u32 texture_size     (0x4600 = 224*80)
 VDP1 sprite header / coordinate table
 tex_off - 0x200: 256-entry CLUT (16bpp, big-endian BGR555 — same layout as PS1
-                 IMG.DAT; reuse lang5_imgdat.rgb555_to_rgb888)
+                 IMG.DAT; reuse langrisser.imgdat.rgb555_to_rgb888)
 0x378: 224x80 8bpp texture (background = index 0)
 ```
 
 The "888" first word was a misread — it is `0x378`, the texture offset. The
 palette is the 512 bytes immediately before the texture (`tex_off - 0x200`).
-`scripts/saturn_scenario_clear.py` reads the texture and CLUT from `CLEAR.DAT`
+`langrisser/saturn_scenario_clear.py` reads the texture and CLUT from `CLEAR.DAT`
 and rewrites the texture in place (fixed size) by calling the shared
-`lang5_banner.redraw_banner` — the exact erase-and-redraw core the PS1 banner
+`langrisser.banner.redraw_banner` — the exact erase-and-redraw core the PS1 banner
 uses — producing a gold `СЦЕНАРИЙ ПРОЙДЕН`.
 
 This gives the general Saturn graphic recipe: an uncompressed 8bpp texture with a
@@ -989,8 +989,8 @@ redraw (`Загрузка…`, same 120x28 visible pixels as the PS1 patch plus 
 rows) fits the original `0x791`-byte stream budget with header `000000a1f5`,
 i.e. depths `(1, 10, 5, 15)`, producing `1928/1937` bytes.
 
-`scripts/saturn_now_loading.py` implements both decoder and encoder. It reuses
-`lang5_now_loading.redraw_plate_pixels`, so the Saturn visible plate is
+`langrisser/saturn_now_loading.py` implements both decoder and encoder. It reuses
+`langrisser.now_loading.redraw_plate_pixels`, so the Saturn visible plate is
 byte-identical to the PS1 translated plate; only the container codec differs.
 The build patches `SYSTEM.<lang>.DAT` in place and preserves the file length.
 
@@ -1017,7 +1017,7 @@ input list / cursor-order table. No matching PS1-style `row K = run K | run K+9`
 copy exists in `A0LANG5.BIN`, `PROG1.BIN` or `PROG2.BIN`; only incidental short
 run fragments appear there.
 
-`scripts/saturn_name_entry.py` patches both tables in place after the target
+`langrisser/saturn_name_entry.py` patches both tables in place after the target
 font table has been generated. It locates the original kana patterns, verifies
 the full source contents, and writes the target language's
 `name_entry_grid.json` as BE tokens from the Saturn build `.tbl`. File size is
@@ -1127,7 +1127,7 @@ from release records (`data/games/<game>/lang/<code>/releases/l5-saturn-jp/SCEN/
 through `scen_mapping.json` entries with a `replaces_ps1` annotation naming
 the PS1-only record they supersede) or stay explicitly preserved with
 `"pending_review": true` until translated — anything else fails the build.
-`scripts/saturn_scen_audit.py` regenerates the minimal mapping and emits
+`langrisser/saturn_scen_audit.py` regenerates the minimal mapping and emits
 `work/build/saturn/scen_platform_review.md`: each pending record with the
 Saturn original decoded through the *derived Saturn kanji map* (~1030 tokens
 voted from positionally-matched pair tokens, `kanji_map.csv`) plus
@@ -1138,7 +1138,7 @@ the closest PS1 record and its current ru/en text.
 The `data/games/<game>/lang/<code>` pack is console-agnostic: the same translation applies to
 both PS1 and Saturn. Because the target alphabet occupies the same font slots on
 both, a record's encoded token stream is identical; only the byte order and
-container differ. `scripts/lang5_saturn_apply.py` reuses the PS1 dump
+container differ. `langrisser/saturn_apply.py` reuses the PS1 dump
 (`parse_dump_file`), codec (`Codec`) and `.tbl` unchanged. Platform is therefore
 a build-time choice, not a property of the pack. Automatic prefix/signature
 alignment covers structurally identical chunks; explicit durable mappings cover
@@ -1149,7 +1149,7 @@ PS1-only deletions and Saturn local reorders. On the current packs it translates
 
 `SYSTEM.DAT` groups are the same offset-table structure as PS1, so the PS1
 `--repack` path (regenerate each group's offset table, keep string indices)
-ports via the shared `lang5_offsetgroups` model with the Saturn BE config.
+ports via the shared `langrisser.offsetgroups` model with the Saturn BE config.
 Index addressing is proven on PS1 and structurally implied on Saturn (the
 offset-table indirection exists precisely to allow it); a final guarantee needs
 the Saturn executable, but the fixed-size in-place repack is safe regardless as
@@ -1158,7 +1158,7 @@ long as string indices and group layout are preserved.
 ### Font — slot rewrite
 
 Cyrillic glyphs are drawn into `SYSTEM.DAT` glyph slots `0..1820` (same
-12x12x18 format as PS1), so `lang5_build_font.py`'s slot-rewrite ports directly;
+12x12x18 format as PS1), so `langrisser/build_font.py`'s slot-rewrite ports directly;
 only the glyph-plane file offset differs.
 
 ### Remaining runtime and release checks
@@ -1193,7 +1193,7 @@ has no open-source license, and the technique is standard CD-ROM practice):
   audio tracks, shifting track 2's MSF for the new track-1 length.
 
 This directly applies to injecting our grown `SCEN.DAT` (and same-size
-`SYSTEM.DAT`) into the Saturn disc. `scripts/saturn_disc.py remaster` implements
+`SYSTEM.DAT`) into the Saturn disc. `langrisser/saturn_disc.py remaster` implements
 the output path conservatively: grown files are relocated into new MODE1 sectors
 inserted before track 2, `ADPCM/**/*.XA` logical LBAs and cue INDEX times are
 shifted by the same sector delta, and all modified MODE1 sectors are rebuilt
@@ -1225,7 +1225,7 @@ Reusable with little conceptual risk:
 - Text token codec concepts: endian and record location are now solved; the
   Saturn SCEN text pool aligns to PS1 chunks 1:1 and the SYSTEM groups align to
   PS1 groups 1:1, so both text stores port from the existing translation.
-- The slot-rewrite font builder (`lang5_build_font.py`): the Saturn font is the
+- The slot-rewrite font builder (`langrisser/build_font.py`): the Saturn font is the
   same 12x12x18 PS1 format in `SYSTEM.DAT`, so drawing the target alphabet into
   slots `0..1820` ports directly.
 
@@ -1337,7 +1337,7 @@ for text.
 | The Saturn name-entry screen uses a PS1-style executable 10x10 table. | Rejected | Full PS1 row-layout patterns do not occur in `A0LANG5.BIN`, `PROG1.BIN` or `PROG2.BIN`; only the two full tables in `SYSTEM.DAT` match. |
 | The Saturn name-entry grid and input list can be patched in `SYSTEM.DAT`. | Confirmed statically | `saturn_name_entry.py` verifies and rewrites the full display grid at `0x08CE6` and flat input table at `0x1B6E0` using target-language single glyph tokens. |
 | Saturn translated files can be remastered into a mixed-mode BIN/CUE. | Confirmed structurally | `saturn_disc.py remaster` relocates grown `SCEN.DAT`, shifts track 2+ cue times and ADPCM directory extents, rebuilds MODE1 EDC/ECC, and extracted replacements compare byte-identical to build outputs. |
-| Some Saturn/PS1 SCEN count deltas can be aligned without manual maps. | Confirmed narrowly | Three chunks have a unique exact subsequence match when comparing only platform-stable JP tokens (kana/ASCII/punctuation/control words). `lang5_saturn_apply.py` applies only those unique matches and leaves ambiguous cases to explicit `scen_mapping.json` entries. |
+| Some Saturn/PS1 SCEN count deltas can be aligned without manual maps. | Confirmed narrowly | Three chunks have a unique exact subsequence match when comparing only platform-stable JP tokens (kana/ASCII/punctuation/control words). `langrisser/saturn_apply.py` applies only those unique matches and leaves ambiguous cases to explicit `scen_mapping.json` entries. |
 | All current Saturn/PS1 SCEN text deltas are covered by durable mapping. | Confirmed | Strict EN/RU Saturn builds translate 125/131 SCEN blocks, preserve the 6 verified service/name-pool chunks, and report `skipped(misaligned)=0`. |
 
 ### Immediate Next Steps

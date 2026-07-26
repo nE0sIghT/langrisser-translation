@@ -92,7 +92,7 @@ acceptable; dense body strokes on an edge are the real risk.
 
 ## Current target-font generator behavior
 
-As of this document, `scripts/lang5_build_font.py` renders compact pair glyphs
+As of this document, `langrisser/build_font.py` renders compact pair glyphs
 with this layout:
 
 - first half: source pixels shifted to `x=1..5`;

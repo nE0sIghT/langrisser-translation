@@ -10,7 +10,7 @@ same dead ends are not repeated.
 - Applies to battle chunks `001` through `042` in `SCEN.DAT` and `SCEN2.DAT`.
 - The text block starts at `vm_off + vm_size`.
 - The battle suffix starts at `text_block.base + text_block.size`.
-- The diagnostic tool is `scripts/lang5_battle_suffix.py`.
+- The diagnostic tool is `langrisser/battle_suffix.py`.
 
 ## Progress Log
 
@@ -24,9 +24,9 @@ same dead ends are not repeated.
 - 2026-06-13: Confirmed all original battle suffix starts are 4-byte aligned.
   The known broken chunk `002` build shifted the suffix by `0x13A`, creating
   a `2 mod 4` suffix start. This is now the leading failure hypothesis.
-- 2026-06-13: Updated `scripts/lang5_battle_suffix.py` to report actor-derived
-  asset slots and slot offsets. Updated `lang5_sceninsert.py` and
-  `lang5_validate_translation.py` so grown text blocks are 4-byte aligned and budget
+- 2026-06-13: Updated `langrisser/battle_suffix.py` to report actor-derived
+  asset slots and slot offsets. Updated `langrisser/sceninsert.py` and
+  `langrisser/validate_translation.py` so grown text blocks are 4-byte aligned and budget
   checks include that padding.
 - 2026-06-13: Restored the fuller chunk `002` translation and built it with the
   suffix shifted by `0x13C`, leaving the suffix start 4-byte aligned. In-game
@@ -169,11 +169,11 @@ unaligned `2 mod 4` suffix start, not from moving the suffix.
 ## Current Plan
 
 1. Update the suffix diagnostic tooling to reflect the confirmed slot-offset
-   format. Done in `scripts/lang5_battle_suffix.py`.
+   format. Done in `langrisser/battle_suffix.py`.
 2. Change the SCEN inserter so a grown text block is padded to a 4-byte size
-   before the suffix is appended. Done in `scripts/lang5_sceninsert.py`.
+   before the suffix is appended. Done in `langrisser/sceninsert.py`.
 3. Update validation so budget checks include the 4-byte growth padding cost.
-   Done in `scripts/lang5_validate_translation.py`.
+   Done in `langrisser/validate_translation.py`.
 4. Produce a controlled build that allows battle chunk growth only when the
    resulting suffix start remains 4-byte aligned. Done with chunk `002`.
 5. If the controlled aligned build fixes the portrait regression, replace the
@@ -191,7 +191,7 @@ inserter and validator account for this padding automatically.
 Use block-budget mode only as a regression diagnostic:
 
 ```bash
-python3 scripts/lang5_validate_translation.py <chunk> --budget-mode block
+python3 -m langrisser.validate_translation <chunk> --budget-mode block
 ```
 
 This keeps the suffix byte-identical at its original offset. It is safe but

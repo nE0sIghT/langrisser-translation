@@ -136,7 +136,7 @@ cross-check when it helps clarify context.
 
 Work one scenario at a time:
 
-1. Generate the scenario dump with `lang5_scenario.py --lang ru dump N`.
+1. Generate the scenario dump with `langrisser/scenario.py --lang ru dump N`.
 2. Read the current Russian scenario first as Russian prose.
 3. Identify literal or stiff Russian turns, especially in visible location
    captions and emotionally important dialogue.

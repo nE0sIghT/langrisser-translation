@@ -73,7 +73,7 @@ Language-specific data uses neutral target fields:
 language's output field.
 
 `system_strings.json` intentionally contains no extracted Japanese text or
-offset metadata. `lang5_system_dump.py` regenerates those fields under
+offset metadata. `langrisser/system_dump.py` regenerates those fields under
 `work/systemdump/system_strings.json`; the packer joins the durable overlay to
 that source by ids such as `table:08052:1` and `offset:176A0`.
 
@@ -246,7 +246,7 @@ records, control-signature differences and residual Japanese.
 Generate a scenario-oriented three-way review with:
 
 ```bash
-python3 scripts/lang5_review_html.py --lang ru --scenario 1
+python3 -m langrisser.review_html --lang ru --scenario 1
 ```
 
 The JP dump drives the records, English is the default reference language, and
@@ -255,7 +255,7 @@ all HTML output stays under `work/review/<lang>/`.
 Target terminology can be checked independently of script completion:
 
 ```bash
-python3 scripts/lang5_validate_terms.py --lang ru --require-complete --require-speakers --max-plate-chars 10
+python3 -m langrisser.validate_terms --lang ru --require-complete --require-speakers --max-plate-chars 10
 ```
 
 The validator compares the JP key sequence with the reference pack and checks
@@ -285,14 +285,14 @@ negative values and loose strings are rejected. Loose strings have no
 regenerable offset table and always remain within their original fixed budget.
 Keep the default conservative and add only display-verified exceptions.
 
-`lang5_system_pack.py --max-grow N` is a diagnostic override for the default;
+`langrisser/system_pack.py --max-grow N` is a diagnostic override for the default;
 stable-id overrides still take precedence. The normal build does not pass this
 option and reads all limits from the language pack.
 
 ## Creating A Pack
 
 ```bash
-python3 scripts/lang5_init_lang.py ru --label Russian
+python3 -m langrisser.init_lang ru --label Russian
 ```
 
 The initializer copies source structure while clearing target values. It leaves
@@ -312,8 +312,8 @@ startup-menu labels may not cross a 9-cell VRAM-atlas row.
 To persist newly derived assignments in the language pack for review, run:
 
 ```bash
-python3 scripts/lang5_assign_font_slots.py --lang ru
-python3 scripts/lang5_build_font.py --lang ru
+python3 -m langrisser.assign_font_slots --lang ru
+python3 -m langrisser.build_font --lang ru
 ```
 
 ## Build Outputs

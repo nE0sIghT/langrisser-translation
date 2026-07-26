@@ -4,7 +4,7 @@
 item, weapon, spell and character names; their triangle-button descriptions; the
 menu command help; and the save / memory-card messages. This document describes
 how that text is stored, so it can be dumped, translated and packed back with a
-single flow (`lang5_system_dump.py` + `lang5_system_pack.py`) instead of
+single flow (`langrisser/system_dump.py` + `langrisser/system_pack.py`) instead of
 content-matched global replaces.
 
 ## Layout overview
@@ -27,8 +27,8 @@ points at the glyph). Special codes:
 
 Glyph 1820 starts at `0x7FF8` and occupies bytes through `0x8009`. The bytes
 from `0x800A` through `0x8051` are non-text prelude data, so
-`lang5_system_dump.py` starts at the first verified string-group table,
-`0x8052`; that group's first string base is `0x8298`. `lang5_build_font.py`
+`langrisser/system_dump.py` starts at the first verified string-group table,
+`0x8052`; that group's first string base is `0x8298`. `langrisser/build_font.py`
 rewrites glyphs only up to slot 1820 to draw the target alphabet. Runtime font
 cell behavior and the verified 12x12 boundary probes are documented in
 `docs/FONT_RENDERING_MODEL.md` (see also `IMG_DAT_FORMAT.md` for the unrelated
@@ -78,19 +78,19 @@ short tail lines.
 
 ```bash
 # 1. dump every string (offset table aware) to a generated inspection JSON
-python3 scripts/lang5_system_dump.py --out work/systemdump/system_strings.json
+python3 -m langrisser.system_dump --out work/systemdump/system_strings.json
 
 # 2. translate the target-only stable-id overlay:
 #    data/games/<game>/lang/<lang>/system_strings.json
 #    "{BLANK}" clears a leftover line; omitted ids preserve the JP source.
 
 # 3. resolve exact canonical names/terms inherited from the language pack
-python3 scripts/lang5_resolve_system_strings.py --lang <lang> \
+python3 -m langrisser.resolve_system_strings --lang <lang> \
     --system-source work/systemdump/system_strings.json \
     --out work/build/system_strings.<lang>.json
 
 # 4. pack back into SYSTEM.BIN
-python3 scripts/lang5_system_pack.py \
+python3 -m langrisser.system_pack \
     --system-in work/build/SYSTEM.BIN.font \
     --system-out work/build/SYSTEM.BIN.<lang> \
     --source-strings work/systemdump/system_strings.json \
@@ -105,7 +105,7 @@ automatically and must not be duplicated in the overlay. Grouped ids use
 `table:<table-offset>:<index>`; loose directly addressed strings use
 `offset:<string-offset>`.
 
-`lang5_system_pack.py` has two modes:
+`langrisser/system_pack.py` has two modes:
 
 - **in-place (default)** — each translated string is written into its original
   slot, padded with `0xFFFF`; the offset table is untouched. This is
@@ -147,7 +147,7 @@ across its existing lines — it does not allow unbounded expansion.
 
 The unit, item and magic description tables are fixed four-line cards.
 `data/common/system_card_layout.json` records their table ids and verified
-21-cell line width. `lang5_reflow_system_cards.py` treats each card as one text
+21-cell line width. `langrisser/reflow_system_cards.py` treats each card as one text
 block and deterministically redistributes words across its four lines using the
 exact generated target-language table. Per-line leading cells reserved for
 engine-drawn values are recorded by the dumper and subtracted from the available
@@ -158,7 +158,7 @@ growth heuristic.
 Some compact status and class-name fields are narrower than the normal
 21-cell line. Runtime-verified limits for these fields live in
 `data/common/system_ui_constraints.json` under `fixed_width_fields`.
-`lang5_validate_system_ui.py` measures the resolved translation with the exact
+`langrisser/validate_system_ui.py` measures the resolved translation with the exact
 generated language table and rejects a build that exceeds one of those limits.
 
 ### Startup-menu VRAM atlas rows
@@ -194,12 +194,12 @@ token. Using `Новая игра` (5) restores the original `5 + 4 = 9` alignme
 the full label displays.
 
 `data/common/system_ui_constraints.json` records these sequences.
-`scripts/lang5_validate_system_ui.py` encodes the final target strings with the
+`langrisser/validate_system_ui.py` encodes the final target strings with the
 generated table and fails the build if a label crosses an atlas row.
 
 ## Round-trip guarantee
 
 Dumping with the JP table and packing an empty translation overlay reproduces
-SYSTEM.BIN byte-for-byte (`lang5_system_pack.py --system-in SYSTEM.BIN --tbl
+SYSTEM.BIN byte-for-byte (`langrisser/system_pack.py --system-in SYSTEM.BIN --tbl
 data/common/tables/lang5_jp.tbl`), which is the correctness check for the group
 parser.

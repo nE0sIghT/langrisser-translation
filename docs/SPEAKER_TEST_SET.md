@@ -1,6 +1,6 @@
 # Speaker plate test set
 
-In-game–verified speaker plates. `scripts/lang5_check_speakers.py` asserts that
+In-game–verified speaker plates. `langrisser/check_speakers.py` asserts that
 `semantic_plate_slots` (the per-record plate extractor used by the line wrapper)
 resolves each record below to the listed speaker. A mismatch means the plate
 reserve — and therefore the line wrapping — is wrong for that record, so this is
@@ -8,7 +8,7 @@ a **mandatory** check (see AGENTS.md).
 
 How to use it:
 
-- Run `python3 scripts/lang5_check_speakers.py`; it must print `OK`.
+- Run `python3 -m langrisser.check_speakers`; it must print `OK`.
 - When you confirm a plate in game (the name shown on a dialogue window), add a
   row here. Each row is `| record | speaker | phrase |` under its `## Chunk N`
   heading. `record` is the record index in `data/games/l5/lang/en/SCEN/chunk_N.txt`;

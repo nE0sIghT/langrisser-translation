@@ -6,8 +6,8 @@ the shipped wrapper does not need it.
 
 ## Current Production Mechanism
 
-`lang5_rewrap.py` uses `semantic_plate_slots()` as the authoritative source for
-per-record speaker plates. `lang5_scendump.py` uses the same function to emit
+`langrisser/rewrap.py` uses `semantic_plate_slots()` as the authoritative source for
+per-record speaker plates. `langrisser/scendump.py` uses the same function to emit
 `# spk: <name>` comments and the `speaker` column in `work/scriptdump/all_records.csv`.
 
 The extractor does **not** execute the VM. It scans the chunk VM block for
@@ -67,7 +67,7 @@ speaker plate and wrap at full width.
 
 ## Legacy And Parked Work
 
-`traced_plate_slots()` and `display_plate_slots()` in `lang5_rewrap.py` are
+`traced_plate_slots()` and `display_plate_slots()` in `langrisser/rewrap.py` are
 legacy fallbacks. Do not base new work on their broad byte9 scans. The only
 production use of `p+9` is inside `semantic_plate_slots()`, after a display
 command passes the semantic filter. Actor-key value is not a production guard.
@@ -104,28 +104,28 @@ PARKED      stopped on purpose; do not resume without a new requirement
 | DONE | One record can contain multiple `FB00` markers. | Chunk 45 has Sigma/Lambda switches in one record. | Rewrap must be segment-aware. |
 | REJECTED | `FB00 <id>` directly indexes the speaker-name pool. | IDs exceed local name count and do not match visible speakers. | Never use as speaker slot. |
 | REJECTED | The high byte before `FF0B` is a direct speaker slot. | Chunk 45 maps `0x0013` to Sigma by this heuristic, but the line is Lambda. | Remove or downgrade `vm_direct_00` confirmed output. |
-| DONE | A chunk-wide widest-POOL reserve with short plate names is acceptable. | Early breaks came from location plates leaking into the bound and from long titled names; with the VM-header pool size and <= 5-cell plates the slack is 2-3 cells. | Shipped in `lang5_rewrap.py`; see the Decision section. |
+| DONE | A chunk-wide widest-POOL reserve with short plate names is acceptable. | Early breaks came from location plates leaking into the bound and from long titled names; with the VM-header pool size and <= 5-cell plates the slack is 2-3 cells. | Shipped in `langrisser/rewrap.py`; see the Decision section. |
 | REJECTED | Derive a per-record plate bound from JP first-line widths (21 - width). | The JP script relies on the engine's anywhere-wrap: dialogue first lines reach 81 cells, so the bound goes negative/below the real plate. | Do not retry; JP line breaks carry no plate evidence. |
 | REJECTED | A record-wide reserve is enough. | Records can switch speakers after an internal `FB00`. | Use active reserve changes after `FB00`. |
-| DONE | `scripts/lang5_speakers.py` no longer emits heuristic speaker confirmations. | Chunk 45 now reports `confirmed=0`; former `vm_direct_00` rows are `vm_state_byte_rejected/unresolved`. | Use it only as an evidence dumper until runtime behavior is decoded. |
-| DONE | `scripts/lang5_vm_dialog_refs.py` is documented as legacy evidence only. | Its header no longer calls the `FF0B` patterns confirmed command shapes. | Do not use it for execution order. |
+| DONE | `langrisser/speakers.py` no longer emits heuristic speaker confirmations. | Chunk 45 now reports `confirmed=0`; former `vm_direct_00` rows are `vm_state_byte_rejected/unresolved`. | Use it only as an evidence dumper until runtime behavior is decoded. |
+| DONE | `langrisser/vm_dialog_refs.py` is documented as legacy evidence only. | Its header no longer calls the `FF0B` patterns confirmed command shapes. | Do not use it for execution order. |
 | DONE | VM dispatcher is byte-oriented. | Dispatcher reads one opcode byte from `gp + 0x30c`. | Parse VM command starts by byte offset. |
 | DONE | Opcodes `0x0b..0x10` reach handler `0x80024424`. | Jump table at `0x80010250`. | Decode this handler's inputs precisely. |
 | DONE | Handler `0x80024424` writes window/dialogue state fields. | Writes to `0x8011a024` structure. | Identify which field resolves final speaker plate. |
 | DONE | Display payload byte 9 is the visible speaker slot after semantic display-command filtering. | Chunk 45 maps records 10/11 to slot 6 (`機械音声`), matching the visible Machine plate; chunk 69 verified plated lines reject the actor-key model. | Use `p+9` only inside `semantic_plate_slots()` after its opcode/mode/name/text-id filters pass. |
-| DONE | Continuation pages after `FFFD` do not redraw the speaker plate. | User playtest: first page can show a blue speaker plate, while the next page in the same record has no name; chunk 1 record 96 demonstrates this. | Reset reserve to zero after page breaks in `lang5_rewrap.py`. |
+| DONE | Continuation pages after `FFFD` do not redraw the speaker plate. | User playtest: first page can show a blue speaker plate, while the next page in the same record has no name; chunk 1 record 96 demonstrates this. | Reset reserve to zero after page breaks in `langrisser/rewrap.py`. |
 | DONE | Runtime actor/plate lookup table exists. | `0x800b2da4` searches table at `0x800eba38` with count `0x800eba46`. | Decode the table source in each chunk. |
-| DONE | Map chunk-local data to runtime `0x800eba38` table. | Header `u32 +0x14` is the table offset; low byte of header `u32 +0x2c` is the entry count. | Use `actor_plate_table()` in `scripts/lang5_speakers.py`. |
+| DONE | Map chunk-local data to runtime `0x800eba38` table. | Header `u32 +0x14` is the table offset; low byte of header `u32 +0x2c` is the entry count. | Use `actor_plate_table()` in `langrisser/speakers.py`. |
 | DONE | Decode the static `0x800eba38` table shape. | Static parser matches `0x800b2da4`: `u16 key`, `u8 field2`, `u8 field3`. | Decode field semantics in the VM handler context. |
 | REJECTED | Word-only `FF0B ... FFFF FFFF` pattern scan is executable VM command parsing. | Chunk 45 starts at opcode `0x00`; that handler length-skips payload bytes containing `FF0B` patterns. | Keep word patterns as evidence only, never as command order. |
-| DONE | Build a bytecode trace for the VM stream. | `scripts/lang5_speakers.py --trace-out` reaches real chunk 45 display commands in byte order. | Use trace rows as evidence, not speaker mapping. |
+| DONE | Build a bytecode trace for the VM stream. | `langrisser/speakers.py --trace-out` reaches real chunk 45 display commands in byte order. | Use trace rows as evidence, not speaker mapping. |
 | DONE | Decode enough opcode lengths to trace chunk 45 into display commands. | Known lengths include `00`, `04/05/09`, `06/07/08/0a`, `0b..10`, `14..1b`, `23..25`, `63`, `6f`, `78`. | Keep extending from disassembly when the tracer stops. |
 | DONE | Decode branch targets for conditional opcode `0x7b`. | Chunk 45 `0x7b` at rel `0x0246` yields targets `0x024c` and `0x025c` from the `0x80025a1c -> 0x80026400` path. | Keep it as CFG branch evidence until the runtime condition is modeled. |
 | PARKED | Continue bytecode tracing after the first `0x7b` branch. | CFG trace reaches more display commands after both `0x7b` targets. | Decode the next stopping opcode reported by `--trace-out`. |
 | PARKED | Resolve non-linear VM entry/control flow for chunks 65/107. | Linear trace reaches `opcode 00` with skip length `0xfc00` after the first `0x04` command. | Determine whether this is an exit sentinel, alternate entrypoint, or conditional path. |
 | PARKED | Decode `0x800a39a4` `FBxx` text-control handler. | Dispatch table sends `FB` family there. | Confirm how text `FB00 <id>` links to VM state. |
 | PARKED | Implement trusted speaker extraction API. | Requires resolved table and command semantics. | Emit only dispatch-verified mappings. |
-| DONE | Integrate display-command plate reserves into `lang5_rewrap.py`. | `semantic_plate_slots()` reads the local speaker slot from display byte `p+9`; `0xFF` means no plate and values outside the local pool keep the conservative chunk-wide pool reserve. | Current production path. |
+| DONE | Integrate display-command plate reserves into `langrisser/rewrap.py`. | `semantic_plate_slots()` reads the local speaker slot from display byte `p+9`; `0xFF` means no plate and values outside the local pool keep the conservative chunk-wide pool reserve. | Current production path. |
 | DONE | Validate against chunk 45 in-game bad lines. | Simulated render: no line exceeds 21 cells with the pool reserve. | Confirm visually in the next playtest. |
 | DONE | VM block begins with a u32 script offset table. | Ascending u32 offsets at vm start in 131/131 chunks; tracer wrongly starts at offset 0 (the table) and reads entry `0x44` as an opcode. | Start the walk at the first table entry; decode opcodes `0x28`/`0x44`. |
 | REJECTED | Recover display rows by opcode-only `0x0B..0x10` 12-byte scans. | Requiring the complete `0..N-1` `text_id` set to resolve uniquely succeeds in 0/131 chunks; lenient filters admit false-positive windows. | Use the semantic opcode/mode/name/text-id filter instead. |
@@ -138,7 +138,7 @@ Do not execute this plan for wrapping polish unless the parked decision is
 explicitly reversed. It remains here to prevent repeating already tested
 reverse-engineering paths.
 
-1. Make `scripts/lang5_speakers.py` conservative. DONE.
+1. Make `langrisser/speakers.py` conservative. DONE.
    - Remove any `confirmed` result based only on the rejected high-byte
      heuristic.
    - Keep such rows as evidence with `unresolved` confidence if they are useful.
@@ -151,7 +151,7 @@ reverse-engineering paths.
      `0x800eb2ac`, `0x800eb8fc`, and `0x800eb574`.
    - Success criterion: a script can locate and dump the `0x800eba38` table
      for sampled chunks from static SCEN data.
-   - Result: `scripts/lang5_speakers.py` now parses `0x800eba38` from chunk
+   - Result: `langrisser/speakers.py` now parses `0x800eba38` from chunk
      header `+0x14` and count from header `+0x2c`.
 3. Decode the `0x800eba38` table format. DONE.
    - Use `0x800b2da4` as the reference behavior.
@@ -167,7 +167,7 @@ reverse-engineering paths.
      starts.
    - Success criterion: chunk 45 trace reaches the actual display command
      sites in execution order.
-   - Result: `python3 scripts/lang5_speakers.py --chunk 45 --trace-out
+   - Result: `python3 -m langrisser.speakers --chunk 45 --trace-out
      work/vm_dialog_refs/vm_trace_045.csv` reaches 30 display commands per
      SCEN/SCEN2 copy and stops at opcode `0x7b`.
 5. Decode branch/conditional VM opcodes required by chunk 45. DONE.
@@ -209,10 +209,10 @@ reverse-engineering paths.
    - Success criterion: known bad chunk 45 lines wrap without premature word
      splits.
 11. Run required build checks.
-   - `python3 scripts/lang5_verify_roundtrip.py`
-   - `python3 scripts/lang5_rewrap.py`
-   - `python3 scripts/lang5_validate_translation.py`
-   - `python3 scripts/lang5_build_ppf.py`
+   - `python3 -m langrisser.verify_roundtrip`
+   - `python3 -m langrisser.rewrap`
+   - `python3 -m langrisser.validate_translation`
+   - `python3 -m langrisser.build_ppf`
    - Success criterion: failures, if any, are unrelated WIP translation files
      and are documented clearly.
 
@@ -232,7 +232,7 @@ reverse-engineering paths.
   opcode dispatch.
 - Do not treat `FF0B <flags> FFFF FFFF` pattern matches inside opcode `0x00`
   length-skipped payload as executed display commands.
-- Do not wire the legacy `scripts/lang5_speakers.py` tracer into rewrap; use
+- Do not wire the legacy `langrisser/speakers.py` tracer into rewrap; use
   `semantic_plate_slots()` unless a new defect proves it insufficient.
 
 ## Confirmed Data Model
@@ -357,10 +357,10 @@ not fully decoded yet.
 
 ## Bytecode Trace Evidence
 
-`scripts/lang5_speakers.py` now has a conservative VM bytecode tracer:
+`langrisser/speakers.py` now has a conservative VM bytecode tracer:
 
 ```bash
-python3 scripts/lang5_speakers.py \
+python3 -m langrisser.speakers \
   --chunk 45 \
   --out work/vm_dialog_refs/speaker_045_check.csv \
   --trace-out work/vm_dialog_refs/vm_trace_045.csv
@@ -502,7 +502,7 @@ name-pool positions.
 
 ### The high byte before `FF0B` is a direct speaker slot
 
-False. The current untracked `scripts/lang5_speakers.py` can label rows as
+False. The current untracked `langrisser/speakers.py` can label rows as
 `vm_direct_00` when the high byte of the preceding state word looks like a
 speaker slot. Chunk 45 disproves this.
 
@@ -557,7 +557,7 @@ chunk index -> FB id -> speaker name -> first-line reserve
 
 ## Rewrap Integration Requirement
 
-`lang5_rewrap.py` must not use one reserve for a whole chunk when a trusted
+`langrisser/rewrap.py` must not use one reserve for a whole chunk when a trusted
 display row gives a tighter record-level reserve. A fully segment-level reserve
 would still require resolving multiple `FB00` markers inside one record.
 
@@ -578,7 +578,7 @@ Choice records and non-dialogue records must keep their existing special rules.
 
 ## Current Implementation Risk
 
-`scripts/lang5_speakers.py` is useful as an evidence dumper. It must remain
+`langrisser/speakers.py` is useful as an evidence dumper. It must remain
 conservative: no row may be marked `confirmed` unless it follows decoded
 runtime behavior. The rejected high-byte heuristic is now emitted as
 `vm_state_byte_rejected` with `unresolved` confidence.

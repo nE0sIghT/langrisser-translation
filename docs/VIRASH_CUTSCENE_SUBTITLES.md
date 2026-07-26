@@ -26,14 +26,14 @@ in the dialogue window, then the voiced scene plays.
   yellow caption, page 3+ = the monologue (`<$FFFD>` per cue).
 - **The token** (`<!FORCE$FFFD>`): a hard page break the reflow pass must never
   compact. It **encodes to a plain `<$FFFD>`** (the engine sees a normal page),
-  but `lang5_rewrap.py` splits the record on it and reflows each segment
+  but `langrisser/rewrap.py` splits the record on it and reflows each segment
   independently, so compaction cannot pull the monologue back into the speech.
-  - `scripts/lang5_scen.py` — `FORCE_PAGE_BREAK` constant; `Codec.encode`
+  - `langrisser/scen.py` — `FORCE_PAGE_BREAK` constant; `Codec.encode`
     replaces it with `<$FFFD>` before tokenising.
-  - `scripts/lang5_rewrap.py` — `reflow_record` splits on the token (only the
+  - `langrisser/rewrap.py` — `reflow_record` splits on the token (only the
     first segment keeps the speaker plate; only the last carries the yes/no tail
     reserve); `page_segments` treats it as a page boundary for the height check.
-  - `scripts/lang5_validate_translation.py` — strips it before the ASCII-punctuation
+  - `langrisser/validate_translation.py` — strips it before the ASCII-punctuation
     check (it contains `!`); the control signature already ignores it.
 - **Checks:** `verify_roundtrip`, `rewrap`, `check_speakers`, `validate_en`
   (chunk 69 `body` within budget, SCEN/SCEN2 fixed-size repack OK) all pass; the
@@ -506,12 +506,12 @@ code hook. Findings:
 #### Format DEFINITIVELY IDENTIFIED: type-8 scanline-packets (== IMG.DAT)
 
 MAP_C.DAT uses the **same image codec as `/L5/IMG.DAT`** — the type-8
-scanline-packet format already implemented in `scripts/lang5_imgdat.py`
+scanline-packet format already implemented in `langrisser/imgdat.py`
 (`image_groups` / `decode_image` / `encode_image`). Verified against MAP_C:
 
 - **MAP_C is the same _container_ as IMG.DAT, not just the same codec.** It opens
   with the identical **0x800-byte TOC of sorted u32 asset offsets**
-  (`lang5_imgdat.parse_toc`): **172 assets**. Each asset bundles **its own image
+  (`langrisser.imgdat.parse_toc`): **172 assets**. Each asset bundles **its own image
   groups _and_ its own CLUT block(s)** — typically **4 palette variants** per asset.
 - A packet is **2048 bytes = 0x20 header + 2016 pixel bytes**. Header: magic
   `u16[0]==0x0160`, `u16[3]==8` (type), `u16[0x1a]==2048`, **width = `u16[0x14]*2`**,
@@ -600,7 +600,7 @@ not the colours.
 #### Honest state of the assembly (DATA → coherent image)
 
 - **DATA → VRAM is fully solved & reversible.** The packet header places each
-  block in VRAM (verified 100 % byte-exact, above); `lang5_bg_sprites.py pack`
+  block in VRAM (verified 100 % byte-exact, above); `langrisser/bg_sprites.py pack`
   writes edits back losslessly. This is the "disassemble back into the game" half.
 - **The cave bg is NOT stored as one coherent image anywhere in the data** — it is
   an **8-px-wide column atlas** (raw index render: smooth _within_ each 8-px
@@ -733,8 +733,8 @@ usable wide canvas for designing subtitle placement.
 
 ### Sprite extract / pack tool — DELIVERED
 
-`scripts/lang5_bg_sprites.py` drives the verified **type-8 codec** (from
-`lang5_imgdat`) against MAP_C, **per asset** (TOC-aware): it lists assets/groups
+`langrisser/bg_sprites.py` drives the verified **type-8 codec** (from
+`langrisser.imgdat`) against MAP_C, **per asset** (TOC-aware): it lists assets/groups
 and round-trips any group through an indexed PNG, **byte-exact and size-preserving**
 (data files are gitignored under `work/virash/`):
 

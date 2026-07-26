@@ -106,13 +106,15 @@ v1.004 exactly:
 | 1 (Mode 1) | `61901` | `ef034bde` | `37685a3ac74ac252abb2d01ea6987c73` | `b90529e379efde5787693ffda6fff53fddd7c2ee` |
 
 ```bash
-python3 scripts/saturn_disc.py --cue iso/saturn/LANGRISSER_5.cue verify
+python3 -m langrisser.saturn_disc --cue iso/saturn/LANGRISSER_5.cue verify
 ```
 
 ## Repository Layout
 
 | Path | Purpose |
 | --- | --- |
+| `langrisser/` | the toolkit: one module per tool, run as `python3 -m langrisser.<name>` |
+| `scripts/release.sh` | release build driver |
 | `data/common/` | shared maps, scenario map, UI constraints and JP table |
 | `data/games/<code>/manifest.json` | game descriptor: glyph-plane map, curated table, pack root |
 | `data/releases/<slug>/manifest.json` | release descriptor: medium, paths, offsets, font ceiling, reference release, dump fingerprint |
@@ -171,7 +173,7 @@ user's own disc image. This avoids committing game text that can be extracted by
 scripts.
 
 English (`en`) and Russian (`ru`) are complete language packs. Additional
-languages should start from `scripts/lang5_init_lang.py` and follow the same
+languages should start from `langrisser/init_lang.py` and follow the same
 extraction, review, validation and build flow.
 
 ## Flow 1: Extract Source Data
@@ -180,19 +182,19 @@ Extract original game files:
 
 ```bash
 mkdir -p work/extracted
-python3 scripts/iso_mode2.py iso/SLPS-01818-9-B.bin extract /L5/SCEN.DAT  work/extracted/SCEN.DAT
-python3 scripts/iso_mode2.py iso/SLPS-01818-9-B.bin extract /L5/SCEN2.DAT work/extracted/SCEN2.DAT
-python3 scripts/iso_mode2.py iso/SLPS-01818-9-B.bin extract /L5/SYSTEM.BIN work/extracted/SYSTEM.BIN
-python3 scripts/iso_mode2.py iso/SLPS-01818-9-B.bin extract /L5/IMG.DAT    work/extracted/IMG.DAT
-python3 scripts/iso_mode2.py iso/SLPS-01818-9-B.bin extract /SLPS_018.19  work/extracted/SLPS_018.19
+python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/SCEN.DAT  work/extracted/SCEN.DAT
+python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/SCEN2.DAT work/extracted/SCEN2.DAT
+python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/SYSTEM.BIN work/extracted/SYSTEM.BIN
+python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/IMG.DAT    work/extracted/IMG.DAT
+python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /SLPS_018.19  work/extracted/SLPS_018.19
 ```
 
 Dump source text and verify the no-edit round trip:
 
 ```bash
-python3 scripts/lang5_scendump.py
-python3 scripts/lang5_system_dump.py
-python3 scripts/lang5_verify_roundtrip.py
+python3 -m langrisser.scendump
+python3 -m langrisser.system_dump
+python3 -m langrisser.verify_roundtrip
 ```
 
 Generated JP source stays under `work/scriptdump/` and `work/systemdump/`.
@@ -203,10 +205,10 @@ live under `/L4`, and it has no `SCEN2.DAT`):
 
 ```bash
 mkdir -p work/l4
-python3 scripts/iso_mode2.py iso/ps1/4/SLPS-01818.bin extract /L4/SCEN.DAT   work/l4/SCEN.DAT
-python3 scripts/iso_mode2.py iso/ps1/4/SLPS-01818.bin extract /L4/SYSTEM.BIN work/l4/SYSTEM.BIN
-python3 scripts/lang5_scendump.py     --game l4 --scen work/l4/SCEN.DAT --out-dir work/l4/scriptdump
-python3 scripts/lang5_system_dump.py  --game l4 --system-bin work/l4/SYSTEM.BIN --out work/l4/system_strings.json
+python3 -m langrisser.iso_mode2 iso/ps1/4/SLPS-01818.bin extract /L4/SCEN.DAT   work/l4/SCEN.DAT
+python3 -m langrisser.iso_mode2 iso/ps1/4/SLPS-01818.bin extract /L4/SYSTEM.BIN work/l4/SYSTEM.BIN
+python3 -m langrisser.scendump     --game l4 --scen work/l4/SCEN.DAT --out-dir work/l4/scriptdump
+python3 -m langrisser.system_dump  --game l4 --system-bin work/l4/SYSTEM.BIN --out work/l4/system_strings.json
 ```
 
 Each game generates its own glyph plane, so a new game needs its own slot→
@@ -220,7 +222,7 @@ stretched `ー`, a sweat-drop mark, plane noise) are recorded in the same CSV
 with an empty `char` and a group saying what they are:
 
 ```bash
-python3 scripts/lang5_derive_font_map.py --game l4 \
+python3 -m langrisser.derive_font_map --game l4 \
   --system work/l4/SYSTEM.BIN --reference-system work/extracted/SYSTEM.BIN \
   --out-unmatched work/l4/font_map_unmatched.txt
 ```
@@ -230,7 +232,7 @@ python3 scripts/lang5_derive_font_map.py --game l4 \
 Create a new language scaffold:
 
 ```bash
-python3 scripts/lang5_init_lang.py <lang> --label "Language Name"
+python3 -m langrisser.init_lang <lang> --label "Language Name"
 ```
 
 By default this copies source structure while clearing target-language fields
@@ -270,9 +272,9 @@ before insertion. It never rewrites tracked translation sources. To persist a
 new assignment baseline for review, run:
 
 ```bash
-python3 scripts/lang5_assign_font_slots.py --lang <lang>
-python3 scripts/lang5_build_font.py --lang <lang>
-python3 scripts/lang5_font_review.py
+python3 -m langrisser.assign_font_slots --lang <lang>
+python3 -m langrisser.build_font --lang <lang>
+python3 -m langrisser.font_review
 ```
 
 ## Flow 3: Translate And Review
@@ -280,9 +282,9 @@ python3 scripts/lang5_font_review.py
 Work scenario by scenario:
 
 ```bash
-python3 scripts/lang5_scenario.py --lang <lang> list
-python3 scripts/lang5_scenario.py --lang <lang> dump 1
-python3 scripts/lang5_scenario.py --lang <lang> prefill 1
+python3 -m langrisser.scenario --lang <lang> list
+python3 -m langrisser.scenario --lang <lang> dump 1
+python3 -m langrisser.scenario --lang <lang> prefill 1
 ```
 
 `prefill` writes partial chunks to `work/wip_<lang>/SCEN/`. Move a chunk to
@@ -299,22 +301,22 @@ Source priority for translation and review:
 Per translation/review pass:
 
 ```bash
-python3 scripts/lang5_rewrap.py --lang <lang>
-python3 scripts/lang5_validate_terms.py --lang <lang> --require-complete
-python3 scripts/lang5_validate_translation.py --lang <lang>
-python3 scripts/lang5_review_html.py --lang <lang> --scenario 1
+python3 -m langrisser.rewrap --lang <lang>
+python3 -m langrisser.validate_terms --lang <lang> --require-complete
+python3 -m langrisser.validate_translation --lang <lang>
+python3 -m langrisser.review_html --lang <lang> --scenario 1
 ```
 
 For English, verify the speaker extractor against the in-game test set:
 
 ```bash
-python3 scripts/lang5_check_speakers.py --lang en
+python3 -m langrisser.check_speakers --lang en
 ```
 
 For Russian, enforce speaker coverage and conservative plate width:
 
 ```bash
-python3 scripts/lang5_validate_terms.py --lang ru --require-complete --require-speakers --max-plate-chars 10
+python3 -m langrisser.validate_terms --lang ru --require-complete --require-speakers --max-plate-chars 10
 ```
 
 The review generator writes `work/review/<lang>/index.html` and one page per
@@ -347,16 +349,16 @@ https://gamefaqs.gamespot.com/saturn/562834-langrisser-v-the-end-of-legend/faqs/
 Mandatory shared checks:
 
 ```bash
-python3 scripts/lang5_verify_roundtrip.py
-python3 scripts/lang5_rewrap.py --lang <lang>
-python3 scripts/lang5_validate_terms.py --lang <lang> --require-complete
-python3 scripts/lang5_validate_translation.py --lang <lang>
-python3 scripts/lang5_build_ppf.py --lang <lang> --patch-version dev
+python3 -m langrisser.verify_roundtrip
+python3 -m langrisser.rewrap --lang <lang>
+python3 -m langrisser.validate_terms --lang <lang> --require-complete
+python3 -m langrisser.validate_translation --lang <lang>
+python3 -m langrisser.build_ppf --lang <lang> --patch-version dev
 ```
 
-Run `python3 scripts/lang5_check_speakers.py --lang en` before English release
+Run `python3 -m langrisser.check_speakers --lang en` before English release
 builds; Russian speaker coverage is enforced by
-`lang5_validate_terms.py --lang ru --require-complete --require-speakers --max-plate-chars 10`.
+`langrisser/validate_terms.py --lang ru --require-complete --require-speakers --max-plate-chars 10`.
 
 The PPF build automatically validates engine-specific SYSTEM UI constraints,
 including startup-menu VRAM-atlas rows and other tight fixed-width fields.
@@ -389,17 +391,17 @@ share.
 Verify the disc and extract the Saturn side once:
 
 ```bash
-python3 scripts/saturn_disc.py --cue iso/saturn/LANGRISSER_5.cue verify
+python3 -m langrisser.saturn_disc --cue iso/saturn/LANGRISSER_5.cue verify
 for f in SYSTEM.DAT SCEN.DAT CLEAR.DAT TITLE1.DAT TITLE2.DAT OPEN.DAT; do
-  python3 scripts/saturn_disc.py extract $f work/build/saturn/$f
+  python3 -m langrisser.saturn_disc extract $f work/build/saturn/$f
 done
 ```
 
 Build:
 
 ```bash
-python3 scripts/lang5_saturn_build.py --lang ru
-python3 scripts/lang5_saturn_build.py --lang ru --remaster-disc
+python3 -m langrisser.saturn_build --lang ru
+python3 -m langrisser.saturn_build --lang ru --remaster-disc
 ```
 
 This also needs the PS1 base extracts (`work/extracted/SCEN.DAT`, `SCEN2.DAT`,
@@ -421,8 +423,8 @@ save menu), the audits regenerate the proven mappings and list what still
 needs Saturn-specific translation:
 
 ```bash
-python3 scripts/saturn_scen_audit.py   --write-mapping   # SCEN records
-python3 scripts/saturn_system_audit.py --write-mapping   # SYSTEM entries
+python3 -m langrisser.saturn_scen_audit   --write-mapping   # SCEN records
+python3 -m langrisser.saturn_system_audit --write-mapping   # SYSTEM entries
 ```
 
 They emit `work/build/saturn/scen_platform_review.md` with the Saturn original

@@ -85,7 +85,7 @@ for spec in \
 	path="${spec%%:*}"
 	name="${spec##*:}"
 	if [[ ! -f "$EXTRACT_DIR/$name" ]]; then
-		"$PYTHON" scripts/iso_mode2.py "$ORIG_BIN" extract "$path" "$EXTRACT_DIR/$name"
+		"$PYTHON" -m langrisser.iso_mode2 "$ORIG_BIN" extract "$path" "$EXTRACT_DIR/$name"
 	fi
 done
 
@@ -123,7 +123,7 @@ file_size() {
 }
 
 log "Running shared no-edit round trip"
-"$PYTHON" scripts/lang5_verify_roundtrip.py
+"$PYTHON" -m langrisser.verify_roundtrip
 
 rm -rf "$DIST"
 mkdir -p "$DIST"
@@ -150,19 +150,19 @@ metadata=""
 for lang in "${LANGS[@]}"; do
 	suffix="$(lang_suffix "$lang")"
 	log "Validating $lang"
-	"$PYTHON" scripts/lang5_rewrap.py --lang "$lang"
+	"$PYTHON" -m langrisser.rewrap --lang "$lang"
 	if [[ "$lang" == "en" ]]; then
-		"$PYTHON" scripts/lang5_check_speakers.py --lang "$lang"
+		"$PYTHON" -m langrisser.check_speakers --lang "$lang"
 	fi
 	if [[ "$lang" == "ru" ]]; then
-		"$PYTHON" scripts/lang5_validate_terms.py --lang "$lang" --require-complete --require-speakers --max-plate-chars 10
+		"$PYTHON" -m langrisser.validate_terms --lang "$lang" --require-complete --require-speakers --max-plate-chars 10
 	else
-		"$PYTHON" scripts/lang5_validate_terms.py --lang "$lang" --require-complete
+		"$PYTHON" -m langrisser.validate_terms --lang "$lang" --require-complete
 	fi
-	"$PYTHON" scripts/lang5_validate_translation.py --lang "$lang"
+	"$PYTHON" -m langrisser.validate_translation --lang "$lang"
 
 	log "Building $lang patch (version $VERSION)"
-	"$PYTHON" scripts/lang5_build_ppf.py --lang "$lang" --patch-version "$VERSION"
+	"$PYTHON" -m langrisser.build_ppf --lang "$lang" --patch-version "$VERSION"
 
 	ppf="patches/langrisser_v_${suffix}.ppf"
 	patched_bin="work/build/langrisser_v_${suffix}.bin"

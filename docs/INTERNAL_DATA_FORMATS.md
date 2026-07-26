@@ -67,7 +67,7 @@ uses `FB00 0003`, while its visible speaker is the local machine-voice plate
 (name record 7 in that chunk).
 
 The production reference layer is in the chunk VM block before the text block.
-`scripts/lang5_rewrap.py::semantic_plate_slots()` scans validated 12-byte
+`langrisser/rewrap.py::semantic_plate_slots()` scans validated 12-byte
 display/window commands (`0x0B..0x10`) and maps `record = first FB00 record +
 text_id`. Plate selection is:
 
@@ -77,7 +77,7 @@ text_id`. Plate selection is:
 - for commands with actor key `0xFFFF`, `p+9` is either `0xFF` for no plate or
   a zero-based local speaker-pool slot.
 
-`scripts/lang5_scendump.py` uses this same extractor for `# spk:` comments and
+`langrisser/scendump.py` uses this same extractor for `# spk:` comments and
 `work/scriptdump/all_records.csv`. No hand-written speaker map is canonical.
 
 Detailed dispatch-level evidence is in:

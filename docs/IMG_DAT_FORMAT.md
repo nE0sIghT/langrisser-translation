@@ -7,11 +7,11 @@ size and every replaced asset size must remain unchanged.
 Durable tooling:
 
 ```bash
-python3 scripts/lang5_imgdat.py list work/extracted/IMG.DAT
-python3 scripts/lang5_imgdat.py inspect work/extracted/IMG.DAT 10
-python3 scripts/lang5_imgdat.py extract work/extracted/IMG.DAT 10 work/title_asset10.bin
-python3 scripts/lang5_imgdat.py replace work/extracted/IMG.DAT 10 work/title_asset10.bin work/IMG_roundtrip.DAT
-python3 scripts/lang5_imgdat.py title-credits work/extracted/IMG.DAT \
+python3 -m langrisser.imgdat list work/extracted/IMG.DAT
+python3 -m langrisser.imgdat inspect work/extracted/IMG.DAT 10
+python3 -m langrisser.imgdat extract work/extracted/IMG.DAT 10 work/title_asset10.bin
+python3 -m langrisser.imgdat replace work/extracted/IMG.DAT 10 work/title_asset10.bin work/IMG_roundtrip.DAT
+python3 -m langrisser.imgdat title-credits work/extracted/IMG.DAT \
   --out-imgdat work/build/IMG.DAT.en \
   --version 1 \
   --out-display work/build/title_credits_display.png
@@ -167,7 +167,7 @@ and block padding bytes.
 
 ## Known Image Profiles: Title Screens
 
-Profile names in `scripts/lang5_imgdat.py`: `title10` and `title11`. These
+Profile names in `langrisser/imgdat.py`: `title10` and `title11`. These
 are the two title screens seen in-game; they alternate around the opening
 movie/title loop. They share the same bitmap layout and credit coordinates.
 
@@ -191,10 +191,10 @@ movie/title loop. They share the same bitmap layout and credit coordinates.
 Decode commands:
 
 ```bash
-python3 scripts/lang5_imgdat.py decode-gap-bitmap work/extracted/IMG.DAT \
+python3 -m langrisser.imgdat decode-gap-bitmap work/extracted/IMG.DAT \
   --profile title10 \
   --out work/title_credits/title10_decoded.png
-python3 scripts/lang5_imgdat.py decode-gap-bitmap work/extracted/IMG.DAT \
+python3 -m langrisser.imgdat decode-gap-bitmap work/extracted/IMG.DAT \
   --profile title11 \
   --out work/title_credits/title11_decoded.png
 ```
@@ -205,7 +205,7 @@ index-colored rendering is needed.
 Production title-credit patch command:
 
 ```bash
-python3 scripts/lang5_imgdat.py title-credits work/extracted/IMG.DAT \
+python3 -m langrisser.imgdat title-credits work/extracted/IMG.DAT \
   --out-imgdat work/build/IMG.DAT.en \
   --version 1 \
   --out-raw-preview work/build/title_credits_raw.png \
@@ -227,12 +227,12 @@ perceived on screen.
 
 ### Release Credits and QR
 
-`lang5_build_ppf.py` calls `lang5_imgdat.py title-credits` as part of the
+`langrisser/build_ppf.py` calls `langrisser/imgdat.py title-credits` as part of the
 standard patch build and injects the resulting `/L5/IMG.DAT`.
 
 The release text is generated from:
 
-- `--version` / `lang5_build_ppf.py --patch-version` (`1` by default);
+- `--version` / `langrisser/build_ppf.py --patch-version` (`1` by default);
 - `git rev-parse --short=8 HEAD` unless `--commit-hash` is passed.
 
 Rendered text:
@@ -264,7 +264,7 @@ screen block.
 
 ## Type-8 Scanline-Packet Images
 
-The editable images currently supported by `scripts/lang5_imgdat.py` are
+The editable images currently supported by `langrisser/imgdat.py` are
 `u16[3] == 8` indexed scanline packets. A type-8 packet is fixed-size `0x800`
 bytes (2048): a `0x20`-byte header followed by `0x7E0` (2016) bytes of 8bpp
 pixel data. The gap-bitmap "32-byte gap" documented above is exactly this
@@ -295,7 +295,7 @@ concatenate the `0x7E0` data bodies of its packets, then reshape the result to
 packets — this is why the gap-bitmap gap lands at a different `x` on each row).
 
 Observed decoded type-8 image inventory (width x height), from
-`scripts/lang5_imgdat.py dump-all` and no-edit encode round-trip checks:
+`langrisser/imgdat.py dump-all` and no-edit encode round-trip checks:
 
 | Asset | Images |
 | ---: | --- |
@@ -331,14 +331,14 @@ strip). A line of text may straddle a column boundary (strip rows 256 / 512):
 its bottom sliver is the column's last rows, which - being rows 252-255 of the
 768-wide image - are exactly the `type=2` remainder block. Blanking that block
 (rather than rewriting it) drops those slivers and leaves a black seam between
-"screens". `scripts/lang5_poem_render.py` renders the whole 768px strip on one
-uniform line pitch; `scripts/lang5_poem_translate.py` slices it back into the
+"screens". `langrisser/poem_render.py` renders the whole 768px strip on one
+uniform line pitch; `langrisser/poem_translate.py` slices it back into the
 three columns and writes the main image **and** the remainder block. Translating
 it is a graphics edit: redraw the text into the indexed bitmap and re-pack it
 into the scanline packets, leaving every `0x20` packet header untouched.
 
 `block_rows` and the per-row gap positions are fully determined by the width
-through the scanline rule, so `scripts/lang5_imgdat.py` derives them with
+through the scanline rule, so `langrisser/imgdat.py` derives them with
 `scanline_gaps(width, block_rows)` instead of hand-listing them per profile.
 
 ### Block types and palettes
