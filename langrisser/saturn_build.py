@@ -297,7 +297,6 @@ def main() -> None:
         "--scen", scen_in,
         "--out-scen", scen_out,
         "--tbl", tbl,
-        "--ps1-scen", args.ps1_scen,
         "--translation-root", build_translation_root,
     ]
     if args.allow_unmapped:

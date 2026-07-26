@@ -235,8 +235,6 @@ def apply_scen(data: bytes, lang_scen_dir: Path, codec: Codec,
     covered by a platform record, or explicitly preserved (pending
     translation); anything else is a build error.
     """
-    if ps1_scen is None:
-        raise SystemExit("apply_scen needs the PS1 SCEN.DAT reference")
     blocks = parse_catalog(data)
     stats = {"blocks": len(blocks), "applied": 0,
              "entries_written": 0, "missing_dump": 0,
@@ -262,11 +260,19 @@ def apply_scen(data: bytes, lang_scen_dir: Path, codec: Codec,
             # dump; any remaining ps1-mapped entry then fails loudly below.
             records = {}
             stats["missing_dump"] += 1
-        ps1_tokens = ps1_chunk_records(ps1_scen, chunk_index)
-        auto, unmatched = monotone_alignment(entries, ps1_tokens, norm)
-        targets: dict[int, object] = dict(auto)
-        for idx in unmatched:
-            targets[idx] = {"unmatched": True}
+        # Correspondence is a fact on record: reconciliation compared the two
+        # originals once and wrote the result to the mapping. Only when a
+        # reference script is handed in (reconciliation itself, or a
+        # diagnostic run) is it derived here instead.
+        if ps1_scen is not None:
+            ps1_tokens = ps1_chunk_records(ps1_scen, chunk_index)
+            auto, unmatched = monotone_alignment(entries, ps1_tokens, norm)
+            targets: dict[int, object] = dict(auto)
+            for idx in unmatched:
+                targets[idx] = {"unmatched": True}
+        else:
+            ps1_tokens = []
+            targets = {}
         spec = chunk_specs.get(chunk_index)
         if spec is not None:
             # Explicit platform/preserve/ps1 entries override the automatic
@@ -283,9 +289,9 @@ def apply_scen(data: bytes, lang_scen_dir: Path, codec: Codec,
         for saturn_index in range(len(entries)):
             target = targets.get(saturn_index)
             if isinstance(target, int):
-                if not (1 <= target <= len(ps1_tokens)) or not proven_equal(
-                    norm, entries[saturn_index], ps1_tokens[target - 1]
-                ):
+                if ps1_tokens and (not (1 <= target <= len(ps1_tokens))
+                                   or not proven_equal(norm, entries[saturn_index],
+                                                       ps1_tokens[target - 1])):
                     chunk_fatal.append(
                         f"chunk {chunk_index:03d} entry {saturn_index}: mapped "
                         f"PS1 record {target} does not match the Saturn original "
@@ -316,6 +322,11 @@ def apply_scen(data: bytes, lang_scen_dir: Path, codec: Codec,
                 new_entries.append(codec.encode(text))
             elif isinstance(target, dict) and target.get("preserve"):
                 stats["preserved_pending"] += 1
+                new_entries.append(entries[saturn_index])
+            elif target is None and ps1_scen is None:
+                chunk_fatal.append(
+                    f"chunk {chunk_index:03d} entry {saturn_index}: no recorded "
+                    "correspondence; run langrisser.saturn_reconcile")
                 new_entries.append(entries[saturn_index])
             elif isinstance(target, dict) and target.get("unmatched"):
                 if strict:
@@ -364,8 +375,10 @@ def main() -> None:
     ap.add_argument("--out-scen", default="work/l5/build/saturn/SCEN.applied.DAT")
     ap.add_argument("--tbl", default=None,
                     help="charmap .tbl (default: platform build tbl)")
-    ap.add_argument("--ps1-scen", default="work/l5/extracted/SCEN.DAT",
-                    help="PS1 SCEN.DAT used only for exact stable-token alignment")
+    ap.add_argument("--ps1-scen", default=None,
+                    help="Script of the release the pack is keyed to. Not "
+                         "needed for a build: the correspondence is recorded "
+                         "in the mapping. Pass it to re-derive instead.")
     ap.add_argument("--mapping", default=None,
                     help="SCEN mapping JSON (default: the release manifest's)")
     ap.add_argument("--translation-root", default=None,
