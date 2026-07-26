@@ -28,7 +28,7 @@ from pathlib import Path
 
 from langrisser.offsetgroups import PS1 as PS1_CFG
 from langrisser.offsetgroups import SATURN as SATURN_CFG
-from langrisser.offsetgroups import find_groups
+from langrisser.offsetgroups import find_groups, group_key
 from langrisser.project import add_language_args, language_from_args
 from langrisser.release import add_release_args, release_from_args
 from langrisser.saturn_apply import load_mapping as load_scen_mapping
@@ -109,11 +109,9 @@ def shadow_system(strings_path: Path, overlay: dict, mapping: dict,
     sat_groups = find_groups(saturn_orig, SATURN_CFG)
     ps1_groups = find_groups(ps1_system, PS1_CFG)
     removed = replaced = 0
-    for group_key, spec in (mapping.get("groups") or {}).items():
-        gi = int(group_key)
+    for group_id, spec in (mapping.get("groups") or {}).items():
+        gi = int(group_id)
         n = len(sat_groups[gi][1])
-        sat_table_off = sat_groups[gi][0]
-        ps1_table_off = ps1_groups[gi][0]
         targets = expand_group_map(spec, n)
         used_ps1 = {t for t in targets.values() if isinstance(t, int)}
         used_ps1 |= {int(str(t["ps1_id"]).rsplit(":", 1)[1])
@@ -122,10 +120,10 @@ def shadow_system(strings_path: Path, overlay: dict, mapping: dict,
         for k in range(len(ps1_groups[gi][1])):
             if k in used_ps1:
                 continue
-            key = f"table:{ps1_table_off:05X}:{k}"
+            key = group_key(gi, k)
             if key not in translations:
                 continue
-            platform_text = overlay.get(f"table:{sat_table_off:05X}:{k}")
+            platform_text = overlay.get(group_key(gi, k))
             if platform_text is not None:
                 translations[key] = platform_text
                 replaced += 1

@@ -146,7 +146,7 @@ usefully reclaims room on lines that were under-full or via re-flowing a topic
 across its existing lines — it does not allow unbounded expansion.
 
 The unit, item and magic description tables are fixed four-line cards.
-`data/common/system_card_layout.json` records their table ids and verified
+`data/games/l5/system_card_layout.json` records their group ordinals and verified
 21-cell line width. `langrisser/reflow_system_cards.py` treats each card as one text
 block and deterministically redistributes words across its four lines using the
 exact generated target-language table. Per-line leading cells reserved for
@@ -157,7 +157,7 @@ growth heuristic.
 
 Some compact status and class-name fields are narrower than the normal
 21-cell line. Runtime-verified limits for these fields live in
-`data/common/system_ui_constraints.json` under `fixed_width_fields`.
+`data/games/l5/system_ui_constraints.json` under `fixed_width_fields`.
 `langrisser/validate_system_ui.py` measures the resolved translation with the exact
 generated language table and rejects a build that exceeds one of those limits.
 
@@ -165,9 +165,9 @@ generated language table and rejects a build that exceeds one of those limits.
 
 The startup menu streams its three labels through `FUN_800a5b14` in this order:
 
-1. `table:08052:211` (`START`)
-2. `table:08052:71` (`LOAD`)
-3. `table:08052:212` (`コンフィグ`)
+1. `group:0:211` (`START`)
+2. `group:0:71` (`LOAD`)
+3. `group:0:212` (`コンフィグ`)
 
 Each encoded token is converted to a 12x12 bitmap and uploaded to a temporary
 VRAM atlas with 9 columns:
@@ -193,7 +193,7 @@ placed `Настройки` (5) at slot 7, displaying only its first two tokens
 token. Using `Новая игра` (5) restores the original `5 + 4 = 9` alignment and
 the full label displays.
 
-`data/common/system_ui_constraints.json` records these sequences.
+`data/games/l5/system_ui_constraints.json` records these sequences.
 `langrisser/validate_system_ui.py` encodes the final target strings with the
 generated table and fails the build if a label crosses an atlas row.
 

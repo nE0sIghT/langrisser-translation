@@ -15,6 +15,7 @@ import re
 import struct
 from pathlib import Path
 
+from langrisser.offsetgroups import is_system_key
 from langrisser.project import COMMON_FONT_MAP, add_language_args, language_from_args
 from langrisser.scen import (FORCE_PAGE_BREAK, consumes_argument, find_text_block,
                         read_chunk_spans, words_from_bytes)
@@ -97,10 +98,7 @@ def map_jp_keys(mp: Path, source_by_id: dict[str, dict]) -> set[str]:
     """JP source strings from a translation map (used to mark UI glyph slots)."""
     data = json.loads(mp.read_text(encoding="utf-8"))
     if isinstance(data, dict):
-        overlay_ids = {
-            key for key in data
-            if key.startswith("table:") or key.startswith("offset:")
-        }
+        overlay_ids = {key for key in data if is_system_key(key)}
         unknown = overlay_ids - set(source_by_id)
         if unknown:
             raise SystemExit(

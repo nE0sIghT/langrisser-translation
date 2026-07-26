@@ -21,5 +21,35 @@
   },
   "offsets": {
     "system_scan_start": "0x8052"
-  }
+  },
+  "system_groups": [
+    "0x8052",
+    "0x8FAE",
+    "0x9542",
+    "0xA060",
+    "0xA7DC",
+    "0xA8EC",
+    "0xAA2A",
+    "0xADB8",
+    "0xAF04",
+    "0xB4C2",
+    "0xC6B6",
+    "0xD7F6",
+    "0xFC9A",
+    "0x13822",
+    "0x15ACE",
+    "0x16DC0"
+  ],
+  "_system_groups_comment": "File offset of each SYSTEM text group's offset table, in scan order. Pack keys name a group by its position in this list, so the list is what turns a pack key into an address on this build.",
+  "system_loose": [
+    "0x9472",
+    "0x9490",
+    "0x94AC",
+    "0x94C6",
+    "0x94E2",
+    "0x94FE",
+    "0x951A",
+    "0x9532"
+  ],
+  "_system_loose_comment": "Text runs outside the group tables, in scan order; pack keys name them by position here for the same reason."
 }

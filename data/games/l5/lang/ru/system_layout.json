@@ -1,9 +1,9 @@
 {
   "default_max_grow": 4,
   "overrides": {
-    "table:09542:7": 5,
-    "table:09542:34": 6,
-    "table:09542:162": 5,
-    "table:09542:163": 5
+    "group:2:7": 5,
+    "group:2:34": 6,
+    "group:2:162": 5,
+    "group:2:163": 5
   }
 }

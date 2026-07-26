@@ -32,6 +32,8 @@ from langrisser.offsetgroups import (
     GroupConfig,
     decode_run,
     find_groups,
+    group_key,
+    loose_key,
     load_codemap,
     load_font_map_csv,
     run_length,
@@ -76,6 +78,7 @@ def main() -> None:
     table = Path(args.tbl) if args.tbl else game.text_table
     codemap = load_codemap(str(table)) if table else load_font_map_csv(game.font_map)
     groups = find_groups(data, cfg)
+    release.check_system_groups([table_off for table_off, _, _ in groups])
     grid_span = name_entry_grid_span(data, codemap)
 
     entries = []
@@ -96,7 +99,7 @@ def main() -> None:
                 continue  # name-entry grid run: owned by langrisser.patch_name_entry
             run = list(struct.unpack_from("<%dH" % words, data, off)) if words else []
             entries.append({
-                "id": f"table:{table_off:05X}:{k}",
+                "id": group_key(gi, k),
                 "group": gi,
                 "table": f"0x{table_off:05X}",
                 "index": k,
@@ -113,6 +116,7 @@ def main() -> None:
     # any offset-table group (e.g. the memory-card error messages). They have no
     # table to regenerate, so the packer keeps them at their fixed offset.
     region_end = max((int(e["offset"], 16) + e["words"] * 2 for e in entries), default=cfg.scan_start)
+    loose_offsets: list[int] = []
     pos = cfg.scan_start
     while pos < region_end:
         if covered[pos]:
@@ -126,7 +130,7 @@ def main() -> None:
                 "぀" <= ch <= "ヿ" or "一" <= ch <= "鿿" for ch in text
             ):
                 entries.append({
-                    "id": f"offset:{pos:05X}",
+                    "id": loose_key(len(loose_offsets)),
                     "group": -1, "table": None, "index": None,
                     "offset": f"0x{pos:05X}", "words": words,
                     "leading_cells": next(
@@ -135,6 +139,7 @@ def main() -> None:
                     ),
                     "jp": text,
                 })
+                loose_offsets.append(pos)
         pos += (words + 1) * 2
 
     entries.sort(key=lambda e: int(e["offset"], 16))

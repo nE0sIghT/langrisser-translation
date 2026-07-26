@@ -37,7 +37,7 @@ though they still need normal playtest and style polish.
 
 | ID | Location | Compression |
 | --- | --- | --- |
-| RU-HD-001 | `table:08052:257-289` | Voice actors are shown as a given-name initial plus full surname. The original lists full names, but their Russian transliterations overflow the fixed shared UI group. Restore full names if the group can later borrow space safely. |
+| RU-HD-001 | `group:0:257-289` | Voice actors are shown as a given-name initial plus full surname. The original lists full names, but their Russian transliterations overflow the fixed shared UI group. Restore full names if the group can later borrow space safely. |
 
 ### SYSTEM.BIN triangle-button help (`data/games/l5/lang/en/system_strings.json`)
 

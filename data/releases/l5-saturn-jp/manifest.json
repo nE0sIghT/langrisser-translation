@@ -33,5 +33,24 @@
       "md5": "37685a3ac74ac252abb2d01ea6987c73",
       "sha1": "b90529e379efde5787693ffda6fff53fddd7c2ee"
     }
-  ]
+  ],
+  "system_groups": [
+    "0x8084",
+    "0x9004",
+    "0x94A8",
+    "0x9FC8",
+    "0xA744",
+    "0xA854",
+    "0xA994",
+    "0xAD24",
+    "0xAE70",
+    "0xB430",
+    "0xC624",
+    "0xD764",
+    "0xFC08",
+    "0x13790",
+    "0x15A3C",
+    "0x16D3C"
+  ],
+  "_system_groups_comment": "File offset of each SYSTEM text group's offset table, in scan order. Pack keys name a group by its position in this list, so the list is what turns a pack key into an address on this build."
 }

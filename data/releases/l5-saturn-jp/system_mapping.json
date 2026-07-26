@@ -35,19 +35,19 @@
       "entries": [
         {
           "saturn": 190,
-          "platform": "table:08084:190"
+          "platform": "group:0:190"
         },
         {
           "saturn": 212,
-          "platform": "table:08084:212"
+          "platform": "group:0:212"
         },
         {
           "saturn": 255,
-          "platform": "table:08084:255"
+          "platform": "group:0:255"
         },
         {
           "saturn": 256,
-          "platform": "table:08084:256"
+          "platform": "group:0:256"
         }
       ]
     },
@@ -62,43 +62,43 @@
       "entries": [
         {
           "saturn": 0,
-          "platform": "table:09004:0"
+          "platform": "group:1:0"
         },
         {
           "saturn": 1,
-          "platform": "table:09004:1"
+          "platform": "group:1:1"
         },
         {
           "saturn": 2,
-          "platform": "table:09004:2"
+          "platform": "group:1:2"
         },
         {
           "saturn": 3,
-          "platform": "table:09004:3"
+          "platform": "group:1:3"
         },
         {
           "saturn": 4,
-          "platform": "table:09004:4"
+          "platform": "group:1:4"
         },
         {
           "saturn": 5,
-          "platform": "table:09004:5"
+          "platform": "group:1:5"
         },
         {
           "saturn": 6,
-          "platform": "table:09004:6"
+          "platform": "group:1:6"
         },
         {
           "saturn": 7,
-          "platform": "table:09004:7"
+          "platform": "group:1:7"
         },
         {
           "saturn": 8,
-          "platform": "table:09004:8"
+          "platform": "group:1:8"
         },
         {
           "saturn": 9,
-          "platform": "table:09004:9"
+          "platform": "group:1:9"
         },
         {
           "saturn": 10,
@@ -106,27 +106,27 @@
         },
         {
           "saturn": 11,
-          "platform": "table:09004:11"
+          "platform": "group:1:11"
         },
         {
           "saturn": 12,
-          "platform": "table:09004:12"
+          "platform": "group:1:12"
         },
         {
           "saturn": 13,
-          "platform": "table:09004:13"
+          "platform": "group:1:13"
         },
         {
           "saturn": 14,
-          "platform": "table:09004:14"
+          "platform": "group:1:14"
         },
         {
           "saturn": 15,
-          "platform": "table:09004:15"
+          "platform": "group:1:15"
         },
         {
           "saturn": 16,
-          "platform": "table:09004:16"
+          "platform": "group:1:16"
         },
         {
           "saturn": 17,
@@ -134,7 +134,7 @@
         },
         {
           "saturn": 18,
-          "platform": "table:09004:18"
+          "platform": "group:1:18"
         },
         {
           "saturn": 19,
@@ -142,11 +142,11 @@
         },
         {
           "saturn": 20,
-          "platform": "table:09004:20"
+          "platform": "group:1:20"
         },
         {
           "saturn": 21,
-          "platform": "table:09004:21"
+          "platform": "group:1:21"
         },
         {
           "saturn": 22,
@@ -154,27 +154,27 @@
         },
         {
           "saturn": 23,
-          "platform": "table:09004:23"
+          "platform": "group:1:23"
         },
         {
           "saturn": 24,
-          "platform": "table:09004:24"
+          "platform": "group:1:24"
         },
         {
           "saturn": 29,
-          "platform": "table:09004:29"
+          "platform": "group:1:29"
         },
         {
           "saturn": 30,
-          "platform": "table:09004:30"
+          "platform": "group:1:30"
         },
         {
           "saturn": 31,
-          "platform": "table:09004:31"
+          "platform": "group:1:31"
         },
         {
           "saturn": 32,
-          "platform": "table:09004:32"
+          "platform": "group:1:32"
         },
         {
           "saturn": 33,
@@ -182,43 +182,43 @@
         },
         {
           "saturn": 34,
-          "platform": "table:09004:34"
+          "platform": "group:1:34"
         },
         {
           "saturn": 35,
-          "platform": "table:09004:35"
+          "platform": "group:1:35"
         },
         {
           "saturn": 36,
-          "platform": "table:09004:36"
+          "platform": "group:1:36"
         },
         {
           "saturn": 37,
-          "platform": "table:09004:37"
+          "platform": "group:1:37"
         },
         {
           "saturn": 38,
-          "platform": "table:09004:38"
+          "platform": "group:1:38"
         },
         {
           "saturn": 39,
-          "platform": "table:09004:39"
+          "platform": "group:1:39"
         },
         {
           "saturn": 40,
-          "platform": "table:09004:40"
+          "platform": "group:1:40"
         },
         {
           "saturn": 41,
-          "platform": "table:09004:41"
+          "platform": "group:1:41"
         },
         {
           "saturn": 42,
-          "platform": "table:09004:42"
+          "platform": "group:1:42"
         },
         {
           "saturn": 43,
-          "platform": "table:09004:43"
+          "platform": "group:1:43"
         }
       ]
     },
@@ -253,15 +253,15 @@
       "entries": [
         {
           "saturn": 26,
-          "platform": "table:15A3C:26"
+          "platform": "group:14:26"
         },
         {
           "saturn": 27,
-          "platform": "table:15A3C:27"
+          "platform": "group:14:27"
         },
         {
           "saturn": 28,
-          "platform": "table:15A3C:28"
+          "platform": "group:14:28"
         },
         {
           "saturn": 29,
@@ -269,7 +269,7 @@
         },
         {
           "saturn": 30,
-          "platform": "table:15A3C:30"
+          "platform": "group:14:30"
         },
         {
           "saturn": 31,
@@ -277,15 +277,15 @@
         },
         {
           "saturn": 32,
-          "platform": "table:15A3C:32"
+          "platform": "group:14:32"
         },
         {
           "saturn": 36,
-          "platform": "table:15A3C:36"
+          "platform": "group:14:36"
         },
         {
           "saturn": 40,
-          "platform": "table:15A3C:40"
+          "platform": "group:14:40"
         },
         {
           "saturn": 41,
@@ -293,7 +293,7 @@
         },
         {
           "saturn": 42,
-          "platform": "table:15A3C:42"
+          "platform": "group:14:42"
         },
         {
           "saturn": 43,
@@ -301,11 +301,11 @@
         },
         {
           "saturn": 44,
-          "platform": "table:15A3C:44"
+          "platform": "group:14:44"
         },
         {
           "saturn": 48,
-          "platform": "table:15A3C:48"
+          "platform": "group:14:48"
         }
       ]
     },
@@ -345,47 +345,47 @@
       "entries": [
         {
           "saturn": 4,
-          "platform": "table:16D3C:4"
+          "platform": "group:15:4"
         },
         {
           "saturn": 5,
-          "platform": "table:16D3C:5"
+          "platform": "group:15:5"
         },
         {
           "saturn": 6,
-          "platform": "table:16D3C:6"
+          "platform": "group:15:6"
         },
         {
           "saturn": 25,
-          "platform": "table:16D3C:25"
+          "platform": "group:15:25"
         },
         {
           "saturn": 26,
-          "platform": "table:16D3C:26"
+          "platform": "group:15:26"
         },
         {
           "saturn": 27,
-          "platform": "table:16D3C:27"
+          "platform": "group:15:27"
         },
         {
           "saturn": 28,
-          "platform": "table:16D3C:28"
+          "platform": "group:15:28"
         },
         {
           "saturn": 66,
-          "platform": "table:16D3C:66"
+          "platform": "group:15:66"
         },
         {
           "saturn": 72,
-          "platform": "table:16D3C:72"
+          "platform": "group:15:72"
         },
         {
           "saturn": 73,
-          "platform": "table:16D3C:73"
+          "platform": "group:15:73"
         },
         {
           "saturn": 74,
-          "platform": "table:16D3C:74"
+          "platform": "group:15:74"
         }
       ]
     },
@@ -393,13 +393,13 @@
       "entries": [
         {
           "saturn": 3,
-          "platform": "table:0A854:3",
+          "platform": "group:5:3",
           "space_override": true,
           "reason": "shared translation exceeds the Saturn group budget"
         },
         {
           "saturn": 30,
-          "platform": "table:0A854:30",
+          "platform": "group:5:30",
           "space_override": true,
           "reason": "shared translation exceeds the Saturn group budget"
         }

@@ -22,7 +22,7 @@ import struct
 import sys
 from pathlib import Path
 
-from langrisser.game import add_game_args
+from langrisser.game import add_game_args, game_from_args
 from langrisser.release import add_release_args, release_from_args
 from langrisser.offsetgroups import PS1, GroupConfig
 from langrisser.project import add_language_args, language_from_args
@@ -65,15 +65,16 @@ def load_system_layout(path: Path, source_by_id: dict[str, dict]) -> tuple[int, 
 
 
 def load_card_layout(path: Path) -> dict[int, int]:
+    """Line width of each multi-line card group, by group ordinal."""
     data = json.loads(path.read_text(encoding="utf-8"))
     groups = data.get("groups", {})
     if not isinstance(groups, dict):
         raise SystemExit(f"{path}: groups must be an object")
     out: dict[int, int] = {}
-    for table, spec in groups.items():
+    for group, spec in groups.items():
         if not isinstance(spec, dict) or "line_cells" not in spec:
-            raise SystemExit(f"{path}: invalid card layout for {table}")
-        out[int(table, 16)] = int(spec["line_cells"])
+            raise SystemExit(f"{path}: invalid card layout for group {group}")
+        out[int(group)] = int(spec["line_cells"])
     return out
 
 
@@ -104,8 +105,8 @@ def main() -> None:
     ap.add_argument("--strings", default=None)
     ap.add_argument("--layout", default=None,
                     help="Per-language SYSTEM line-growth limits JSON.")
-    ap.add_argument("--card-layout",
-                    default="data/common/system_card_layout.json")
+    ap.add_argument("--card-layout", default=None,
+                    help="Multi-line card groups (default: the game manifest's).")
     ap.add_argument("--source-strings",
                     default="work/l5/systemdump/system_strings.json",
                     help="Generated SYSTEM source dump with offsets and JP text.")
@@ -122,6 +123,7 @@ def main() -> None:
                     help="Exit non-zero on any unencodable line or over-budget group.")
     args = ap.parse_args()
 
+    game = game_from_args(args)
     release = release_from_args(args, platform="ps1")
     lang = language_from_args(args)
     strings_path = Path(args.strings) if args.strings else lang.system_strings
@@ -163,7 +165,8 @@ def main() -> None:
     default_max_grow, max_grow_overrides = load_system_layout(
         layout_path, source_by_id
     )
-    card_line_cells = load_card_layout(Path(args.card_layout))
+    card_line_cells = load_card_layout(
+        Path(args.card_layout) if args.card_layout else game.system_card_layout)
     if args.max_grow is not None:
         if args.max_grow < 0:
             raise SystemExit("--max-grow must be a non-negative integer")
@@ -256,8 +259,8 @@ def main() -> None:
             toks = reserve_leading_cells(orig) + toks
             entry_id = id_by_key[(gi, k)]
             max_grow = max_grow_overrides.get(entry_id, default_max_grow)
-            if args.repack and table_off in card_line_cells:
-                cap = card_line_cells[table_off]
+            if args.repack and gi in card_line_cells:
+                cap = card_line_cells[gi]
             else:
                 cap = orig_len + max_grow if args.repack else orig_len
             if len(toks) > cap:

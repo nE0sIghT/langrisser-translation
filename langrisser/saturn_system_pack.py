@@ -27,7 +27,8 @@ from langrisser.platform import add_platform_args, platform_from_args
 from langrisser.release import add_release_args, release_from_args
 from langrisser.project import COMMON_FONT_MAP, add_language_args, language_from_args
 from langrisser.binfmt import BE
-from langrisser.offsetgroups import PS1, SATURN, find_groups, run_length
+from langrisser.game import add_game_args, game_from_args
+from langrisser.offsetgroups import PS1, SATURN, find_groups, group_key, run_length
 from langrisser.saturn_apply import Normalizer, load_font_map_csv, proven_equal
 from langrisser.scen import Codec, load_charmap_tbl
 from langrisser.system_pack import (load_card_layout, load_system_layout,
@@ -125,6 +126,7 @@ def encoded_from_text(codec: Codec, text: str | None, orig: list[int],
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
+    add_game_args(ap)
     add_platform_args(ap, "saturn")
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--system-in", default=None,
@@ -142,7 +144,8 @@ def main() -> None:
                     help="Saturn charmap .tbl for the selected language.")
     ap.add_argument("--layout", default=None,
                     help="Per-language SYSTEM growth limits (default: the pack's).")
-    ap.add_argument("--card-layout", default="data/common/system_card_layout.json")
+    ap.add_argument("--card-layout", default=None,
+                    help="Multi-line card groups (default: the game manifest's).")
     ap.add_argument("--system-source", default=None,
                     help="Generated SYSTEM source dump (validates layout ids).")
     ap.add_argument("--allow-unmapped", action="store_true",
@@ -179,7 +182,8 @@ def main() -> None:
     } if args.system_source else {}
     default_max_grow, max_grow_overrides = load_system_layout(
         Path(args.layout) if args.layout else lang.system_layout, source_by_id)
-    card_line_cells = load_card_layout(Path(args.card_layout))
+    card_line_cells = load_card_layout(
+        Path(args.card_layout) if args.card_layout else game_from_args(args).system_card_layout)
     norm = Normalizer(load_font_map_csv(COMMON_FONT_MAP),
                       load_font_map_csv(release.kanji_map))
 
@@ -255,7 +259,7 @@ def main() -> None:
                 seq = reserve_leading_cells(orig) + seq
                 max_grow = (max_grow_overrides.get(entry_id, default_max_grow)
                             if entry_id else default_max_grow)
-                cap = card_line_cells.get(ps1_table_off, orig_len + max_grow)
+                cap = card_line_cells.get(gi, orig_len + max_grow)
                 if len(seq) > cap:
                     fatal.append(
                         f"group {gi} entry {k}: line {len(seq)}>{cap} "
@@ -265,7 +269,7 @@ def main() -> None:
                 seqs.append(seq)
 
             if explicit_map is None:
-                entry_id = f"table:{ps1_table_off:05X}:{k}"  # type: ignore[union-attr]
+                entry_id = group_key(gi, k)
                 text = translations.get(entry_id)
                 if text and not proven_equal(norm, orig, ps1_words(gi, k) or []):
                     fatal.append(
@@ -279,7 +283,7 @@ def main() -> None:
                     fatal.append(f"group {gi}: PS1 group missing for mapped entry {k}")
                     seqs.append(orig)
                     continue
-                entry_id = f"table:{ps1_table_off:05X}:{target}"
+                entry_id = group_key(gi, target)
                 text = translations.get(entry_id)
                 if text and not proven_equal(norm, orig, ps1_words(gi, target) or []):
                     fatal.append(

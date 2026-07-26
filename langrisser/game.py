@@ -74,6 +74,28 @@ class GamePack:
         return _path(self.root, self._data.get("text_table"))
 
     @property
+    def system_card_layout(self) -> Path:
+        """Multi-line SYSTEM card groups, by group ordinal.
+
+        Per game rather than shared: a group ordinal names a different table
+        in another game, so a shared file would silently apply one game's card
+        widths to another's groups.
+        """
+        return _path(self.root, str(self._data.get("system_card_layout")
+                                    or "system_card_layout.json"))  # type: ignore[return-value]
+
+    @property
+    def system_ui_constraints(self) -> Path:
+        """Screens whose SYSTEM text must fit a measured cell budget.
+
+        Per game for the same reason as the card layout: the ids in it name
+        groups by ordinal, and a group ordinal means a different table
+        elsewhere.
+        """
+        return _path(self.root, str(self._data.get("system_ui_constraints")
+                                    or "system_ui_constraints.json"))  # type: ignore[return-value]
+
+    @property
     def lang_root(self) -> Path:
         """Directory holding this game's language packs."""
         return _path(self.root, str(self._data["lang_root"]))  # type: ignore[return-value]

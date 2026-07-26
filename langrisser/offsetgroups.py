@@ -92,6 +92,41 @@ def decode_run(words: list[int], codemap: dict[int, str]) -> str:
     return "".join(out)
 
 
+# A SYSTEM string is named by where it sits, not by where it lands: which group
+# it is in and which entry of that group. Those two numbers are the same on
+# every build of the game, so one translation serves them all - unlike the
+# table's file offset, which differs on each and made a pack readable only next
+# to the build it was keyed from. The release manifest records each build's own
+# group offsets, which is what turns these names back into addresses.
+GROUP_ID = "group"
+LOOSE_ID = "loose"
+
+
+def group_key(group_index: int, entry_index: int) -> str:
+    """Name of the `entry_index`-th string of group `group_index`."""
+    return f"{GROUP_ID}:{group_index}:{entry_index}"
+
+
+def loose_key(run_index: int) -> str:
+    """Name of a text run that sits outside the group tables."""
+    return f"{LOOSE_ID}:{run_index}"
+
+
+def is_system_key(key: str) -> bool:
+    return key.startswith((f"{GROUP_ID}:", f"{LOOSE_ID}:"))
+
+
+def parse_group_key(key: str) -> tuple[int, int] | None:
+    """Group and entry a key names, or None if it names something else."""
+    parts = key.split(":")
+    if len(parts) != 3 or parts[0] != GROUP_ID:
+        return None
+    try:
+        return int(parts[1]), int(parts[2])
+    except ValueError:
+        return None
+
+
 def read_table(data: bytes, pos: int, cfg: GroupConfig = PS1) -> list[int] | None:
     """Parse a group offset table at `pos`, or None if there isn't one."""
     if pos + 2 > len(data) or cfg.order.u16(data, pos) != 0:

@@ -5,5 +5,7 @@
   "engine": "l45",
   "font_map": "../../common/font_mapping/groups_report.csv",
   "text_table": "../../common/tables/lang5_jp.tbl",
-  "lang_root": "lang"
+  "lang_root": "lang",
+  "system_card_layout": "system_card_layout.json",
+  "system_ui_constraints": "system_ui_constraints.json"
 }

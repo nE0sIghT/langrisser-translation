@@ -1,0 +1,17 @@
+{
+  "_comment": "Multi-line SYSTEM cards, by group ordinal. This is Langrisser V's layout: a group number means a different table in another game, so it lives under the game and not in common.",
+  "groups": {
+    "11": {
+      "card_size": 4,
+      "line_cells": 21
+    },
+    "12": {
+      "card_size": 4,
+      "line_cells": 21
+    },
+    "13": {
+      "card_size": 4,
+      "line_cells": 21
+    }
+  }
+}

@@ -125,6 +125,34 @@ class ReleasePack:
         root = self.game_root(game).rstrip("/")
         return f"{root}/{name}"
 
+    @property
+    def system_groups(self) -> list[int]:
+        """File offset of each SYSTEM text group's offset table, in scan order.
+
+        A pack names a string by which group it is in and where in that group,
+        never by an address, so that one translation serves every build. This
+        list is what turns that name into an address here. It is recorded
+        rather than only scanned so a change in the scanner shows up as a
+        mismatch instead of silently shifting what every key means.
+        """
+        return [int(str(v), 0) for v in (self._data.get("system_groups") or [])]
+
+    @property
+    def system_loose(self) -> list[int]:
+        """Offsets of text runs outside the group tables, in scan order."""
+        return [int(str(v), 0) for v in (self._data.get("system_loose") or [])]
+
+    def check_system_groups(self, scanned: list[int]) -> None:
+        """Fail if the scan disagrees with the recorded group offsets."""
+        recorded = self.system_groups
+        if not recorded or recorded == scanned:
+            return
+        raise SystemExit(
+            f"release {self.code}: SYSTEM group scan disagrees with the "
+            f"recorded offsets; every pack key would change meaning.\n"
+            f"  recorded: {[f'0x{v:04X}' for v in recorded]}\n"
+            f"  scanned:  {[f'0x{v:04X}' for v in scanned]}")
+
     def offset(self, name: str, default: int | None = None) -> int:
         """A named file offset of this build, parsed from its hex string."""
         raw = (self._data.get("offsets") or {}).get(name)

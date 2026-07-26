@@ -20,5 +20,24 @@
   },
   "offsets": {
     "system_scan_start": "0x9042"
-  }
+  },
+  "system_groups": [
+    "0x9042",
+    "0x9FB2",
+    "0xA528",
+    "0xB35C",
+    "0xC102",
+    "0xC212",
+    "0xC35A",
+    "0xC6E8",
+    "0xC834",
+    "0xCE38",
+    "0xE0D0",
+    "0xF246",
+    "0x12912",
+    "0x16600",
+    "0x1898E",
+    "0x19C80"
+  ],
+  "_system_groups_comment": "File offset of each SYSTEM text group's offset table, in scan order. Pack keys name a group by its position in this list, so the list is what turns a pack key into an address on this build."
 }

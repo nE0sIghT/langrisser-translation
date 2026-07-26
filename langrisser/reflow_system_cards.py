@@ -4,6 +4,8 @@ import argparse
 import json
 from pathlib import Path
 
+from langrisser.game import add_game_args, game_from_args
+from langrisser.offsetgroups import group_key, parse_group_key
 from langrisser.scen import Codec, load_charmap_tbl
 
 
@@ -34,12 +36,14 @@ def wrap_words(text: str, codec: Codec, widths: list[int]) -> list[str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
+    add_game_args(ap)
     ap.add_argument("--strings", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--tbl", required=True)
     ap.add_argument("--system-source", required=True)
     ap.add_argument("--layout",
-                    default="data/common/system_card_layout.json")
+                    default=None,
+                    help="Multi-line card groups (default: the game manifest's).")
     args = ap.parse_args()
 
     strings_path = Path(args.strings)
@@ -50,28 +54,32 @@ def main() -> None:
             Path(args.system_source).read_text(encoding="utf-8")
         )
     }
-    layout = json.loads(Path(args.layout).read_text(encoding="utf-8"))
+    card_layout = (Path(args.layout) if args.layout
+                   else game_from_args(args).system_card_layout)
+    layout = json.loads(card_layout.read_text(encoding="utf-8"))
     codec = Codec(load_charmap_tbl(Path(args.tbl)))
     problems: list[str] = []
     changed = 0
 
-    for table, spec in layout["groups"].items():
+    for group, spec in layout["groups"].items():
         size = int(spec["card_size"])
         width = int(spec["line_cells"])
         indices = sorted(
-            int(key.rsplit(":", 1)[1])
-            for key in strings
-            if key.startswith(f"table:{table}:")
+            entry for entry in (
+                parsed[1] for parsed in
+                (parse_group_key(key) for key in strings)
+                if parsed and parsed[0] == int(group)
+            )
         )
         if not indices:
             continue
         count = max(indices) + 1
         if count % size:
             raise SystemExit(
-                f"table {table}: {count} entries is not divisible by {size}"
+                f"group {group}: {count} entries is not divisible by {size}"
             )
         for start in range(0, count, size):
-            keys = [f"table:{table}:{i}" for i in range(start, start + size)]
+            keys = [group_key(int(group), i) for i in range(start, start + size)]
             widths = [
                 width - int(source[key].get("leading_cells", 0))
                 for key in keys

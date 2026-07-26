@@ -18,6 +18,7 @@ from langrisser.offsetgroups import (
     GroupConfig,
     decode_run,
     find_groups,
+    group_key,
     load_codemap,
     run_length,
 )
@@ -35,7 +36,7 @@ def dump_system(data: bytes, codemap: dict[int, str], cfg: GroupConfig) -> dict:
                 word_count = run_length(data, off, cfg)
             words = cfg.order.words(data, off, word_count)
             entries.append({
-                "id": f"table:{table_off:05X}:{index}",
+                "id": group_key(group_index, index),
                 "group": group_index,
                 "table": f"0x{table_off:05X}",
                 "index": index,

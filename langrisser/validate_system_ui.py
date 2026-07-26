@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 
+from langrisser.game import add_game_args, game_from_args
 from langrisser.project import ROOT, add_language_args, language_from_args
 from langrisser.scen import Codec, TAG_RE, load_charmap_tbl
 
@@ -47,20 +48,20 @@ def authored_visible_text(text: str) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
+    add_game_args(ap)
     ap.add_argument("--tbl", default=None)
     ap.add_argument("--strings", default=None)
     ap.add_argument("--system-source", default="work/l5/systemdump/system_strings.json")
-    ap.add_argument(
-        "--constraints",
-        default="data/common/system_ui_constraints.json",
-    )
+    ap.add_argument("--constraints", default=None,
+                    help="UI cell budgets (default: the game manifest's).")
     args = ap.parse_args()
 
     lang = language_from_args(args)
     tbl = Path(args.tbl) if args.tbl else lang.tbl
     strings_path = Path(args.strings) if args.strings else lang.system_strings
     source_path = Path(args.system_source)
-    constraints_path = Path(args.constraints)
+    constraints_path = (Path(args.constraints) if args.constraints
+                        else game_from_args(args).system_ui_constraints)
     if not constraints_path.is_absolute():
         constraints_path = ROOT / constraints_path
 

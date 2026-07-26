@@ -74,8 +74,16 @@ language's output field.
 
 `system_strings.json` intentionally contains no extracted Japanese text or
 offset metadata. `langrisser/system_dump.py` regenerates those fields under
-`work/l5/systemdump/system_strings.json`; the packer joins the durable overlay to
-that source by ids such as `table:08052:1` and `offset:176A0`.
+`work/<game>/systemdump/system_strings.json`; the packer joins the durable
+overlay to that source by ids such as `group:0:1` and `loose:3`.
+
+An id names *where a string sits*, not where it lands: which group it is in and
+which entry of that group, or which text run outside the tables. Those numbers
+are the same on every build of the game, so one translation serves them all.
+Each release records its own group offsets in its manifest (`system_groups`),
+and that list is what turns an id back into an address on that build — which
+is also why the dumpers fail loudly if a scan disagrees with it, instead of
+silently changing what every id means.
 
 ## Manifest
 
@@ -199,8 +207,8 @@ Saturn overlay ids:
   "groups": {
     "1": {
       "entries": [
-        {"saturn": 0, "platform": "table:09004:0"},
-        {"saturn": 30, "ps1_id": "table:08FAE:30"}
+        {"saturn": 0, "platform": "group:1:0"},
+        {"saturn": 30, "ps1_id": "group:1:30"}
       ]
     }
   }
@@ -274,7 +282,7 @@ unexpectedly wider merely because its offset-table group has enough storage:
 {
   "default_max_grow": 4,
   "overrides": {
-    "table:08052:262": 6
+    "group:0:262": 6
   }
 }
 ```
@@ -306,7 +314,7 @@ newly required pairs part of the actual build instead of an optional
 maintenance step.
 
 After generating the final table, the build also checks shared engine layout
-constraints from `data/common/system_ui_constraints.json`. In particular,
+constraints from `data/games/l5/system_ui_constraints.json`. In particular,
 startup-menu labels may not cross a 9-cell VRAM-atlas row.
 
 To persist newly derived assignments in the language pack for review, run:

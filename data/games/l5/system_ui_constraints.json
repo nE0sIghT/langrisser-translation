@@ -5,137 +5,137 @@
       "columns": 9,
       "start_slot": 0,
       "ids": [
-        "table:08052:211",
-        "table:08052:71",
-        "table:08052:212"
+        "group:0:211",
+        "group:0:71",
+        "group:0:212"
       ]
     }
   ],
   "fixed_width_fields": [
     {
       "name": "shop buy header: buy",
-      "id": "table:08052:121",
+      "id": "group:0:121",
       "max_cells": 2
     },
     {
       "name": "class stat: command range",
-      "id": "table:08052:11",
+      "id": "group:0:11",
       "max_cells": 4
     },
     {
       "name": "class stat: judgment",
-      "id": "table:08052:12",
+      "id": "group:0:12",
       "max_cells": 2
     },
     {
       "name": "class stat: movement",
-      "id": "table:08052:13",
+      "id": "group:0:13",
       "max_cells": 2
     },
     {
       "name": "class: Silver Knight",
       "ids": [
-        "table:09542:63",
-        "table:09542:64",
-        "table:09542:65"
+        "group:2:63",
+        "group:2:64",
+        "group:2:65"
       ],
       "max_cells": 8
     },
     {
       "name": "battle menu: move",
-      "id": "table:08052:20",
+      "id": "group:0:20",
       "max_cells": 3
     },
     {
       "name": "battle menu: magic",
-      "id": "table:08052:21",
+      "id": "group:0:21",
       "max_cells": 2
     },
     {
       "name": "battle menu: attack",
-      "id": "table:08052:22",
+      "id": "group:0:22",
       "max_cells": 3
     },
     {
       "name": "battle menu: heal",
-      "id": "table:08052:23",
+      "id": "group:0:23",
       "max_cells": 3
     },
     {
       "name": "battle menu: summon",
-      "id": "table:08052:24",
+      "id": "group:0:24",
       "max_cells": 2
     },
     {
       "name": "battle menu: order",
-      "id": "table:08052:28",
+      "id": "group:0:28",
       "max_cells": 2
     },
     {
       "name": "order setting: normal",
-      "id": "table:08052:30",
+      "id": "group:0:30",
       "max_cells": 2
     },
     {
       "name": "unit type: mercenary",
-      "id": "table:08052:36",
+      "id": "group:0:36",
       "max_cells": 3
     },
     {
       "name": "turn banner",
-      "id": "table:08052:209",
+      "id": "group:0:209",
       "max_cells": 4
     },
     {
       "name": "system menu: win and loss conditions",
-      "id": "table:08052:69",
+      "id": "group:0:69",
       "max_cells": 6
     },
     {
       "name": "system menu: save",
-      "id": "table:08052:70",
+      "id": "group:0:70",
       "max_cells": 4
     },
     {
       "name": "system menu: load",
-      "id": "table:08052:71",
+      "id": "group:0:71",
       "max_cells": 4
     },
     {
       "name": "system menu: config",
-      "id": "table:08052:72",
+      "id": "group:0:72",
       "max_cells": 5
     },
     {
       "name": "system menu: action order",
-      "id": "table:08052:73",
+      "id": "group:0:73",
       "max_cells": 6
     },
     {
       "name": "system menu: end turn",
-      "id": "table:08052:74",
+      "id": "group:0:74",
       "max_cells": 6
     }
   ],
   "composed_runtime_fields": [
     {
       "name": "deployment prompt: gear leader",
-      "prefix_id": "table:08052:102",
-      "suffix_id": "table:08052:108",
+      "prefix_id": "group:0:102",
+      "suffix_id": "group:0:108",
       "suffix_start": 2,
       "max_cells": 9
     },
     {
       "name": "deployment prompt: assign leader",
-      "prefix_id": "table:08052:106",
-      "suffix_id": "table:08052:108",
+      "prefix_id": "group:0:106",
+      "suffix_id": "group:0:108",
       "suffix_start": 2,
       "max_cells": 9
     },
     {
       "name": "deployment prompt: place leader",
-      "prefix_id": "table:08052:107",
-      "suffix_id": "table:08052:108",
+      "prefix_id": "group:0:107",
+      "suffix_id": "group:0:108",
       "suffix_start": 2,
       "max_cells": 9
     }
