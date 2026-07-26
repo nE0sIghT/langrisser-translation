@@ -1,0 +1,54 @@
+{
+  "release": "l5-saturn-jp",
+  "_comment": "sha1 of every artifact this release builds, per language. Builds verify it as their last stage; re-record only when an output change is intended.",
+  "artifacts": {
+    "en": {
+      "/OPEN.DAT": {
+        "sha1": "44f9db88bbd71f1971fdfff1519a9246e292444e",
+        "size": 371820
+      },
+      "/SCEN.DAT": {
+        "sha1": "44d07415470e4df448e9e53c8381acaa049b6558",
+        "size": 22919168
+      },
+      "/SYSTEM.DAT": {
+        "sha1": "b243112210ae326ef0b16c3c9bf3a9c8fbb2f42c",
+        "size": 121344
+      },
+      "/TITLE1.DAT": {
+        "sha1": "cac77b93f43fc2c3ee24921ff3e216a28cfa0043",
+        "size": 140648
+      },
+      "/TITLE2.DAT": {
+        "sha1": "7c2d11749b4d7eb6d77a98134d975fe6f130dfb7",
+        "size": 135592
+      }
+    },
+    "ru": {
+      "/CLEAR.DAT": {
+        "sha1": "10cd231c21edc9e96c5bae103912d15902db5b28",
+        "size": 18808
+      },
+      "/OPEN.DAT": {
+        "sha1": "c2717183fef04759ead43e0681be511ad2852d36",
+        "size": 378204
+      },
+      "/SCEN.DAT": {
+        "sha1": "5115c58fb8899d5ad62cb5bb20b4f698d1b6889d",
+        "size": 22915072
+      },
+      "/SYSTEM.DAT": {
+        "sha1": "c9a22613745921646729137cef1e0e9d0e2fb8e1",
+        "size": 121344
+      },
+      "/TITLE1.DAT": {
+        "sha1": "1baf428c436c0179f4ce22e70edd339ba5940ef9",
+        "size": 134632
+      },
+      "/TITLE2.DAT": {
+        "sha1": "ab6a0a300195ab7f5e333344c68e131c4e37c9b4",
+        "size": 129576
+      }
+    }
+  }
+}

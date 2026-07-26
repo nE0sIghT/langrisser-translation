@@ -25,6 +25,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from lang5_build_reference import (add_reference_args, check_or_record,
+                                   default_release)
 from lang5_game import add_game_args, game_from_args
 from lang5_platform import add_platform_args, platform_from_args
 from lang5_project import add_language_args, language_from_args
@@ -75,6 +77,9 @@ def main() -> None:
                     help="Patch version substituted into the title credits.")
     ap.add_argument("--allow-unmapped", action="store_true",
                     help="Diagnostic mode: preserve unmapped Saturn SCEN/SYSTEM data.")
+    ap.add_argument("--release", default=None,
+                    help="Release slug the reference hashes are kept under.")
+    add_reference_args(ap)
     args = ap.parse_args()
 
     game = game_from_args(args)
@@ -314,6 +319,15 @@ def main() -> None:
             "--out-open", saturn / f"OPEN.{lang.suffix}.DAT",
             "--out-preview", saturn / f"open_poem_{lang.suffix}_preview.png")
 
+    # Every on-disc file this build replaces, in disc-path order. Optional
+    # stages (banner, title, poem) only produce theirs when the pack carries
+    # the text, so the list is what actually got built.
+    replaced = {"/SCEN.DAT": scen_out, "/SYSTEM.DAT": system_out}
+    for name in ("CLEAR", "TITLE1", "TITLE2", "OPEN"):
+        candidate = saturn / f"{name}.{lang.suffix}.DAT"
+        if candidate.exists():
+            replaced[f"/{name}.DAT"] = candidate
+
     if args.remaster_disc:
         out_bin = Path(args.out_bin) if args.out_bin else saturn / f"langrisser_v_{lang.suffix}_saturn.bin"
         out_cue = Path(args.out_cue) if args.out_cue else saturn / f"langrisser_v_{lang.suffix}_saturn.cue"
@@ -323,22 +337,17 @@ def main() -> None:
             "remaster",
             "--out-bin", out_bin,
             "--out-cue", out_cue,
-            "--replace", f"/SCEN.DAT={scen_out}",
-            "--replace", f"/SYSTEM.DAT={system_out}",
         ]
-        clear_out = saturn / f"CLEAR.{lang.suffix}.DAT"
-        if clear_out.exists():
-            remaster_cmd.extend(["--replace", f"/CLEAR.DAT={clear_out}"])
-        for title_name in ("TITLE1", "TITLE2"):
-            title_out = saturn / f"{title_name}.{lang.suffix}.DAT"
-            if title_out.exists():
-                remaster_cmd.extend(["--replace", f"/{title_name}.DAT={title_out}"])
-        open_out = saturn / f"OPEN.{lang.suffix}.DAT"
-        if open_out.exists():
-            remaster_cmd.extend(["--replace", f"/OPEN.DAT={open_out}"])
+        for iso_path, local in replaced.items():
+            remaster_cmd.extend(["--replace", f"{iso_path}={local}"])
         run(*remaster_cmd)
 
     print(f"saturn build: system -> {system_out}, scen -> {scen_out}")
+
+    if not args.skip_reference:
+        check_or_record(
+            args.release or default_release(game.code, platform.code),
+            args.lang, replaced, record=args.record_reference)
 
 
 if __name__ == "__main__":

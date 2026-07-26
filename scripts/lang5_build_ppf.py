@@ -10,6 +10,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from lang5_build_reference import (add_reference_args, check_or_record,
+                                   default_release)
 from lang5_game import add_game_args, game_from_args
 from lang5_project import add_language_args, language_from_args
 from ppf3 import write_ppf3
@@ -40,6 +42,9 @@ def main() -> None:
     ap.add_argument("--patch-version", default="dev")
     ap.add_argument("--work-bin", default=None)
     ap.add_argument("--out-ppf", default=None)
+    ap.add_argument("--release", default=None,
+                    help="Release slug the reference hashes are kept under.")
+    add_reference_args(ap)
     args = ap.parse_args()
 
     lang = language_from_args(args)
@@ -238,6 +243,12 @@ def main() -> None:
         lang.patch_description,
     )
     print(f"ppf_records={records} out={out_ppf}")
+
+    if not args.skip_reference:
+        artifacts = {iso_path: Path(local) for iso_path, local in injections}
+        artifacts["patch.ppf"] = out_ppf
+        check_or_record(args.release or default_release(game.code, "ps1"),
+                        args.lang, artifacts, record=args.record_reference)
 
 
 if __name__ == "__main__":
