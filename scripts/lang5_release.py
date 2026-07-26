@@ -253,10 +253,19 @@ def find_release(game: str,
     return found[0]
 
 
-def add_release_args(ap: argparse.ArgumentParser) -> None:
-    ap.add_argument("--release", default=None,
-                    help="Release slug from data/releases/<slug>. Defaults to "
-                         "the single release matching --game and --platform.")
+def add_release_args(ap: argparse.ArgumentParser,
+                     default: str | None = None) -> None:
+    """Add `--release`.
+
+    Tools that also take `--game` leave `default` unset and let the slug be
+    resolved from game plus platform. A tool written against one particular
+    build names it as the default instead, so its bare invocation keeps
+    working while still being repointable at another release.
+    """
+    ap.add_argument("--release", default=default,
+                    help="Release slug from data/releases/<slug>."
+                         + ("" if default else " Defaults to the single "
+                            "release matching --game and --platform."))
     ap.add_argument("--release-root", default="data/releases",
                     help="Directory containing release manifests.")
 

@@ -7,7 +7,7 @@ identical entry counts). This reuses the shared `lang5_offsetgroups` model with
 the Saturn BE config and the PS1 codec to rebuild each group's
 `[u16 offset table][strings]` in place with the translated text. Same-count
 groups use direct PS1 index mapping; count-different or reordered groups must be
-described by `data/platforms/saturn/system_mapping.json` and any Saturn-only
+described by the release's `system_mapping.json` and any Saturn-only
 target strings under `<pack>/platforms/saturn/system_strings.json`.
 
 Fixed-size per group: the group stays at its base and within its original byte
@@ -24,6 +24,7 @@ import json
 from pathlib import Path
 
 from lang5_platform import add_platform_args, platform_from_args
+from lang5_release import add_release_args, release_from_args
 from lang5_project import COMMON_FONT_MAP, add_language_args, language_from_args
 from lang5_binfmt import BE
 from lang5_offsetgroups import PS1, SATURN, find_groups, run_length
@@ -125,6 +126,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
     add_platform_args(ap, "saturn")
+    add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--system-in", default=None,
                     help="Input SYSTEM.DAT with the target font applied.")
     ap.add_argument("--system-out", default=None,
@@ -135,7 +137,7 @@ def main() -> None:
     ap.add_argument("--platform-strings", default=None,
                     help="Language-specific platform SYSTEM overlay JSON.")
     ap.add_argument("--mapping", default=None,
-                    help="Platform SYSTEM mapping JSON (default: platform manifest value)")
+                    help="SYSTEM mapping JSON (default: the release manifest's)")
     ap.add_argument("--tbl", default=None,
                     help="Saturn charmap .tbl for the selected language.")
     ap.add_argument("--layout", default=None,
@@ -149,6 +151,7 @@ def main() -> None:
 
     lang = language_from_args(args)
     platform = platform_from_args(args)
+    release = release_from_args(args, platform=platform.code)
     system_in = (
         Path(args.system_in) if args.system_in
         else Path(f"work/build/saturn/SYSTEM.DAT.{lang.suffix}.font")
@@ -178,7 +181,7 @@ def main() -> None:
         Path(args.layout) if args.layout else lang.system_layout, source_by_id)
     card_line_cells = load_card_layout(Path(args.card_layout))
     norm = Normalizer(load_font_map_csv(COMMON_FONT_MAP),
-                      load_font_map_csv(platform.kanji_map))
+                      load_font_map_csv(release.kanji_map))
 
     def ps1_words(gi: int, k: int) -> list[int] | None:
         if gi >= len(ps1_groups):
@@ -197,7 +200,7 @@ def main() -> None:
         json.loads(platform_strings_path.read_text(encoding="utf-8"))
         if platform_strings_path.exists() else {}
     )
-    mapping_path = Path(args.mapping) if args.mapping else platform.system_mapping
+    mapping_path = Path(args.mapping) if args.mapping else release.system_mapping
     mapping = load_mapping(mapping_path)
     group_specs = {int(k): v for k, v in (mapping.get("groups") or {}).items()}
 

@@ -17,6 +17,9 @@
   },
   "max_font_slot": 1819,
   "_max_font_slot_comment": "Slot 1820's 18 bytes cross file offset 0x8000, where SYSTEM.DAT keeps the group pointer directory.",
+  "scen_mapping": "scen_mapping.json",
+  "system_mapping": "system_mapping.json",
+  "kanji_map": "kanji_map.csv",
   "verify": [
     {
       "role": "track1",

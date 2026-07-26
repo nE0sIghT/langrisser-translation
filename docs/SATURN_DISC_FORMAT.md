@@ -75,10 +75,10 @@ The stages, all reusing shared logic:
   `0..1820` (text region untouched) and emits the `.tbl`.
 - `lang5_saturn_system_pack` rebuilds the SYSTEM UI groups with the translated
   text via the shared group model (BE), using
-  `data/platforms/saturn/system_mapping.json` for direct PS1 ids, sparse
+  `data/releases/l5-saturn-jp/system_mapping.json` for direct PS1 ids, sparse
   platform overlays, and verified preserved entries. It packs all 16/16 groups.
 - `lang5_saturn_apply` inserts translated scenario text through
-  `data/platforms/saturn/scen_mapping.json`: 125/131 SCEN blocks are translated,
+  `data/releases/l5-saturn-jp/scen_mapping.json`: 125/131 SCEN blocks are translated,
   and the 6 service/name-pool blocks are explicitly preserved.
 - Graphic steps run when the corresponding Saturn files are extracted:
   `CLEAR.DAT` scenario-clear banner, `TITLE1.DAT` title credits, and
@@ -1030,8 +1030,8 @@ Honest status of applying the universal language pack to Saturn, by asset:
 
 | Translation asset (README) | PS1 | Saturn |
 | --- | --- | --- |
-| SCEN scenario/dialogue text | done | done — strict pipeline translates 125/131 blocks through `data/platforms/saturn/scen_mapping.json`; 6 service/name-pool chunks are explicitly preserved |
-| SYSTEM UI text | done | strict pipeline — 16/16 groups pack through `data/platforms/saturn/system_mapping.json`; Saturn-only RAM/save strings live in sparse language overlays |
+| SCEN scenario/dialogue text | done | done — strict pipeline translates 125/131 blocks through `data/releases/l5-saturn-jp/scen_mapping.json`; 6 service/name-pool chunks are explicitly preserved |
+| SYSTEM UI text | done | strict pipeline — 16/16 groups pack through `data/releases/l5-saturn-jp/system_mapping.json`; Saturn-only RAM/save strings live in sparse language overlays |
 | Font glyphs | done | done — Cyrillic into `SYSTEM.DAT` slots 0..1819 (slot 1820 would cross the `0x8000` pointer directory); needed native symbols remapped onto the real Saturn slots via the glyph plan |
 | Title credits graphic | done | **done** — `saturn_title_credits.py` stamps the PS1 credit lines (same `title_text_mask`/`title_alpha_table` pipeline, masks doubled for the 640-wide hi-res plane) onto the *overlay* tilemap of `TITLE1.DAT`/`TITLE2.DAT` with a transparent background (the 40x28 background plane doubles as the menu backdrop and must stay clean); each filler position gets a new cell appended to the cell store (last sub-asset, TOC size updated) |
 | Prologue poem graphic | done | done — `OPEN.DAT[2]` VDP1 run-atlas format; `saturn_poem_translate.py` renders the target poem to 320x768 at the PS1 metrics (font 12 / line height 18) and grows the atlas to fit (the poem is the last sub-asset: header `+0x00`/`+0x20` and the TOC size are updated; RU: 38 runs, `0x19128` atlas bytes) |
@@ -1106,7 +1106,7 @@ attract demos froze near the menu. The in-place growth mostly fits inside the
 A Saturn entry takes a PS1 record's translation **only** when both JP
 originals provably match. Raw token ids in the reordered kanji bank
 (`>= 0x185`) are incomparable across consoles — but *normalized to text*
-through the tracked `data/platforms/saturn/kanji_map.csv` (same CSV convention
+through the tracked `data/releases/l5-saturn-jp/kanji_map.csv` (same CSV convention
 as the common `groups_report.csv`, holding *only* the reordered kanji bank —
 ~1030 tokens voted from positionally-matched pair tokens by
 `saturn_scen_audit.py`; the shared range is never duplicated) they compare directly. The apply

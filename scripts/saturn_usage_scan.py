@@ -26,6 +26,7 @@ from collections import Counter
 from pathlib import Path
 
 from lang5_project import COMMON_FONT_MAP
+from lang5_release import add_release_args, release_from_args
 from lang5_saturn_apply import load_font_map_csv, load_mapping
 from lang5_scen import consumes_argument
 from saturn_scen import local_index_entries, parse_catalog
@@ -86,8 +87,11 @@ def file_runs(data: bytes, charmap: dict[int, str]) -> Counter:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--scen", default="work/build/saturn/SCEN.DAT")
-    ap.add_argument("--mapping", default="data/platforms/saturn/scen_mapping.json")
-    ap.add_argument("--kanji-map", default="data/platforms/saturn/kanji_map.csv")
+    add_release_args(ap, "l5-saturn-jp")
+    ap.add_argument("--mapping", default=None,
+                    help="SCEN mapping JSON (default: the release manifest's)")
+    ap.add_argument("--kanji-map", default=None,
+                    help="Kanji slot map CSV (default: the release manifest's)")
     ap.add_argument("--files", nargs="*", default=[
         "work/build/saturn/SYSTEM.DAT",
         "work/build/saturn/BAR.BIN",
@@ -102,10 +106,14 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
+    release = release_from_args(args)
+    mapping_path = Path(args.mapping) if args.mapping else release.scen_mapping
+    kanji_map = Path(args.kanji_map) if args.kanji_map else release.kanji_map
+
     charmap = load_font_map_csv(COMMON_FONT_MAP)
-    charmap.update(load_font_map_csv(Path(args.kanji_map)))
+    charmap.update(load_font_map_csv(kanji_map))
     usage, jp_visible = scen_usage(
-        Path(args.scen).read_bytes(), load_mapping(Path(args.mapping)))
+        Path(args.scen).read_bytes(), load_mapping(mapping_path))
     ui_used: Counter = Counter()
     for f in args.files:
         p = Path(f)

@@ -22,7 +22,7 @@ release flow also patches them.
 | Source extraction | `iso_mode2.py` extracts PS1 files to `work/extracted/` | `saturn_disc.py extract` extracts Saturn files to `work/build/saturn/` | Partial | Saturn extraction exists, but there is no single Saturn equivalent to the PS1 release/extract bootstrap. | Add a Saturn extraction/bootstrap command or document the required extraction set in one release/build script. |
 | No-edit roundtrip | `lang5_verify_roundtrip.py` covers PS1 SCEN/SYSTEM no-edit paths | SCEN no-edit model is documented; SYSTEM and graphics have individual tooling | Partial | Roundtrip proofs are split across tools/docs instead of one mandatory build gate. | Add a Saturn no-edit verification driver that calls the existing per-container checks. |
 | Font slots | `lang5_assign_font_slots.py` -> generated assignments -> `lang5_build_font.py` | Saturn build now runs the same generated-assignment stage, then writes `SYSTEM.DAT` glyphs | Implemented | The shared assignment stage uses the PS1 common source and a Saturn build-copy table. | Keep platform-specific SYSTEM overlays sparse; extend allocator source handling only when real Saturn-only strings are added. |
-| SCEN text | `lang5_sceninsert.py --fixed-size-repack` writes all PS1 SCEN/SCEN2 text | `lang5_saturn_apply.py` writes Saturn `SCEN.DAT` field_3c pools through strict platform mapping | Implemented (`125/131` translated, 6 service preserved) | Saturn entry-order/content deltas are fully represented in `data/platforms/saturn/scen_mapping.json`. | Keep future Saturn-only deltas as sparse platform overlays; strict mode must stay green. |
+| SCEN text | `lang5_sceninsert.py --fixed-size-repack` writes all PS1 SCEN/SCEN2 text | `lang5_saturn_apply.py` writes Saturn `SCEN.DAT` field_3c pools through strict platform mapping | Implemented (`125/131` translated, 6 service preserved) | Saturn entry-order/content deltas are fully represented in `data/releases/l5-saturn-jp/scen_mapping.json`. | Keep future Saturn-only deltas as sparse platform overlays; strict mode must stay green. |
 | SYSTEM text | `lang5_system_dump.py` -> resolver -> reflow -> strict `lang5_system_pack.py --repack` | `lang5_saturn_system_pack.py` packs all Saturn groups through explicit platform mapping | Implemented (`16/16`) | Saturn-only RAM/save strings and compact Saturn-only class labels are stored as sparse overlays. | Add runtime review rows if any Saturn-only SYSTEM string needs wording changes. |
 | Build-copy wrapping | PS1 build rewraps `work/build/translation.<lang>/` with the exact generated `.tbl` | Saturn build rewraps `work/build/translation.<lang>.saturn/` with the Saturn `.tbl` | Implemented | The tracked language pack is never rewritten. | None. |
 | Translation validation | PS1 build validates control words, encodability and budgets under exact `.tbl` | Saturn build validates the same generated translation copy under the Saturn `.tbl` | Implemented for current data | No populated sparse SCEN override chunks exist yet. | Add validation for sparse Saturn override chunks when they are populated. |
@@ -40,7 +40,7 @@ release flow also patches them.
 The strict Saturn mapper now covers every translatable Saturn `SCEN.DAT` text
 entry. It applies 125 translated blocks, explicitly preserves the 6 known
 service/name-pool blocks, and leaves no unresolved chunks in
-`data/platforms/saturn/scen_mapping.json`. No Japanese source text is stored in
+`data/releases/l5-saturn-jp/scen_mapping.json`. No Japanese source text is stored in
 the mapping file.
 
 Resolved mapping classes:
@@ -67,7 +67,7 @@ Service chunks that are intentionally not language-pack chunks:
 
 The Saturn SYSTEM packer now translates all 16 text tables in strict mode. The
 tables below were the structural blockers and are now covered by
-`data/platforms/saturn/system_mapping.json`. Table numbers are only local report
+`data/releases/l5-saturn-jp/system_mapping.json`. Table numbers are only local report
 indices; use offsets for durable references.
 
 | Saturn table | PS1 table | Saturn count | PS1 count | Resolved action | Notes |
@@ -85,7 +85,7 @@ These are analysis findings, not implementation steps already taken.
 | --- | --- | --- | --- |
 | Font assignment | Both PS1 and Saturn builds generate build-copy assignments. | Saturn-only overlay strings are not yet fed into assignment source. | Add platform overlay source handling when real overrides are populated. |
 | Rewrap/validate | Both PS1 and Saturn builds rewrap/validate build copies with the exact generated table. | Sparse platform override chunks are not yet validated because none are populated. | Validate platform override chunks when added. |
-| SYSTEM resolving | Saturn build regenerates the PS1 common SYSTEM source/resolved map before packing. | Implemented for current known Saturn SYSTEM deltas. | Extend `data/platforms/saturn/system_mapping.json` only if new Saturn-only SYSTEM strings are identified. |
+| SYSTEM resolving | Saturn build regenerates the PS1 common SYSTEM source/resolved map before packing. | Implemented for current known Saturn SYSTEM deltas. | Extend `data/releases/l5-saturn-jp/system_mapping.json` only if new Saturn-only SYSTEM strings are identified. |
 | Graphics rendering | Title, poem, clear and Now Loading already reuse several render cores. | Container adapters still import PS1 image helpers directly in places. | Keep rendering/palette helpers common; keep only container decode/encode per platform. |
 | Release | PS1 has `release.sh`; Saturn has build-script remastered BIN/CUE output but no release package. | No reproducible xdelta artifact. | Add Saturn release mode after runtime smoke test; use xdelta as the binary patch format. |
 

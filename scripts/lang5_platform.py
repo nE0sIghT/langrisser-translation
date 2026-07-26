@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Platform manifest helpers.
 
-Language packs are target-language data. Platform manifests describe console
-layout differences and mapping data without storing extracted source text.
+A platform is the console itself and nothing more. Anything that varies
+between two games on the same console — mapping data, offsets, font ceilings,
+which release a port is compared against — belongs to a release instead
+(`lang5_release`); keeping it here made Langrisser V's Saturn data look like a
+property of the Saturn.
 """
 from __future__ import annotations
 
@@ -33,28 +36,6 @@ class PlatformPack:
     @property
     def label(self) -> str:
         return str(self._data.get("label") or self.code)
-
-    @property
-    def scen_mapping(self) -> Path | None:
-        return _path(self.root, self._data.get("scen_mapping"))
-
-    @property
-    def system_mapping(self) -> Path | None:
-        return _path(self.root, self._data.get("system_mapping"))
-
-    @property
-    def base_platform(self) -> str:
-        return str(self._data.get("base_platform") or self.code)
-
-    @property
-    def kanji_map(self) -> Path | None:
-        """Token->character map for the platform's reordered kanji bank.
-
-        Derived by `saturn_scen_audit.py` from positionally-matched record
-        pairs; lets both consoles' token streams be normalized to text and
-        compared directly.
-        """
-        return _path(self.root, self._data.get("kanji_map"))
 
 
 def load_platform(platform: str, platform_root: str | Path = DEFAULT_PLATFORM_ROOT) -> PlatformPack:

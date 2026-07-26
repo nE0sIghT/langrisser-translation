@@ -28,6 +28,7 @@ from pathlib import Path
 
 from lang5_offsetgroups import PS1, SATURN, find_groups, run_length
 from lang5_project import COMMON_FONT_MAP
+from lang5_release import add_release_args, release_from_args
 from lang5_saturn_apply import (Normalizer, load_font_map_csv,
                                 monotone_alignment)
 from lang5_game import add_game_args, game_from_args
@@ -47,8 +48,11 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--system", default="work/build/saturn/SYSTEM.DAT")
     ap.add_argument("--ps1-system", default="work/extracted/SYSTEM.BIN")
-    ap.add_argument("--mapping", default="data/platforms/saturn/system_mapping.json")
-    ap.add_argument("--kanji-map", default="data/platforms/saturn/kanji_map.csv")
+    add_release_args(ap, "l5-saturn-jp")
+    ap.add_argument("--mapping", default=None,
+                    help="SYSTEM mapping JSON (default: the release manifest's)")
+    ap.add_argument("--kanji-map", default=None,
+                    help="Kanji slot map CSV (default: the release manifest's)")
     add_game_args(ap)
     ap.add_argument("--lang-root", default=None,
                     help="Pack root (default: the game manifest's lang_root).")
@@ -57,13 +61,17 @@ def main() -> None:
                     help="Rewrite the group specs to the proven form.")
     args = ap.parse_args()
 
+    release = release_from_args(args)
+    mapping_path = Path(args.mapping) if args.mapping else release.system_mapping
+    kanji_map = Path(args.kanji_map) if args.kanji_map else release.kanji_map
+
     norm = Normalizer(load_font_map_csv(COMMON_FONT_MAP),
-                      load_font_map_csv(Path(args.kanji_map)))
+                      load_font_map_csv(kanji_map))
     sat = Path(args.system).read_bytes()
     ps1 = Path(args.ps1_system).read_bytes()
     sat_groups = find_groups(sat, SATURN)
     ps1_groups = find_groups(ps1, PS1)
-    mapping = load_mapping(Path(args.mapping))
+    mapping = load_mapping(mapping_path)
 
     new_groups: dict[str, dict] = {}
     stats = {"recover": 0, "platform": 0, "shifted": 0, "space_override": 0}
@@ -137,7 +145,7 @@ def main() -> None:
     if not args.write_mapping:
         return
     mapping["groups"] = new_groups
-    Path(args.mapping).write_text(
+    mapping_path.write_text(
         json.dumps(mapping, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     used = {
         str(item["platform"])
@@ -155,7 +163,7 @@ def main() -> None:
                                    ensure_ascii=False, indent=2) + "\n",
                         encoding="utf-8")
         print(f"  {lang}: overlay {len(data)} -> {len(pruned)} strings")
-    print(f"mapping rewritten -> {args.mapping}")
+    print(f"mapping rewritten -> {mapping_path}")
 
 
 if __name__ == "__main__":

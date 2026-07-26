@@ -1,11 +1,12 @@
 {
   "_comment": [
-    "Saturn SCEN mapping data. This file stores structure only: no extracted",
-    "Japanese text. Chunks not listed here are eligible for automatic identity",
-    "or proven stable-token alignment against the PS1 base script. Chunks listed",
-    "as empty are known service/name-pool blocks and are preserved, not translated."
+    "Saturn SCEN mapping data for this release. This file stores structure only:",
+    "no extracted Japanese text. Chunks not listed here are eligible for automatic",
+    "identity or proven stable-token alignment against the reference release's",
+    "script. Chunks listed as empty are known service/name-pool blocks and are",
+    "preserved, not translated."
   ],
-  "base_platform": "ps1",
+  "reference": "l5-ps1-jp",
   "empty_chunks": [],
   "unresolved_chunks": {},
   "chunks": {

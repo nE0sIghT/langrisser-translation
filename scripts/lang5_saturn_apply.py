@@ -10,7 +10,7 @@ rebuilt in place at fixed size via `saturn_scen.splice_local_index_table`.
 Saturn block `c`'s entry `e` corresponds to PS1 chunk `c` record `e+1` only
 when platform data proves that relationship. Identity/prefix and unique
 stable-token alignments are automatic; interspersed platform differences must be
-listed in `data/platforms/saturn/scen_mapping.json` or supplied as
+listed in the release's `scen_mapping.json` or supplied as
 language-specific target text under `<pack>/platforms/saturn/SCEN/`.
 Read-only against the disc: it reads an extracted SCEN.DAT and writes a new one.
 """
@@ -22,6 +22,7 @@ import json
 from pathlib import Path
 
 from lang5_platform import add_platform_args, platform_from_args
+from lang5_release import add_release_args, release_from_args
 from lang5_project import add_language_args, language_from_args
 from lang5_scen import Codec, find_text_block, load_charmap_tbl, read_chunk_spans, words_from_bytes
 from lang5_sceninsert import parse_dump_file
@@ -356,6 +357,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
     add_platform_args(ap, "saturn")
+    add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--scen", default="work/build/saturn/SCEN.DAT")
     ap.add_argument("--out-scen", default="work/build/saturn/SCEN.applied.DAT")
     ap.add_argument("--tbl", default=None,
@@ -363,7 +365,7 @@ def main() -> None:
     ap.add_argument("--ps1-scen", default="work/extracted/SCEN.DAT",
                     help="PS1 SCEN.DAT used only for exact stable-token alignment")
     ap.add_argument("--mapping", default=None,
-                    help="Platform SCEN mapping JSON (default: platform manifest value)")
+                    help="SCEN mapping JSON (default: the release manifest's)")
     ap.add_argument("--translation-root", default=None,
                     help="Translated-text root override (the build passes its "
                          "rewrapped/normalized copy; default: the language pack).")
@@ -376,20 +378,21 @@ def main() -> None:
 
     lang = language_from_args(args)
     platform = platform_from_args(args)
+    release = release_from_args(args, platform=platform.code)
     if args.tbl:
         tbl = Path(args.tbl)
     elif platform.code == "ps1":
         tbl = lang.tbl
     else:
         tbl = Path(f"work/build/{platform.code}/lang5_{lang.suffix}.{platform.code}.tbl")
-    mapping_path = Path(args.mapping) if args.mapping else platform.scen_mapping
+    mapping_path = Path(args.mapping) if args.mapping else release.scen_mapping
     mapping = load_mapping(mapping_path)
     codec = Codec(load_charmap_tbl(tbl))
     data = Path(args.scen).read_bytes()
     ps1_scen = Path(args.ps1_scen).read_bytes() if args.ps1_scen else None
     from lang5_project import COMMON_FONT_MAP
     norm = Normalizer(load_font_map_csv(COMMON_FONT_MAP),
-                      load_font_map_csv(platform.kanji_map))
+                      load_font_map_csv(release.kanji_map))
     scen_dir = (Path(args.translation_root) / lang.script_dir.name
                 if args.translation_root else lang.script_dir)
     out, stats = apply_scen(

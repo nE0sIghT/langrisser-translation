@@ -32,6 +32,7 @@ from lang5_saturn_apply import (Normalizer, load_font_map_csv, load_mapping,
 from lang5_game import add_game_args, game_from_args
 from lang5_sceninsert import parse_dump_file
 from lang5_project import COMMON_FONT_MAP
+from lang5_release import add_release_args, release_from_args
 from saturn_scen import local_index_entries, parse_catalog
 
 import csv
@@ -86,12 +87,14 @@ def main() -> None:
     add_game_args(ap)
     ap.add_argument("--scen", default="work/build/saturn/SCEN.DAT")
     ap.add_argument("--ps1-scen", default="work/extracted/SCEN.DAT")
-    ap.add_argument("--mapping", default="data/platforms/saturn/scen_mapping.json")
+    add_release_args(ap, "l5-saturn-jp")
+    ap.add_argument("--mapping", default=None,
+                    help="SCEN mapping JSON (default: the release manifest's)")
     ap.add_argument("--lang-root", default=None,
                     help="Pack root (default: the game manifest's lang_root).")
     ap.add_argument("--langs", nargs="*", default=["ru", "en"])
     ap.add_argument("--out-report", default="work/build/saturn/scen_platform_review.md")
-    ap.add_argument("--out-kanji-map", default="data/platforms/saturn/kanji_map.csv",
+    ap.add_argument("--out-kanji-map", default=None,
                     help="Derived Saturn kanji font map (groups_report CSV convention).")
     ap.add_argument("--write-mapping", action="store_true",
                     help="Rewrite the chunk specs to the minimal exceptional form.")
@@ -101,11 +104,16 @@ def main() -> None:
                          "reordered lines), copying that record's ru/en text.")
     args = ap.parse_args()
 
+    release = release_from_args(args)
+    mapping_path = Path(args.mapping) if args.mapping else release.scen_mapping
+    out_kanji_map = (Path(args.out_kanji_map) if args.out_kanji_map
+                     else release.kanji_map)
+
     lang_root = Path(args.lang_root) if args.lang_root else game_from_args(args).lang_root
     scen_dirs = {lang: lang_root / lang / "SCEN" for lang in args.langs}
     sat = Path(args.scen).read_bytes()
     ps1 = Path(args.ps1_scen).read_bytes()
-    mapping = load_mapping(Path(args.mapping))
+    mapping = load_mapping(mapping_path)
     empty = {int(x) for x in mapping.get("empty_chunks", [])}
     chunk_specs = {int(k): v for k, v in (mapping.get("chunks") or {}).items()}
 
@@ -113,7 +121,7 @@ def main() -> None:
     satkanji = derive_saturn_kanji_map(sat, ps1, empty, ps1map)
     merged = dict(ps1map)
     merged.update(satkanji)
-    with Path(args.out_kanji_map).open("w", newline="", encoding="utf-8") as f:
+    with out_kanji_map.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=["index_dec", "index_hex", "group",
                                           "char", "source"], lineterminator="\n")
         w.writeheader()
@@ -247,10 +255,10 @@ def main() -> None:
     print(f"report -> {args.out_report}")
     if args.write_mapping:
         mapping["chunks"] = new_chunks
-        Path(args.mapping).write_text(
+        mapping_path.write_text(
             json.dumps(mapping, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8")
-        print(f"mapping rewritten (minimal specs) -> {args.mapping}")
+        print(f"mapping rewritten (minimal specs) -> {mapping_path}")
 
 
 if __name__ == "__main__":

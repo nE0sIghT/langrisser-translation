@@ -9,9 +9,10 @@ patch and as a remastered Saturn BIN/CUE. The project currently ships English
 and Russian for Langrisser V; additional target-language packs follow the same
 layout under each game's `lang/<code>/`.
 
-Platform differences are data, not forks: `data/platforms/<code>/` holds the
-mappings that prove which entries the consoles share, and target text that
-exists only on one console lives in that pack's `platforms/<code>/` overlay.
+Platform differences are data, not forks. `data/platforms/<code>/` describes
+the console itself; the mappings that prove which entries two builds share
+belong to the release that was ported, and target text existing only there
+lives in that pack's own overlay.
 
 The same holds for the *game*. Langrisser IV and V share every container
 format, so both are described by manifests under `data/games/<code>/` and
@@ -118,10 +119,10 @@ python3 scripts/saturn_disc.py --cue iso/saturn/LANGRISSER_5.cue verify
 | `data/releases/<slug>/build_reference.json` | sha1 of every artifact the release builds, checked at the end of each build |
 | `data/games/l4/font_map.csv` | Langrisser IV glyph slot→character map (derived + read from the plane) |
 | `data/games/l4/lang/<lang>/` | Langrisser IV language packs |
-| `data/platforms/` | platform manifests and PS1/Saturn mapping metadata |
-| `data/platforms/saturn/scen_mapping.json` | proven Saturn↔PS1 SCEN record correspondence |
-| `data/platforms/saturn/system_mapping.json` | proven Saturn↔PS1 SYSTEM entry correspondence |
-| `data/platforms/saturn/kanji_map.csv` | Saturn kanji slot→character map (its bank is reordered) |
+| `data/platforms/<code>/` | console descriptors — the console itself, nothing game-specific |
+| `data/releases/l5-saturn-jp/scen_mapping.json` | proven Saturn↔PS1 SCEN record correspondence |
+| `data/releases/l5-saturn-jp/system_mapping.json` | proven Saturn↔PS1 SYSTEM entry correspondence |
+| `data/releases/l5-saturn-jp/kanji_map.csv` | Saturn kanji slot→character map (its bank is reordered) |
 | `data/games/l5/lang/<lang>/` | Langrisser V language packs (`en`, `ru`) |
 | `<pack>/manifest.json` | language settings used by tools |
 | `<pack>/SCEN/` | completed translated script chunks for that language |
@@ -381,7 +382,8 @@ or `--version <label>` for a non-tagged development release.
 
 The Saturn release of Langrisser V runs the same language pack through a
 console-specific back end. Nothing is translated twice: the pack stays
-PS1-keyed, and `data/platforms/saturn/` records what the two consoles share.
+PS1-keyed, and `data/releases/l5-saturn-jp/` records what the two builds
+share.
 
 Verify the disc and extract the Saturn side once:
 
@@ -406,7 +408,7 @@ overrides → native-glyph plan → Saturn-side slot usage scan → font → ref
 and validation → SYSTEM pack (+ write-contract check) → name entry → Now
 Loading → SCEN insert → SCENARIO CLEAR, title credits and the prologue poem.
 
-Strict mode stops on any unresolved `data/platforms/saturn/` mapping gap;
+Strict mode stops on any unresolved `data/releases/l5-saturn-jp/` mapping gap;
 `--allow-unmapped` is a diagnostic only. The non-remaster command emits
 translated extracted files under `work/build/saturn/`; `--remaster-disc` emits
 a translated mixed-mode Saturn BIN/CUE in the same directory. Saturn output
@@ -423,7 +425,7 @@ python3 scripts/saturn_system_audit.py --write-mapping   # SYSTEM entries
 ```
 
 They emit `work/build/saturn/scen_platform_review.md` with the Saturn original
-decoded through `data/platforms/saturn/kanji_map.csv`, the closest PS1 record
+decoded through `data/releases/l5-saturn-jp/kanji_map.csv`, the closest PS1 record
 and its current translations — everything needed to author the platform record.
 
 ## Important Constraints

@@ -30,6 +30,7 @@ from lang5_offsetgroups import PS1 as PS1_CFG
 from lang5_offsetgroups import SATURN as SATURN_CFG
 from lang5_offsetgroups import find_groups
 from lang5_project import add_language_args, language_from_args
+from lang5_release import add_release_args, release_from_args
 from lang5_saturn_apply import load_mapping as load_scen_mapping
 from lang5_saturn_system_pack import expand_group_map, load_mapping as load_system_mapping
 from lang5_sceninsert import parse_dump_file
@@ -146,15 +147,23 @@ def main() -> None:
                     help="Resolved common SYSTEM strings JSON, rewritten in place.")
     ap.add_argument("--saturn-orig", required=True)
     ap.add_argument("--ps1-system", default="work/extracted/SYSTEM.BIN")
-    ap.add_argument("--scen-mapping", default="data/platforms/saturn/scen_mapping.json")
-    ap.add_argument("--system-mapping", default="data/platforms/saturn/system_mapping.json")
+    add_release_args(ap, "l5-saturn-jp")
+    ap.add_argument("--scen-mapping", default=None,
+                    help="SCEN mapping JSON (default: the release manifest's)")
+    ap.add_argument("--system-mapping", default=None,
+                    help="SYSTEM mapping JSON (default: the release manifest's)")
     args = ap.parse_args()
     lang = language_from_args(args)
+    release = release_from_args(args)
+    scen_mapping = (Path(args.scen_mapping) if args.scen_mapping
+                    else release.scen_mapping)
+    system_mapping = (Path(args.system_mapping) if args.system_mapping
+                      else release.system_mapping)
 
     replaced = override_scen(
         Path(args.translation_root),
         lang.root / "platforms" / "saturn" / "SCEN",
-        load_scen_mapping(Path(args.scen_mapping)),
+        load_scen_mapping(scen_mapping),
     )
     overlay_path = lang.root / "platforms" / "saturn" / "system_strings.json"
     overlay = (json.loads(overlay_path.read_text(encoding="utf-8"))
@@ -162,7 +171,7 @@ def main() -> None:
     sys_replaced, removed = shadow_system(
         Path(args.strings),
         overlay,
-        load_system_mapping(Path(args.system_mapping)),
+        load_system_mapping(system_mapping),
         Path(args.saturn_orig).read_bytes(),
         Path(args.ps1_system).read_bytes(),
     )

@@ -141,8 +141,8 @@ def main() -> None:
         "--strings", resolved_system_strings,
         "--saturn-orig", system_in,
         "--ps1-system", args.ps1_system,
-        "--scen-mapping", platform.scen_mapping,
-        "--system-mapping", platform.system_mapping)
+        "--scen-mapping", release.scen_mapping,
+        "--system-mapping", release.system_mapping)
 
     # Characters encoded through native PS1-map tokens can hit Saturn slots
     # that hold a different glyph (reordered kanji region). Plan the remap to
@@ -163,8 +163,8 @@ def main() -> None:
     usage_scan = Path(f"work/build/saturn/usage_scan.{lang.suffix}.json")
     run(scripts / "saturn_usage_scan.py",
         "--scen", scen_in,
-        "--mapping", platform.scen_mapping,
-        "--kanji-map", platform.kanji_map,
+        "--mapping", release.scen_mapping,
+        "--kanji-map", release.kanji_map,
         "--out", usage_scan)
 
     build_assignments = Path(f"work/build/font_slot_assignments.{lang.suffix}.saturn.csv")
@@ -245,6 +245,8 @@ def main() -> None:
         "--lang-root", lang.root.parent,
         "--platform", args.platform,
         "--platform-root", args.platform_root,
+        "--release", release.code,
+        "--release-root", args.release_root,
         "--system-in", system_font,
         "--system-out", system_out,
         "--ps1-system", args.ps1_system,
@@ -282,6 +284,8 @@ def main() -> None:
         "--lang", args.lang, "--lang-root", lang.root.parent,
         "--platform", args.platform,
         "--platform-root", args.platform_root,
+        "--release", release.code,
+        "--release-root", args.release_root,
         "--scen", scen_in,
         "--out-scen", scen_out,
         "--tbl", tbl,
