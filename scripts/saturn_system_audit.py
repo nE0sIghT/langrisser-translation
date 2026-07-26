@@ -154,7 +154,8 @@ def main() -> None:
     }
     lang_root = Path(args.lang_root) if args.lang_root else game_from_args(args).lang_root
     for lang in args.langs:
-        path = lang_root / lang / "platforms" / "saturn" / "system_strings.json"
+        path = (lang_root / lang / "releases" / release.code
+                / "system_strings.json")
         if not path.exists():
             continue
         data = json.loads(path.read_text(encoding="utf-8"))

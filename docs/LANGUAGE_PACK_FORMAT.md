@@ -32,23 +32,29 @@ data/games/<game>/lang/<code>/
   poem_prologue.txt
   poem_prologue_jp.txt
   virash_monologue.json
+  releases/
+    l5-saturn-jp/
+      SCEN/
+      system_strings.json
 ```
 
 `SCEN/` contains only completed translated chunks. Work-in-progress chunks live
 in `work/wip_<code>/SCEN/`.
 
-`platforms/<platform>/` contains target-language text that exists only on that
-source platform. Keep this directory empty unless `data/platforms/<platform>/`
-explicitly maps an entry to it. The shared PS1-based translation remains in
-`SCEN/` and `system_strings.json`; do not duplicate common strings in platform
-overlays.
+`releases/<slug>/` contains target-language text that exists only in that
+release. It is keyed by release rather than by console because the delta is
+against one shipped build: two builds of the same game on the same console
+would each need their own. Keep the directory empty unless that release's
+mapping explicitly sends an entry to it. The shared translation stays in
+`SCEN/` and `system_strings.json`; do not duplicate common strings in an
+override.
 
-Current platform overlay shape:
+Current override shape:
 
 ```text
-data/games/<game>/lang/<code>/platforms/saturn/
-  SCEN/                 # sparse chunk_NNN.txt files for Saturn-only SCEN entries
-  system_strings.json   # sparse Saturn SYSTEM id -> target text overlay
+data/games/<game>/lang/<code>/releases/l5-saturn-jp/
+  SCEN/                 # sparse chunk_NNN.txt files for entries only this build has
+  system_strings.json   # sparse SYSTEM id -> target text overlay
 ```
 
 Language-specific data uses neutral target fields:
@@ -86,41 +92,53 @@ Fields currently consumed by the tools:
 | `system_strings` | Relative path to SYSTEM.BIN UI translation JSON. |
 | `system_layout` | Relative path to SYSTEM.BIN line-growth constraints JSON. |
 | `system_complete` | Fail the build when any Japanese-bearing SYSTEM entry remains unresolved. |
-| `title_credits` | Relative path to title-credit templates JSON. |
 | `names` | Relative path to name table CSV. |
 | `glossary` | Relative path to glossary CSV. |
-| `name_entry_grid` | Relative path to name-entry layout JSON. |
-| `manual_record_overrides` | Relative path to quiz/bootstrap overrides. |
 | `review_status` | Relative path to record-level translation review CSV. |
-| `poem` | Relative path to translated prologue poem text. |
-| `poem_source` | Relative path to recognized original poem text. |
-| `virash_monologue` | Relative path to Virash monologue cue JSON. |
 | `font` | Font path for rendering target glyph slots, relative to the language root. |
 | `font_size` | TTF render size for font-slot rendering. |
 | `caps_font` | Optional separate font for single uppercase glyphs in all-caps runs. |
 | `caps_font_size` | Render size for `caps_font`. |
-| `scenario_clear` | Optional translated IMG.DAT asset 9 banner text; empty or absent preserves the original graphic. |
-| `now_loading` | Optional translated IMG.DAT asset 0 loading-plate text; empty or absent preserves the original graphic. |
 | `single_chars` | Characters that must receive glyph slots even before script text uses them; this includes target-specific punctuation not present in the native map. |
 | `forced_pairs` | Optional two-character glyphs that must be allocated, such as compact UI labels. |
 | `window_width` | Dialogue window width in cells. |
 | `choice_width` | Choice-row width in cells. |
 | `max_lines` | Safe page height for rewrap checks. |
+| `assets` | Screens this pack's game happens to have (see below). |
 
-## Platform Packs
+The top-level fields above apply to any target language of any game. Screens a
+particular game has live in `assets`, so a new game's pack neither inherits
+keys that mean nothing to it nor makes the loader grow a field per screen:
 
-Console-specific source structure lives under `data/platforms/<platform>/`.
-These files store mappings and layout decisions only; they must not contain
-extracted Japanese source text.
+| `assets` key | Meaning |
+| --- | --- |
+| `title_credits` | Relative path to title-credit templates JSON. |
+| `name_entry_grid` | Relative path to name-entry layout JSON. |
+| `manual_record_overrides` | Relative path to quiz/bootstrap overrides. |
+| `poem` | Relative path to translated prologue poem text. |
+| `poem_source` | Relative path to recognized original poem text. |
+| `virash_monologue` | Relative path to Virash monologue cue JSON. |
+| `scenario_clear` | Optional translated IMG.DAT asset 9 banner text; empty or absent preserves the original graphic. |
+| `now_loading` | Optional translated IMG.DAT asset 0 loading-plate text; empty or absent preserves the original graphic. |
+
+## Release Packs
+
+Per-build structure lives under `data/releases/<slug>/`. These files store
+mappings and layout decisions only; they must not contain extracted Japanese
+source text. `data/platforms/<platform>/` holds the console descriptor and
+nothing game-specific.
 
 ```text
-data/platforms/
-  ps1/
+data/releases/
+  l5-ps1-jp/
     manifest.json
-  saturn/
+    build_reference.json
+  l5-saturn-jp/
     manifest.json
+    build_reference.json
     scen_mapping.json
     system_mapping.json
+    kanji_map.csv
 ```
 
 The common language pack is PS1-based because the existing translation and
@@ -158,7 +176,8 @@ A Saturn-only translated record uses a sparse platform chunk file:
 ```
 
 which resolves to
-`data/games/<game>/lang/<code>/platforms/saturn/SCEN/chunk_NNN.txt` record `253`.
+`data/games/<game>/lang/<code>/releases/l5-saturn-jp/SCEN/chunk_NNN.txt`
+record `253`.
 
 A verified non-translated SCEN entry can be preserved explicitly:
 

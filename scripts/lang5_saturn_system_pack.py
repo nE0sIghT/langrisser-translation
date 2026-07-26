@@ -134,8 +134,8 @@ def main() -> None:
     ap.add_argument("--ps1-system", default="work/extracted/SYSTEM.BIN")
     ap.add_argument("--strings", default=None,
                     help="Resolved common SYSTEM strings JSON.")
-    ap.add_argument("--platform-strings", default=None,
-                    help="Language-specific platform SYSTEM overlay JSON.")
+    ap.add_argument("--release-strings", default=None,
+                    help="Language-specific release SYSTEM overlay JSON.")
     ap.add_argument("--mapping", default=None,
                     help="SYSTEM mapping JSON (default: the release manifest's)")
     ap.add_argument("--tbl", default=None,
@@ -193,8 +193,8 @@ def main() -> None:
         return PS1.order.words(ps1_data, off, run_length(ps1_data, off, PS1))
     translations = json.loads(strings_path.read_text(encoding="utf-8"))
     platform_strings_path = (
-        Path(args.platform_strings) if args.platform_strings
-        else lang.root / "platforms" / platform.code / "system_strings.json"
+        Path(args.release_strings) if args.release_strings
+        else lang.override_system_strings(release.code)
     )
     platform_translations = (
         json.loads(platform_strings_path.read_text(encoding="utf-8"))

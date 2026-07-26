@@ -126,7 +126,7 @@ python3 scripts/saturn_disc.py --cue iso/saturn/LANGRISSER_5.cue verify
 | `data/games/l5/lang/<lang>/` | Langrisser V language packs (`en`, `ru`) |
 | `<pack>/manifest.json` | language settings used by tools |
 | `<pack>/SCEN/` | completed translated script chunks for that language |
-| `<pack>/platforms/` | sparse platform-specific target overlays |
+| `<pack>/releases/<slug>/` | sparse target text only one release ships |
 | `<pack>/system_strings.json` | target SYSTEM.BIN UI text overlay |
 | `<pack>/system_layout.json` | SYSTEM.BIN line-growth constraints |
 | `<pack>/title_credits.json` | language-specific title credits |
@@ -159,8 +159,8 @@ durable translation/editorial data only:
 - target title credits and non-reproducible graphic/cutscene transcript text.
 
 The common translation is PS1-based. Console-specific structure lives under
-`data/platforms/<platform>/`; target text that exists only on a platform lives
-under `data/lang/<lang>/platforms/<platform>/`. A Saturn build reuses common
+its release pack; target text that only one build ships lives under that
+pack's `releases/<slug>/`. A Saturn build reuses common
 PS1 strings only when the platform mapping proves the entry correspondence.
 If platform-specific mapping or target text is missing, the strict build fails
 instead of silently preserving Japanese.

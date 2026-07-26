@@ -8,17 +8,9 @@
   "system_strings": "system_strings.json",
   "system_layout": "system_layout.json",
   "system_complete": true,
-  "title_credits": "title_credits.json",
   "names": "names.csv",
   "glossary": "glossary.csv",
-  "name_entry_grid": "name_entry_grid.json",
-  "manual_record_overrides": "manual_record_overrides.json",
   "review_status": "review_status.csv",
-  "poem": "poem_prologue.txt",
-  "poem_source": "poem_prologue_jp.txt",
-  "virash_monologue": "virash_monologue.json",
-  "scenario_clear": "СЦЕНАРИЙ ПРОЙДЕН",
-  "now_loading": "Загрузка…",
   "font": "../../../../fonts/terminus-normal.otb",
   "font_size": 12,
   "caps_font": "../../../../fonts/ter-u14n.bdf",
@@ -30,5 +22,15 @@
   "forced_pairs": [
     "ОК",
     "нб"
-  ]
+  ],
+  "assets": {
+    "title_credits": "title_credits.json",
+    "name_entry_grid": "name_entry_grid.json",
+    "manual_record_overrides": "manual_record_overrides.json",
+    "poem": "poem_prologue.txt",
+    "poem_source": "poem_prologue_jp.txt",
+    "virash_monologue": "virash_monologue.json",
+    "scenario_clear": "СЦЕНАРИЙ ПРОЙДЕН",
+    "now_loading": "Загрузка…"
+  }
 }

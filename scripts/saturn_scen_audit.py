@@ -229,7 +229,8 @@ def main() -> None:
         for lang, records_map in common.items():
             if not auto_writes:
                 break
-            pfile = lang_root / lang / "platforms" / "saturn" / "SCEN" / f"chunk_{ci:03d}.txt"
+            pfile = (lang_root / lang / "releases" / release.code / "SCEN"
+                     / f"chunk_{ci:03d}.txt")
             existing = parse_dump_file(pfile) if pfile.exists() else {}
             additions = [
                 f"{si}\t{records_map[r]}"

@@ -41,6 +41,7 @@ from pathlib import Path
 
 from lang5_build_font import GLYPH_BYTES, NATIVE_VISUAL_OVERRIDES
 from lang5_project import COMMON_FONT_MAP, add_language_args, language_from_args
+from lang5_release import add_release_args
 from lang5_sceninsert import parse_dump_file
 
 TAG_RE = re.compile(r"<\$[0-9A-Fa-f]{4}>")
@@ -93,7 +94,7 @@ def glyph(plane: bytes, tok: int) -> bytes:
     return plane[tok * GLYPH_BYTES:(tok + 1) * GLYPH_BYTES]
 
 
-def cmd_plan(args: argparse.Namespace, lang, platform_dir: Path) -> None:
+def cmd_plan(args: argparse.Namespace, lang, override_dir: Path) -> None:
     # The build copies are already normalized by saturn_apply_text_overrides
     # (platform records inlined, shadowed SYSTEM ids removed), so the
     # effective character set is simply everything those copies plus the
@@ -103,10 +104,10 @@ def cmd_plan(args: argparse.Namespace, lang, platform_dir: Path) -> None:
     texts: list[str] = []
     for fp in sorted(Path(args.translation_root).glob("*/chunk_*.txt")):
         texts.extend(parse_dump_file(fp).values())
-    for fp in sorted((platform_dir / "SCEN").glob("chunk_*.txt")):
+    for fp in sorted((override_dir / "SCEN").glob("chunk_*.txt")):
         texts.extend(parse_dump_file(fp).values())
     texts.extend(json.loads(Path(args.strings).read_text(encoding="utf-8")).values())
-    overlay_path = platform_dir / "system_strings.json"
+    overlay_path = override_dir / "system_strings.json"
     if overlay_path.exists():
         texts.extend(json.loads(overlay_path.read_text(encoding="utf-8")).values())
     effective = chars_of(texts, lang.name_entry_grid)
@@ -188,6 +189,7 @@ def cmd_apply(args: argparse.Namespace) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
+    add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("command", choices=["plan", "apply"])
     ap.add_argument("--plan", required=True, help="Plan JSON path.")
     ap.add_argument("--ps1-system", default="work/extracted/SYSTEM.BIN")
@@ -202,11 +204,11 @@ def main() -> None:
                     help="apply: build font slot assignments CSV.")
     args = ap.parse_args()
     lang = language_from_args(args)
-    platform_dir = lang.root / "platforms" / "saturn"
+    override_dir = lang.overrides(args.release)
     if args.command == "plan":
         if not (args.saturn_orig and args.translation_root and args.strings):
             raise SystemExit("plan requires --saturn-orig, --translation-root and --strings")
-        cmd_plan(args, lang, platform_dir)
+        cmd_plan(args, lang, override_dir)
     else:
         if not (args.tbl and args.assignments):
             raise SystemExit("apply requires --tbl and --assignments")

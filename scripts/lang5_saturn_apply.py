@@ -172,8 +172,10 @@ def load_mapping(path: Path | None) -> dict:
     return data
 
 
-def platform_scen_records(lang_root: Path, platform_code: str, chunk_index: int) -> dict[int, str]:
-    path = lang_root / "platforms" / platform_code / "SCEN" / f"chunk_{chunk_index:03d}.txt"
+def release_scen_records(lang_root: Path, release_code: str,
+                         chunk_index: int) -> dict[int, str]:
+    path = (lang_root / "releases" / release_code / "SCEN"
+            / f"chunk_{chunk_index:03d}.txt")
     return parse_dump_file(path) if path.exists() else {}
 
 
@@ -220,7 +222,7 @@ def apply_scen(data: bytes, lang_scen_dir: Path, codec: Codec,
                ps1_scen: bytes | None = None, *,
                mapping: dict | None = None,
                lang_root: Path | None = None,
-               platform_code: str = "saturn",
+               release_code: str = "",
                strict: bool = True,
                no_grow: bool = False,
                norm: Normalizer | None = None) -> tuple[bytes, dict]:
@@ -239,7 +241,7 @@ def apply_scen(data: bytes, lang_scen_dir: Path, codec: Codec,
     stats = {"blocks": len(blocks), "applied": 0,
              "entries_written": 0, "missing_dump": 0,
              "mapped": 0, "empty_skipped": 0, "skipped_over_budget": 0,
-             "platform_records": 0, "preserved_pending": 0}
+             "release_records": 0, "preserved_pending": 0}
     mapping = mapping or {"empty_chunks": [], "chunks": {}}
     empty_chunks = {int(x) for x in mapping.get("empty_chunks", [])}
     chunk_specs = {int(k): v for k, v in (mapping.get("chunks") or {}).items()}
@@ -272,9 +274,9 @@ def apply_scen(data: bytes, lang_scen_dir: Path, codec: Codec,
             # signature-verified below like the automatic ones.
             targets.update(expand_record_map(spec, len(entries)))
             stats["mapped"] += 1
-        platform_records = (
-            platform_scen_records(lang_root, platform_code, chunk_index)
-            if lang_root is not None else {}
+        release_records = (
+            release_scen_records(lang_root, release_code, chunk_index)
+            if lang_root is not None and release_code else {}
         )
         new_entries: list[list[int]] = []
         chunk_fatal: list[str] = []
@@ -302,7 +304,7 @@ def apply_scen(data: bytes, lang_scen_dir: Path, codec: Codec,
                 new_entries.append(codec.encode(text))
             elif isinstance(target, dict) and "platform" in target:
                 platform_index = int(target["platform"])
-                text = platform_records.get(platform_index)
+                text = release_records.get(platform_index)
                 if text is None:
                     chunk_fatal.append(
                         f"chunk {chunk_index:03d} entry {saturn_index}: platform "
@@ -310,7 +312,7 @@ def apply_scen(data: bytes, lang_scen_dir: Path, codec: Codec,
                     )
                     new_entries.append(entries[saturn_index])
                     continue
-                stats["platform_records"] += 1
+                stats["release_records"] += 1
                 new_entries.append(codec.encode(text))
             elif isinstance(target, dict) and target.get("preserve"):
                 stats["preserved_pending"] += 1
@@ -399,7 +401,7 @@ def main() -> None:
         data, scen_dir, codec, ps1_scen,
         mapping=mapping,
         lang_root=lang.root,
-        platform_code=platform.code,
+        release_code=release.code,
         strict=not args.allow_unmapped,
         no_grow=args.no_grow,
         norm=norm,
@@ -412,7 +414,7 @@ def main() -> None:
         f"applied {stats['applied']}/{stats['blocks']} blocks, "
         f"{stats['entries_written']} entries; "
         f"mapped={stats['mapped']} "
-        f"platform-records={stats['platform_records']} "
+        f"release-records={stats['release_records']} "
         f"preserved-pending={stats['preserved_pending']} "
         f"empty-skipped={stats['empty_skipped']} "
         f"missing-dump={stats['missing_dump']} "

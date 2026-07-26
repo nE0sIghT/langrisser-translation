@@ -4,6 +4,19 @@
 The toolkit keeps generated source dumps under work/ and durable translation
 assets under each game's lang/<code>/. This module is the single place that resolves
 language manifests and derived output paths.
+
+A pack manifest has two halves. Its top level holds what every target language
+needs whatever the game is: script directory, fonts and metrics, glossary,
+SYSTEM overlays, review status. Its `assets` block holds the text of screens a
+particular game happens to have — Langrisser V's prologue poem and Virash
+monologue, the title credits, the name-entry grid. Splitting them is what
+tells the author of a new game's pack which half applies to them, and lets a
+game add a screen through `asset_path`/`asset_text` without this module
+growing a property for it.
+
+Target text that only one release ships lives under the pack's
+`releases/<slug>/`, mirroring the shared layout. It is keyed by release rather
+than by console because it is a delta against a specific build.
 """
 from __future__ import annotations
 
@@ -55,6 +68,37 @@ class LanguagePack:
         return self.script_dir.parent
 
     @property
+    def assets(self) -> dict[str, Any]:
+        """Text and layout of screens specific to this pack's game."""
+        return dict(self._data.get("assets") or {})
+
+    def asset_path(self, name: str, default: str | None = None) -> Path:
+        """File holding a game-specific asset, defaulting to its usual name."""
+        return _path(self.root, str(self.assets.get(name) or default or name))  # type: ignore[return-value]
+
+    def asset_text(self, name: str) -> str:
+        """A game-specific asset that is a literal string, empty when absent.
+
+        Absent means "leave the original alone": a pack that has not translated
+        a banner keeps the shipped one rather than blanking it.
+        """
+        return str(self.assets.get(name) or "")
+
+    def overrides(self, release: str) -> Path:
+        """Directory of target text that only `release` ships.
+
+        Keyed by release, not by console: the delta is against one build, and
+        two builds of the same game on one console would need separate ones.
+        """
+        return self.root / "releases" / release
+
+    def override_script_dir(self, release: str) -> Path:
+        return self.overrides(release) / self.script_stem
+
+    def override_system_strings(self, release: str) -> Path:
+        return self.overrides(release) / "system_strings.json"
+
+    @property
     def script_stem(self) -> str:
         return self.script_dir.name
 
@@ -81,7 +125,7 @@ class LanguagePack:
 
     @property
     def title_credits(self) -> Path:
-        return _path(self.root, str(self._data.get("title_credits") or "title_credits.json"))  # type: ignore[return-value]
+        return self.asset_path("title_credits", "title_credits.json")
 
     @property
     def names(self) -> Path:
@@ -93,11 +137,12 @@ class LanguagePack:
 
     @property
     def name_entry_grid(self) -> Path:
-        return _path(self.root, str(self._data.get("name_entry_grid") or "name_entry_grid.json"))  # type: ignore[return-value]
+        return self.asset_path("name_entry_grid", "name_entry_grid.json")
 
     @property
     def manual_record_overrides(self) -> Path:
-        return _path(self.root, str(self._data.get("manual_record_overrides") or "manual_record_overrides.json"))  # type: ignore[return-value]
+        return self.asset_path("manual_record_overrides",
+                               "manual_record_overrides.json")
 
     @property
     def review_status(self) -> Path:
@@ -105,15 +150,15 @@ class LanguagePack:
 
     @property
     def poem(self) -> Path:
-        return _path(self.root, str(self._data.get("poem") or "poem_prologue.txt"))  # type: ignore[return-value]
+        return self.asset_path("poem", "poem_prologue.txt")
 
     @property
     def poem_source(self) -> Path:
-        return _path(self.root, str(self._data.get("poem_source") or "poem_prologue_jp.txt"))  # type: ignore[return-value]
+        return self.asset_path("poem_source", "poem_prologue_jp.txt")
 
     @property
     def virash_monologue(self) -> Path:
-        return _path(self.root, str(self._data.get("virash_monologue") or "virash_monologue.json"))  # type: ignore[return-value]
+        return self.asset_path("virash_monologue", "virash_monologue.json")
 
     @property
     def font(self) -> Path | None:
@@ -125,11 +170,11 @@ class LanguagePack:
 
     @property
     def scenario_clear(self) -> str:
-        return str(self._data.get("scenario_clear") or "")
+        return self.asset_text("scenario_clear")
 
     @property
     def now_loading(self) -> str:
-        return str(self._data.get("now_loading") or "")
+        return self.asset_text("now_loading")
 
     @property
     def caps_font(self) -> Path | None:

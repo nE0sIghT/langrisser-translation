@@ -1123,7 +1123,7 @@ wrongly-fed entries).
 
 Entries with no proven counterpart hold Saturn-edited content (pad-button
 phrasing, extra lines, reordered duplicates, karaoke jokes). They must come
-from platform records (`data/games/<game>/lang/<code>/platforms/saturn/SCEN/`, wired
+from release records (`data/games/<game>/lang/<code>/releases/l5-saturn-jp/SCEN/`, wired
 through `scen_mapping.json` entries with a `replaces_ps1` annotation naming
 the PS1-only record they supersede) or stay explicitly preserved with
 `"pending_review": true` until translated — anything else fails the build.
@@ -1166,7 +1166,7 @@ only the glyph-plane file offset differs.
 - Runtime-check that the remastered BIN/CUE reaches translated scenario text,
   SYSTEM screens and Saturn-specific graphic adapters.
 - If future Saturn-only text is found, add sparse platform overrides under
-  `data/games/<game>/lang/<code>/platforms/saturn/` and keep strict builds green.
+  `data/games/<game>/lang/<code>/releases/l5-saturn-jp/` and keep strict builds green.
 
 ### Cross-validation and ISO-output recipe (Langrisser III, Saturn)
 

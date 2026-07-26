@@ -16,6 +16,7 @@ from pathlib import Path
 
 from lang5_game import add_game_args, game_from_args
 from lang5_project import ROOT, load_language
+from lang5_release import releases_for
 
 
 SCALAR_FILES = [
@@ -154,7 +155,8 @@ def main() -> None:
     ap.add_argument("--force", action="store_true", help="Overwrite an existing scaffold file.")
     args = ap.parse_args()
 
-    lang_root = Path(args.lang_root) if args.lang_root else game_from_args(args).lang_root
+    game = game_from_args(args)
+    lang_root = Path(args.lang_root) if args.lang_root else game.lang_root
     if not lang_root.is_absolute():
         lang_root = Path.cwd() / lang_root
     src = load_language(args.from_lang, lang_root)
@@ -162,15 +164,15 @@ def main() -> None:
     dst_root.mkdir(parents=True, exist_ok=True)
     (dst_root / "SCEN").mkdir(exist_ok=True)
     (dst_root / "SCEN" / ".gitkeep").touch()
-    platform_root = ROOT / "data" / "platforms"
-    if platform_root.exists():
-        for platform_dir in sorted(p for p in platform_root.iterdir() if p.is_dir()):
-            dst_platform = dst_root / "platforms" / platform_dir.name
-            (dst_platform / "SCEN").mkdir(parents=True, exist_ok=True)
-            (dst_platform / "SCEN" / ".gitkeep").touch()
-            system_overlay = dst_platform / "system_strings.json"
-            if not system_overlay.exists() or args.force:
-                system_overlay.write_text("{}\n", encoding="utf-8")
+    # One override directory per release of this game: a delta is against a
+    # build, so a game shipped twice on one console gets one slot each.
+    for release in releases_for(game.code):
+        dst_release = dst_root / "releases" / release.code
+        (dst_release / "SCEN").mkdir(parents=True, exist_ok=True)
+        (dst_release / "SCEN" / ".gitkeep").touch()
+        system_overlay = dst_release / "system_strings.json"
+        if not system_overlay.exists() or args.force:
+            system_overlay.write_text("{}\n", encoding="utf-8")
 
     manifest = src.manifest_copy()
     manifest["lang"] = args.lang

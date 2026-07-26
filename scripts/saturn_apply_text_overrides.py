@@ -162,10 +162,10 @@ def main() -> None:
 
     replaced = override_scen(
         Path(args.translation_root),
-        lang.root / "platforms" / "saturn" / "SCEN",
+        lang.override_script_dir(release.code),
         load_scen_mapping(scen_mapping),
     )
-    overlay_path = lang.root / "platforms" / "saturn" / "system_strings.json"
+    overlay_path = lang.override_system_strings(release.code)
     overlay = (json.loads(overlay_path.read_text(encoding="utf-8"))
                if overlay_path.exists() else {})
     sys_replaced, removed = shadow_system(

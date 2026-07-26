@@ -137,6 +137,7 @@ def main() -> None:
     # actually ships — e.g. Saturn pad buttons instead of PS1 pad symbols.
     run(scripts / "saturn_apply_text_overrides.py",
         "--lang", args.lang, "--lang-root", lang.root.parent,
+        "--release", release.code,
         "--translation-root", build_translation_root,
         "--strings", resolved_system_strings,
         "--saturn-orig", system_in,
@@ -151,6 +152,7 @@ def main() -> None:
     glyph_plan = Path(f"work/build/saturn/native_glyphs.{lang.suffix}.plan.json")
     run(scripts / "saturn_fix_native_glyphs.py",
         "--lang", args.lang, "--lang-root", lang.root.parent,
+        "--release", release.code,
         "plan",
         "--plan", glyph_plan,
         "--saturn-orig", system_in,
@@ -158,10 +160,11 @@ def main() -> None:
         "--translation-root", build_translation_root,
         "--strings", resolved_system_strings)
 
-    # Sacrificial-slot facts must come from the platform's own data: what the
+    # Sacrificial-slot facts must come from this release's own data: what the
     # Saturn build leaves untranslated is what a sacrifice would corrupt.
     usage_scan = Path(f"work/build/saturn/usage_scan.{lang.suffix}.json")
     run(scripts / "saturn_usage_scan.py",
+        "--release", release.code,
         "--scen", scen_in,
         "--mapping", release.scen_mapping,
         "--kanji-map", release.kanji_map,
@@ -181,8 +184,8 @@ def main() -> None:
         "--scen2", args.ps1_scen2,
         "--max-slot", str(release.max_font_slot),
         "--exclude-slots", glyph_plan,
-        "--extra-script-dir", lang.root / "platforms" / platform.code / "SCEN",
-        "--extra-menu-strings", lang.root / "platforms" / platform.code / "system_strings.json",
+        "--extra-script-dir", lang.override_script_dir(release.code),
+        "--extra-menu-strings", lang.override_system_strings(release.code),
         "--usage-scan", usage_scan)
 
     font_cmd = [
@@ -251,7 +254,7 @@ def main() -> None:
         "--system-out", system_out,
         "--ps1-system", args.ps1_system,
         "--strings", reflowed_system_strings,
-        "--platform-strings", lang.root / "platforms" / platform.code / "system_strings.json",
+        "--release-strings", lang.override_system_strings(release.code),
         "--tbl", tbl,
         "--layout", lang.system_layout,
         "--system-source", system_source,
