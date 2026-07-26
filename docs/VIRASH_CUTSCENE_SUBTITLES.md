@@ -228,7 +228,7 @@ verbatim — high confidence overall.
 
 ### Content confirmed by three sources
 
-1. **Game recap**, `work/scriptdump/SCEN/chunk_129.txt` #66 ("そしてヴィラージュは、
+1. **Game recap**, `work/l5/scriptdump/SCEN/chunk_129.txt` #66 ("そしてヴィラージュは、
    古代魔法大戦について語る。…クリムゾは本来の軌道を外れ、200年周期で楕円軌道を描く衛星となった。").
 2. **Borgor's GameFAQs guide** (`work/translation.txt` ~L8500-8517) — an English
    *summary* (borgor couldn't catch an exact translation): red Crimzo / blue

@@ -146,7 +146,7 @@ def main() -> None:
     ap.add_argument("--strings", required=True,
                     help="Resolved common SYSTEM strings JSON, rewritten in place.")
     ap.add_argument("--saturn-orig", required=True)
-    ap.add_argument("--ps1-system", default="work/extracted/SYSTEM.BIN")
+    ap.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN")
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--scen-mapping", default=None,
                     help="SCEN mapping JSON (default: the release manifest's)")

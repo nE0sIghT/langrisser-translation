@@ -7,14 +7,14 @@ size and every replaced asset size must remain unchanged.
 Durable tooling:
 
 ```bash
-python3 -m langrisser.imgdat list work/extracted/IMG.DAT
-python3 -m langrisser.imgdat inspect work/extracted/IMG.DAT 10
-python3 -m langrisser.imgdat extract work/extracted/IMG.DAT 10 work/title_asset10.bin
-python3 -m langrisser.imgdat replace work/extracted/IMG.DAT 10 work/title_asset10.bin work/IMG_roundtrip.DAT
-python3 -m langrisser.imgdat title-credits work/extracted/IMG.DAT \
-  --out-imgdat work/build/IMG.DAT.en \
+python3 -m langrisser.imgdat list work/l5/extracted/IMG.DAT
+python3 -m langrisser.imgdat inspect work/l5/extracted/IMG.DAT 10
+python3 -m langrisser.imgdat extract work/l5/extracted/IMG.DAT 10 work/title_asset10.bin
+python3 -m langrisser.imgdat replace work/l5/extracted/IMG.DAT 10 work/title_asset10.bin work/IMG_roundtrip.DAT
+python3 -m langrisser.imgdat title-credits work/l5/extracted/IMG.DAT \
+  --out-imgdat work/l5/build/IMG.DAT.en \
   --version 1 \
-  --out-display work/build/title_credits_display.png
+  --out-display work/l5/build/title_credits_display.png
 ```
 
 ## Container
@@ -191,10 +191,10 @@ movie/title loop. They share the same bitmap layout and credit coordinates.
 Decode commands:
 
 ```bash
-python3 -m langrisser.imgdat decode-gap-bitmap work/extracted/IMG.DAT \
+python3 -m langrisser.imgdat decode-gap-bitmap work/l5/extracted/IMG.DAT \
   --profile title10 \
   --out work/title_credits/title10_decoded.png
-python3 -m langrisser.imgdat decode-gap-bitmap work/extracted/IMG.DAT \
+python3 -m langrisser.imgdat decode-gap-bitmap work/l5/extracted/IMG.DAT \
   --profile title11 \
   --out work/title_credits/title11_decoded.png
 ```
@@ -205,12 +205,12 @@ index-colored rendering is needed.
 Production title-credit patch command:
 
 ```bash
-python3 -m langrisser.imgdat title-credits work/extracted/IMG.DAT \
-  --out-imgdat work/build/IMG.DAT.en \
+python3 -m langrisser.imgdat title-credits work/l5/extracted/IMG.DAT \
+  --out-imgdat work/l5/build/IMG.DAT.en \
   --version 1 \
-  --out-raw-preview work/build/title_credits_raw.png \
-  --out-display work/build/title_credits_display.png \
-  --out-crop work/build/title_credits_crop.png
+  --out-raw-preview work/l5/build/title_credits_raw.png \
+  --out-display work/l5/build/title_credits_display.png \
+  --out-crop work/l5/build/title_credits_crop.png
 ```
 
 The command writes an edited same-size copy of `IMG.DAT`, patching both

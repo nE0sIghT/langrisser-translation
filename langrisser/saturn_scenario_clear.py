@@ -45,11 +45,11 @@ def load_palette(data: bytes, offset: int) -> list[tuple[int, int, int]]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
-    ap.add_argument("--clear", default="work/build/saturn/CLEAR.DAT")
-    ap.add_argument("--out-clear", default="work/build/saturn/CLEAR.ru.DAT")
+    ap.add_argument("--clear", default="work/l5/build/saturn/CLEAR.DAT")
+    ap.add_argument("--out-clear", default="work/l5/build/saturn/CLEAR.ru.DAT")
     ap.add_argument("--text", default=None)
     ap.add_argument("--font", default=FONT)
-    ap.add_argument("--out-preview", default="work/build/saturn/scenario_clear_preview.png")
+    ap.add_argument("--out-preview", default="work/l5/build/saturn/scenario_clear_preview.png")
     args = ap.parse_args()
 
     lang = language_from_args(args)

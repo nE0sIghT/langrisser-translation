@@ -98,12 +98,12 @@ def dump_file(src: Path, out_dir: Path, codec: Codec) -> list[dict[str, str]]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_game_args(ap)
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
     ap.add_argument("--scen2", default=None,
                     help="Second script file (Langrisser V mirrors SCEN in SCEN2).")
     ap.add_argument("--charmap", default=None,
                     help="Slot->char map (default: the game's font map).")
-    ap.add_argument("--out-dir", default="work/scriptdump")
+    ap.add_argument("--out-dir", default="work/l5/scriptdump")
     args = ap.parse_args()
 
     game = game_from_args(args)

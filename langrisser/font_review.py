@@ -82,7 +82,7 @@ def img_tag(b64: str | None, cls: str = "") -> str:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--groups-report", default=str(COMMON_FONT_MAP))
-    ap.add_argument("--system-bin", default="work/extracted/SYSTEM.BIN")
+    ap.add_argument("--system-bin", default="work/l5/extracted/SYSTEM.BIN")
     ap.add_argument("--proposals", default=str(COMMON_FONT_FIXES))
     ap.add_argument("--out", default="work/font_review/font_review.html")
     ap.add_argument("--flagged-only", action="store_true",

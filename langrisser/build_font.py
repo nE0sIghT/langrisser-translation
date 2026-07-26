@@ -346,7 +346,7 @@ def main() -> None:
     add_language_args(ap)
     ap.add_argument("--groups-report", default=None)
     ap.add_argument("--assignments", default=None)
-    ap.add_argument("--system-bin", default="work/extracted/SYSTEM.BIN")
+    ap.add_argument("--system-bin", default="work/l5/extracted/SYSTEM.BIN")
     ap.add_argument("--out-system-bin", default=None)
     ap.add_argument("--out-tbl", default=None)
     ap.add_argument("--font", default=None)

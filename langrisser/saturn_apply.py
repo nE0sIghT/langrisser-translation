@@ -360,11 +360,11 @@ def main() -> None:
     add_language_args(ap)
     add_platform_args(ap, "saturn")
     add_release_args(ap, "l5-saturn-jp")
-    ap.add_argument("--scen", default="work/build/saturn/SCEN.DAT")
-    ap.add_argument("--out-scen", default="work/build/saturn/SCEN.applied.DAT")
+    ap.add_argument("--scen", default="work/l5/build/saturn/SCEN.DAT")
+    ap.add_argument("--out-scen", default="work/l5/build/saturn/SCEN.applied.DAT")
     ap.add_argument("--tbl", default=None,
                     help="charmap .tbl (default: platform build tbl)")
-    ap.add_argument("--ps1-scen", default="work/extracted/SCEN.DAT",
+    ap.add_argument("--ps1-scen", default="work/l5/extracted/SCEN.DAT",
                     help="PS1 SCEN.DAT used only for exact stable-token alignment")
     ap.add_argument("--mapping", default=None,
                     help="SCEN mapping JSON (default: the release manifest's)")
@@ -386,7 +386,7 @@ def main() -> None:
     elif platform.code == "ps1":
         tbl = lang.tbl
     else:
-        tbl = Path(f"work/build/{platform.code}/lang5_{lang.suffix}.{platform.code}.tbl")
+        tbl = Path(f"work/l5/build/{platform.code}/lang5_{lang.suffix}.{platform.code}.tbl")
     mapping_path = Path(args.mapping) if args.mapping else release.scen_mapping
     mapping = load_mapping(mapping_path)
     codec = Codec(load_charmap_tbl(tbl))

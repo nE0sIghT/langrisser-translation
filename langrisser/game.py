@@ -49,6 +49,11 @@ class GamePack:
         return str(self._data.get("engine") or "l45")
 
     @property
+    def patch_stem(self) -> str:
+        """Stem of this game's shipped patch and its work image."""
+        return str(self._data.get("patch_stem") or self.code)
+
+    @property
     def font_map(self) -> Path:
         """Slot->character map for this game's glyph plane.
 

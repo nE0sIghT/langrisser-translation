@@ -1,6 +1,7 @@
 {
   "game": "l5",
   "label": "Langrisser V: The End of Legend",
+  "patch_stem": "langrisser_v",
   "engine": "l45",
   "font_map": "../../common/font_mapping/groups_report.csv",
   "text_table": "../../common/tables/lang5_jp.tbl",

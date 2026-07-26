@@ -20,7 +20,7 @@ if [[ -z "${PYTHON:-}" ]]; then
 fi
 ORIG_BIN="${ORIG_BIN:-iso/SLPS-01818-9-B.bin}"
 ORIG_SHA256="${ORIG_SHA256:-af3f5e1d6912f31f712d43cf71d954481fa9814021e62b41fdd8fce0c9429247}"
-EXTRACT_DIR="${EXTRACT_DIR:-work/extracted}"
+EXTRACT_DIR="${EXTRACT_DIR:-work/l5/extracted}"
 DIST_ROOT="${DIST_ROOT:-dist}"
 
 VERSION=""
@@ -165,7 +165,7 @@ for lang in "${LANGS[@]}"; do
 	"$PYTHON" -m langrisser.build_ppf --lang "$lang" --patch-version "$VERSION"
 
 	ppf="patches/langrisser_v_${suffix}.ppf"
-	patched_bin="work/build/langrisser_v_${suffix}.bin"
+	patched_bin="work/l5/build/langrisser_v_${suffix}.bin"
 	ppf_name="langrisser_v_${suffix}-${LABEL}.ppf"
 	cp "$ppf" "$DIST/$ppf_name"
 	ppf_sha="$(sha256sum "$DIST/$ppf_name" | cut -d' ' -f1)"

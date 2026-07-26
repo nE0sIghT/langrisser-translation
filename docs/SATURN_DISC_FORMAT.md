@@ -63,10 +63,10 @@ Platform is chosen at build time; the `data/games/<game>/lang/<code>` pack is un
 files:
 
 ```bash
-python3 -m langrisser.saturn_disc extract SYSTEM.DAT work/build/saturn/SYSTEM.DAT
-python3 -m langrisser.saturn_disc extract SCEN.DAT   work/build/saturn/SCEN.DAT
+python3 -m langrisser.saturn_disc extract SYSTEM.DAT work/l5/build/saturn/SYSTEM.DAT
+python3 -m langrisser.saturn_disc extract SCEN.DAT   work/l5/build/saturn/SCEN.DAT
 python3 -m langrisser.saturn_build --lang ru \
-  --assignments work/build/font_slot_assignments.ru.csv
+  --assignments work/l5/build/font_slot_assignments.ru.csv
 ```
 
 The stages, all reusing shared logic:
@@ -85,12 +85,12 @@ The stages, all reusing shared logic:
   `OPEN.DAT[2]` prologue poem. The `Now Loading` plate is part of
   `SYSTEM.DAT`, so it is patched immediately after the SYSTEM text packer.
 - With `--remaster-disc`, the build writes a translated mixed-mode BIN/CUE under
-  `work/build/saturn/`.
+  `work/l5/build/saturn/`.
 
 Remaining before release-grade Saturn parity: runtime-checking the statically
 patched Saturn-only screens and the remastered BIN/CUE.
 
-Generated investigation output lives under `work/build/saturn/` and is not
+Generated investigation output lives under `work/l5/build/saturn/` and is not
 tracked.
 
 ## Track Layout
@@ -210,8 +210,8 @@ Reproducible commands:
 
 ```bash
 python3 -m langrisser.saturn_disc info
-python3 -m langrisser.saturn_disc list --json > work/build/saturn/iso_entries.json
-python3 -m langrisser.saturn_disc xainfo > work/build/saturn/xa_info.json
+python3 -m langrisser.saturn_disc list --json > work/l5/build/saturn/iso_entries.json
+python3 -m langrisser.saturn_disc xainfo > work/l5/build/saturn/xa_info.json
 ```
 
 ## Key File Mapping vs PS1
@@ -330,10 +330,10 @@ apply to Saturn; the Saturn executable must be checked before allowing repack.
 Reproducible command:
 
 ```bash
-python3 -m langrisser.saturn_disc extract SYSTEM.DAT work/build/saturn/SYSTEM.DAT
+python3 -m langrisser.saturn_disc extract SYSTEM.DAT work/l5/build/saturn/SYSTEM.DAT
 python3 -m langrisser.saturn_system_dump \
-  --system work/build/saturn/SYSTEM.DAT \
-  --out work/build/saturn/system_strings.json
+  --system work/l5/build/saturn/SYSTEM.DAT \
+  --out work/l5/build/saturn/system_strings.json
 ```
 
 ## `SCEN.DAT`
@@ -543,9 +543,9 @@ Reproducible command:
 
 ```bash
 python3 -m langrisser.saturn_scen_text \
-  --scen work/build/saturn/SCEN.DAT \
-  --out work/build/saturn/scen_text.json \
-  --out-csv work/build/saturn/scen_text.csv
+  --scen work/l5/build/saturn/SCEN.DAT \
+  --out work/l5/build/saturn/scen_text.json \
+  --out-csv work/l5/build/saturn/scen_text.csv
 ```
 
 ### Record payloads are binary resource data, not text
@@ -712,10 +712,10 @@ manifest): slot `1820` would overwrite the group pointer directory at `0x8000`
 Reproducible command:
 
 ```bash
-python3 -m langrisser.saturn_disc extract SCEN.DAT work/build/saturn/SCEN.DAT
+python3 -m langrisser.saturn_disc extract SCEN.DAT work/l5/build/saturn/SCEN.DAT
 python3 -m langrisser.saturn_scen_scan \
-  --scen work/build/saturn/SCEN.DAT \
-  --out work/build/saturn/scen_scan.json
+  --scen work/l5/build/saturn/SCEN.DAT \
+  --out work/l5/build/saturn/scen_scan.json
 ```
 
 ## Asset-Like `.DAT` Containers
@@ -1128,7 +1128,7 @@ through `scen_mapping.json` entries with a `replaces_ps1` annotation naming
 the PS1-only record they supersede) or stay explicitly preserved with
 `"pending_review": true` until translated — anything else fails the build.
 `langrisser/saturn_scen_audit.py` regenerates the minimal mapping and emits
-`work/build/saturn/scen_platform_review.md`: each pending record with the
+`work/l5/build/saturn/scen_platform_review.md`: each pending record with the
 Saturn original decoded through the *derived Saturn kanji map* (~1030 tokens
 voted from positionally-matched pair tokens, `kanji_map.csv`) plus
 the closest PS1 record and its current ru/en text.
@@ -1274,7 +1274,7 @@ for text.
 - [x] Map `SCEN.DAT` `resource_table.field_3c` local index table header.
 - [x] Confirm `field_3c` local index table is the scenario text pool.
 - [x] Build a deterministic Saturn script dump with stable `(chunk, entry)` ids.
-- [x] Compare Saturn script entries against PS1 `work/scriptdump/` (131 chunks 1:1).
+- [x] Compare Saturn script entries against PS1 `work/l5/scriptdump/` (131 chunks 1:1).
 - [x] Confirm Saturn `SYSTEM.DAT` groups correspond 1:1 to PS1 `SYSTEM.BIN`.
 - [x] Confirm the Saturn dialogue/control-word grammar (matches PS1 model).
 - [x] Characterize the Saturn glyph map vs PS1 (kana identical, kanji reordered).

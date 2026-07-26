@@ -99,7 +99,7 @@ def main() -> None:
     add_language_args(ap)
     add_game_args(ap)
     add_release_args(ap)
-    ap.add_argument("--system-in", default="work/build/SYSTEM.BIN.font")
+    ap.add_argument("--system-in", default="work/l5/build/SYSTEM.BIN.font")
     ap.add_argument("--system-out", default=None)
     ap.add_argument("--strings", default=None)
     ap.add_argument("--layout", default=None,
@@ -107,7 +107,7 @@ def main() -> None:
     ap.add_argument("--card-layout",
                     default="data/common/system_card_layout.json")
     ap.add_argument("--source-strings",
-                    default="work/systemdump/system_strings.json",
+                    default="work/l5/systemdump/system_strings.json",
                     help="Generated SYSTEM source dump with offsets and JP text.")
     ap.add_argument("--tbl", default=None)
     ap.add_argument("--repack", action="store_true",

@@ -5,7 +5,7 @@ The scenario text lives in each payload block's ``resource_table.field_3c``
 local index table (see docs/SATURN_DISC_FORMAT.md). This tool walks all 131
 payload blocks, reads every indexed text entry and emits a stable
 ``(chunk_index, entry_index)`` record set, mirroring the PS1
-``work/scriptdump/all_records.csv`` shape so the two platforms can be aligned.
+``work/l5/scriptdump/all_records.csv`` shape so the two platforms can be aligned.
 
 Decoding uses the PS1 Japanese token table. Kana and control words match the
 Saturn stream exactly; a subset of kanji decodes incorrectly because the Saturn
@@ -90,10 +90,10 @@ def write_csv(result: dict, path: Path) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--scen", default="work/build/saturn/SCEN.DAT")
+    ap.add_argument("--scen", default="work/l5/build/saturn/SCEN.DAT")
     ap.add_argument("--tbl", default="data/common/tables/lang5_jp.tbl")
-    ap.add_argument("--out", default="work/build/saturn/scen_text.json")
-    ap.add_argument("--out-csv", default="work/build/saturn/scen_text.csv")
+    ap.add_argument("--out", default="work/l5/build/saturn/scen_text.json")
+    ap.add_argument("--out-csv", default="work/l5/build/saturn/scen_text.csv")
     args = ap.parse_args()
 
     data = Path(args.scen).read_bytes()

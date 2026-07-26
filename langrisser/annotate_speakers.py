@@ -69,7 +69,7 @@ def main() -> None:
     add_language_args(ap)
     ap.add_argument("--translation-root", default=None,
                     help="Override the language pack's translated-text root.")
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
     ap.add_argument("--include-scen2", action="store_true",
                     help="Also annotate an existing SCEN2 dump. Default is SCEN only.")
     args = ap.parse_args()

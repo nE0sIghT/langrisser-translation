@@ -192,7 +192,7 @@ def main() -> None:
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("command", choices=["plan", "apply"])
     ap.add_argument("--plan", required=True, help="Plan JSON path.")
-    ap.add_argument("--ps1-system", default="work/extracted/SYSTEM.BIN")
+    ap.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN")
     ap.add_argument("--saturn-orig", default=None,
                     help="plan: original (untranslated) Saturn SYSTEM.DAT.")
     ap.add_argument("--groups-report", default=str(COMMON_FONT_MAP))

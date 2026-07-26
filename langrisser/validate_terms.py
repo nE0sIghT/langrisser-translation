@@ -48,8 +48,8 @@ def main() -> None:
         action="store_true",
         help="Reject every empty target name or glossary term.",
     )
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
-    ap.add_argument("--jp-dump", default="work/scriptdump/SCEN")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
+    ap.add_argument("--jp-dump", default="work/l5/scriptdump/SCEN")
     ap.add_argument(
         "--max-plate-chars",
         type=int,

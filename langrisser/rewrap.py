@@ -615,7 +615,7 @@ def main() -> None:
     ap.add_argument("--translation-root", default=None,
                     help="Override the language pack's translated-text root.")
     ap.add_argument("--tbl", default=None)
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
     ap.add_argument("--width", type=int, default=None)
     ap.add_argument("--choice-width", type=int, default=None)
     # The JP script routinely shows 4-line pages after engine wrap (594 of

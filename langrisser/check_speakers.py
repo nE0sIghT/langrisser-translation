@@ -52,7 +52,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
     ap.add_argument("--test-set", default="docs/SPEAKER_TEST_SET.md")
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
     ap.add_argument("--translation-root", default=None,
                     help="Override the language pack's translated-text root.")
     args = ap.parse_args()

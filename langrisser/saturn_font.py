@@ -79,13 +79,13 @@ def main() -> None:
     sub = ap.add_subparsers(dest="command", required=True)
 
     r = sub.add_parser("render", help="ASCII-render glyph slots")
-    r.add_argument("--font", default="work/build/saturn/SYSTEM.DAT")
+    r.add_argument("--font", default="work/l5/build/saturn/SYSTEM.DAT")
     r.add_argument("slots", nargs="+", help="glyph indices (e.g. 0x0094 0x0122)")
     r.set_defaults(func=cmd_render)
 
     d = sub.add_parser("diff", help="compare glyph slots against PS1 SYSTEM.BIN")
-    d.add_argument("--font", default="work/build/saturn/SYSTEM.DAT")
-    d.add_argument("--ps1", default="work/extracted/SYSTEM.BIN")
+    d.add_argument("--font", default="work/l5/build/saturn/SYSTEM.DAT")
+    d.add_argument("--ps1", default="work/l5/extracted/SYSTEM.BIN")
     d.set_defaults(func=cmd_diff)
 
     args = ap.parse_args()

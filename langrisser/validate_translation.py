@@ -76,12 +76,12 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
     ap.add_argument("chunks", nargs="*", type=int)
-    ap.add_argument("--jp-dump", default="work/scriptdump")
+    ap.add_argument("--jp-dump", default="work/l5/scriptdump")
     ap.add_argument("--translation-root", default=None,
                     help="Override the language pack's translated-text root.")
     ap.add_argument("--tbl", default=None)
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
-    ap.add_argument("--scen2", default="work/extracted/SCEN2.DAT")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
+    ap.add_argument("--scen2", default="work/l5/extracted/SCEN2.DAT")
     ap.add_argument("--stem", default="SCEN")
     ap.add_argument("--budget-mode", choices=("fixed-repack", "local", "block"),
                     default="fixed-repack")

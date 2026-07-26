@@ -123,9 +123,9 @@ def main() -> None:
     add_language_args(ap)
     ap.add_argument("--grid", default=None)
     ap.add_argument("--tbl", default=None)
-    ap.add_argument("--system-in", default="work/build/SYSTEM.BIN.menu")
+    ap.add_argument("--system-in", default="work/l5/build/SYSTEM.BIN.menu")
     ap.add_argument("--system-out", default=None)
-    ap.add_argument("--exe-in", default="work/extracted/SLPS_018.19")
+    ap.add_argument("--exe-in", default="work/l5/extracted/SLPS_018.19")
     ap.add_argument("--exe-out", default=None)
     args = ap.parse_args()
 

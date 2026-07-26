@@ -8,7 +8,7 @@ Sources, in priority order:
    names.csv and glossary.csv.
 
 Untranslated records keep their JP text and their indices are printed, so
-the output goes to a staging directory (work/wip_<lang> by default): files in
+the output goes to a staging directory (work/l5/wip_<lang> by default): files in
 the language pack must be fully translated or the build fails on kanji whose
 font slots were sacrificed for target-language glyphs. Move a chunk file to
 the pack's SCEN only once it passes langrisser.validate_translation.
@@ -79,7 +79,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
     ap.add_argument("chunks", nargs="+", type=int)
-    ap.add_argument("--jp-dump", default="work/scriptdump")
+    ap.add_argument("--jp-dump", default="work/l5/scriptdump")
     ap.add_argument("--translation-root", default=None,
                     help="Override the language pack's translated-text root.")
     ap.add_argument("--out-dir", default=None)

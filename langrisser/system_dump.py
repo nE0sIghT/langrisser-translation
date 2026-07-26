@@ -58,10 +58,10 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_game_args(ap)
     add_release_args(ap)
-    ap.add_argument("--system-bin", default="work/extracted/SYSTEM.BIN")
+    ap.add_argument("--system-bin", default="work/l5/extracted/SYSTEM.BIN")
     ap.add_argument("--tbl", default=None,
                     help="JP token table (default: the game's font map).")
-    ap.add_argument("--out", default="work/systemdump/system_strings.json")
+    ap.add_argument("--out", default="work/l5/systemdump/system_strings.json")
     args = ap.parse_args()
 
     # Each build's text groups start at their own offset; everything else in

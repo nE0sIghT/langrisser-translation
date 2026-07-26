@@ -85,15 +85,15 @@ def decoder(charmap: dict[int, str]):
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_game_args(ap)
-    ap.add_argument("--scen", default="work/build/saturn/SCEN.DAT")
-    ap.add_argument("--ps1-scen", default="work/extracted/SCEN.DAT")
+    ap.add_argument("--scen", default="work/l5/build/saturn/SCEN.DAT")
+    ap.add_argument("--ps1-scen", default="work/l5/extracted/SCEN.DAT")
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--mapping", default=None,
                     help="SCEN mapping JSON (default: the release manifest's)")
     ap.add_argument("--lang-root", default=None,
                     help="Pack root (default: the game manifest's lang_root).")
     ap.add_argument("--langs", nargs="*", default=["ru", "en"])
-    ap.add_argument("--out-report", default="work/build/saturn/scen_platform_review.md")
+    ap.add_argument("--out-report", default="work/l5/build/saturn/scen_platform_review.md")
     ap.add_argument("--out-kanji-map", default=None,
                     help="Derived Saturn kanji font map (groups_report CSV convention).")
     ap.add_argument("--write-mapping", action="store_true",

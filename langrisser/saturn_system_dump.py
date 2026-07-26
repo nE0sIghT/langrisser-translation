@@ -70,9 +70,9 @@ def dump_system(data: bytes, codemap: dict[int, str], cfg: GroupConfig) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--system", default="work/build/saturn/SYSTEM.DAT")
+    ap.add_argument("--system", default="work/l5/build/saturn/SYSTEM.DAT")
     ap.add_argument("--tbl", default="data/common/tables/lang5_jp.tbl")
-    ap.add_argument("--out", default="work/build/saturn/system_strings.json")
+    ap.add_argument("--out", default="work/l5/build/saturn/system_strings.json")
     ap.add_argument("--scan-start", type=lambda value: int(value, 0), default=SATURN.scan_start)
     ap.add_argument("--endian", choices=("be", "le"), default=SATURN.order.endian)
     args = ap.parse_args()

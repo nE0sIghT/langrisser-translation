@@ -131,7 +131,7 @@ def main() -> None:
                     help="Input SYSTEM.DAT with the target font applied.")
     ap.add_argument("--system-out", default=None,
                     help="Output translated SYSTEM.DAT.")
-    ap.add_argument("--ps1-system", default="work/extracted/SYSTEM.BIN")
+    ap.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN")
     ap.add_argument("--strings", default=None,
                     help="Resolved common SYSTEM strings JSON.")
     ap.add_argument("--release-strings", default=None,
@@ -154,19 +154,19 @@ def main() -> None:
     release = release_from_args(args, platform=platform.code)
     system_in = (
         Path(args.system_in) if args.system_in
-        else Path(f"work/build/saturn/SYSTEM.DAT.{lang.suffix}.font")
+        else Path(f"work/l5/build/saturn/SYSTEM.DAT.{lang.suffix}.font")
     )
     system_out = (
         Path(args.system_out) if args.system_out
-        else Path(f"work/build/saturn/SYSTEM.{lang.suffix}.DAT")
+        else Path(f"work/l5/build/saturn/SYSTEM.{lang.suffix}.DAT")
     )
     strings_path = (
         Path(args.strings) if args.strings
-        else Path(f"work/build/system_strings.{lang.suffix}.json")
+        else Path(f"work/l5/build/system_strings.{lang.suffix}.json")
     )
     tbl = (
         Path(args.tbl) if args.tbl
-        else Path(f"work/build/saturn/lang5_{lang.suffix}.saturn.tbl")
+        else Path(f"work/l5/build/saturn/lang5_{lang.suffix}.saturn.tbl")
     )
     codec = Codec(load_charmap_tbl(tbl))
     data = bytearray(system_in.read_bytes())

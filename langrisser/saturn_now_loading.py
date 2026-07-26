@@ -278,9 +278,9 @@ def save_preview(path: Path, palette: list[tuple[int, int, int]],
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
-    ap.add_argument("--system", default="work/build/saturn/SYSTEM.ru.DAT")
+    ap.add_argument("--system", default="work/l5/build/saturn/SYSTEM.ru.DAT")
     ap.add_argument("--out-system", default=None)
-    ap.add_argument("--palette-imgdat", default="work/extracted/IMG.DAT",
+    ap.add_argument("--palette-imgdat", default="work/l5/extracted/IMG.DAT",
                     help="PS1 IMG.DAT used only for the proven-identical plate palette")
     ap.add_argument("--out-preview", default=None)
     ap.add_argument("--font", default=now_loading.FONT)
@@ -326,7 +326,7 @@ def main() -> None:
     out_path.write_bytes(system)
 
     preview = (Path(args.out_preview) if args.out_preview
-               else Path(f"work/build/saturn/now_loading_{lang.suffix}_preview.png"))
+               else Path(f"work/l5/build/saturn/now_loading_{lang.suffix}_preview.png"))
     save_preview(preview, palette, decoded, target)
     print(
         f"patched SYSTEM.DAT Now Loading -> {out_path}  "

@@ -50,7 +50,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
     ap.add_argument("--system-source",
-                    default="work/systemdump/system_strings.json")
+                    default="work/l5/systemdump/system_strings.json")
     ap.add_argument("--strings", default=None)
     ap.add_argument("--out", required=True)
     ap.add_argument("--require-complete", action="store_true")

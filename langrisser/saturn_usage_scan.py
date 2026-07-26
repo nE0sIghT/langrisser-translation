@@ -86,22 +86,22 @@ def file_runs(data: bytes, charmap: dict[int, str]) -> Counter:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--scen", default="work/build/saturn/SCEN.DAT")
+    ap.add_argument("--scen", default="work/l5/build/saturn/SCEN.DAT")
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--mapping", default=None,
                     help="SCEN mapping JSON (default: the release manifest's)")
     ap.add_argument("--kanji-map", default=None,
                     help="Kanji slot map CSV (default: the release manifest's)")
     ap.add_argument("--files", nargs="*", default=[
-        "work/build/saturn/SYSTEM.DAT",
-        "work/build/saturn/BAR.BIN",
-        "work/build/saturn/SHOP.DAT",
-        "work/build/saturn/CUR.DAT",
-        "work/build/saturn/BTLDAT.BIN",
-        "work/build/saturn/TK_SC.BIN",
-        "work/build/saturn/PROG1.BIN",
-        "work/build/saturn/PROG2.BIN",
-        "work/build/saturn/A0LANG5.BIN",
+        "work/l5/build/saturn/SYSTEM.DAT",
+        "work/l5/build/saturn/BAR.BIN",
+        "work/l5/build/saturn/SHOP.DAT",
+        "work/l5/build/saturn/CUR.DAT",
+        "work/l5/build/saturn/BTLDAT.BIN",
+        "work/l5/build/saturn/TK_SC.BIN",
+        "work/l5/build/saturn/PROG1.BIN",
+        "work/l5/build/saturn/PROG2.BIN",
+        "work/l5/build/saturn/A0LANG5.BIN",
     ])
     ap.add_argument("--out", required=True)
     args = ap.parse_args()

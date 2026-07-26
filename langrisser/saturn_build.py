@@ -12,7 +12,8 @@ this Saturn flow. It reuses the shared stages unchanged:
    mappings (fixed-size where it fits, growing + re-laying-out blocks where it
    does not).
 
-Outputs the translated `SYSTEM.DAT` and `SCEN.DAT` under `work/build/saturn/`.
+Outputs the translated `SYSTEM.DAT` and `SCEN.DAT` under the game's own
+`work/<game>/build/saturn/`.
 With `--remaster-disc`, it also writes a translated mixed-mode BIN/CUE under
 the same directory.
 """
@@ -55,17 +56,18 @@ def main() -> None:
     add_language_args(ap)
     add_game_args(ap)
     add_platform_args(ap, "saturn")
-    ap.add_argument("--saturn-dir", default="work/build/saturn",
-                    help="directory holding the extracted Saturn SYSTEM.DAT/SCEN.DAT")
+    ap.add_argument("--saturn-dir", default=None,
+                    help="directory holding the extracted Saturn SYSTEM.DAT/SCEN.DAT "
+                         "(default: the game's build dir)")
     ap.add_argument("--assignments", default=None,
                     help="font slot assignments CSV (default: the pack's tracked file)")
     ap.add_argument("--translation-root", default=None,
                     help="Override the language pack's translated-text root.")
-    ap.add_argument("--ps1-scen", default="work/extracted/SCEN.DAT",
+    ap.add_argument("--ps1-scen", default="work/l5/extracted/SCEN.DAT",
                     help="PS1 SCEN.DAT used as the common script source.")
-    ap.add_argument("--ps1-scen2", default="work/extracted/SCEN2.DAT",
+    ap.add_argument("--ps1-scen2", default="work/l5/extracted/SCEN2.DAT",
                     help="PS1 SCEN2.DAT used for common validation/font-slot safety.")
-    ap.add_argument("--ps1-system", default="work/extracted/SYSTEM.BIN",
+    ap.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN",
                     help="PS1 SYSTEM.BIN used as the common SYSTEM source.")
     ap.add_argument("--cue", default=None,
                     help="source Saturn CUE for --remaster-disc "
@@ -91,7 +93,9 @@ def main() -> None:
     if platform.code != "saturn":
         raise SystemExit(f"this builder only supports the saturn platform, got {platform.code}")
     scripts = Path(__file__).resolve().parent
-    saturn = Path(args.saturn_dir)
+    build_dir = lang.build_root
+    build_dir.mkdir(parents=True, exist_ok=True)
+    saturn = Path(args.saturn_dir) if args.saturn_dir else build_dir / "saturn"
     system_in = saturn / "SYSTEM.DAT"
     scen_in = saturn / "SCEN.DAT"
     for path in (system_in, scen_in):
@@ -108,7 +112,7 @@ def main() -> None:
 
     translation_root = (Path(args.translation_root)
                         if args.translation_root else lang.dump_root)
-    build_translation_root = Path(f"work/build/translation.{lang.suffix}.saturn")
+    build_translation_root = build_dir / f"translation.{lang.suffix}.saturn"
     if build_translation_root.exists():
         shutil.rmtree(build_translation_root)
     shutil.copytree(translation_root, build_translation_root)
@@ -117,11 +121,11 @@ def main() -> None:
     system_font = saturn / f"SYSTEM.DAT.{lang.suffix}.font"
     tbl = saturn / f"lang5_{lang.suffix}.saturn.tbl"
 
-    system_source = Path(f"work/build/system_source.{lang.suffix}.json")
+    system_source = build_dir / f"system_source.{lang.suffix}.json"
     run("-m", "langrisser.system_dump",
         "--system-bin", args.ps1_system,
         "--out", system_source)
-    resolved_system_strings = Path(f"work/build/system_strings.{lang.suffix}.json")
+    resolved_system_strings = build_dir / f"system_strings.{lang.suffix}.json"
     resolve_args = [
         "-m", "langrisser.resolve_system_strings",
         "--lang", args.lang,
@@ -150,7 +154,7 @@ def main() -> None:
     # that hold a different glyph (reordered kanji region). Plan the remap to
     # the Saturn slots that already hold the right glyphs, so the assigner
     # never sacrifices those slots; the .tbl is remapped after the font build.
-    glyph_plan = Path(f"work/build/saturn/native_glyphs.{lang.suffix}.plan.json")
+    glyph_plan = saturn / f"native_glyphs.{lang.suffix}.plan.json"
     run("-m", "langrisser.saturn_fix_native_glyphs",
         "--lang", args.lang, "--lang-root", lang.root.parent,
         "--release", release.code,
@@ -163,7 +167,7 @@ def main() -> None:
 
     # Sacrificial-slot facts must come from this release's own data: what the
     # Saturn build leaves untranslated is what a sacrifice would corrupt.
-    usage_scan = Path(f"work/build/saturn/usage_scan.{lang.suffix}.json")
+    usage_scan = saturn / f"usage_scan.{lang.suffix}.json"
     run("-m", "langrisser.saturn_usage_scan",
         "--release", release.code,
         "--scen", scen_in,
@@ -171,7 +175,7 @@ def main() -> None:
         "--kanji-map", release.kanji_map,
         "--out", usage_scan)
 
-    build_assignments = Path(f"work/build/font_slot_assignments.{lang.suffix}.saturn.csv")
+    build_assignments = build_dir / f"font_slot_assignments.{lang.suffix}.saturn.csv"
     run("-m", "langrisser.assign_font_slots",
         "--lang", args.lang,
         "--lang-root", lang.root.parent,
@@ -216,7 +220,7 @@ def main() -> None:
         "--tbl", tbl,
         "--assignments", build_assignments)
 
-    reflowed_system_strings = Path(f"work/build/system_strings.{lang.suffix}.saturn.reflowed.json")
+    reflowed_system_strings = build_dir / f"system_strings.{lang.suffix}.saturn.reflowed.json"
     run("-m", "langrisser.reflow_system_cards",
         "--strings", resolved_system_strings,
         "--out", reflowed_system_strings,

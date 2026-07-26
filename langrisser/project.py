@@ -46,6 +46,18 @@ class LanguagePack:
     code: str
     root: Path
     _data: dict[str, Any]
+    game: str = ""
+
+    @property
+    def work_root(self) -> Path:
+        """Generated files for this pack's game.
+
+        Scoped by game because the outputs collide otherwise: two games'
+        builds would write the same SCEN.<lang>.DAT and the same table.
+        Inputs are not scoped here - a caller points those at whatever it
+        extracted.
+        """
+        return ROOT / "work" / (self.game or "l5")
 
     @property
     def label(self) -> str:
@@ -212,26 +224,36 @@ class LanguagePack:
 
     @property
     def tbl(self) -> Path:
-        return ROOT / "work" / "tables" / f"lang5_{self.suffix}.tbl"
+        return self.work_root / "tables" / f"{self.suffix}.tbl"
+
+    @property
+    def build_root(self) -> Path:
+        return self.work_root / "build"
 
     def build_path(self, name: str) -> Path:
-        return ROOT / "work" / "build" / name.format(lang=self.suffix)
+        return self.build_root / name.format(lang=self.suffix)
+
+    @property
+    def patch_stem(self) -> str:
+        """Stem of this game's shipped patch, from its game manifest."""
+        from langrisser.game import load_game
+        return load_game(self.game or "l5").patch_stem
 
     @property
     def work_bin(self) -> Path:
-        return self.build_path("langrisser_v_{lang}.bin")
+        return self.build_path(f"{self.patch_stem}_{{lang}}.bin")
 
     @property
     def out_ppf(self) -> Path:
-        return ROOT / "patches" / f"langrisser_v_{self.suffix}.ppf"
+        return ROOT / "patches" / f"{self.patch_stem}_{self.suffix}.ppf"
 
     @property
     def wip_root(self) -> Path:
-        return ROOT / "work" / f"wip_{self.suffix}"
+        return self.work_root / f"wip_{self.suffix}"
 
     @property
     def review_root(self) -> Path:
-        return ROOT / "work" / "review" / self.suffix
+        return self.work_root / "review" / self.suffix
 
 
 def default_lang_root(game: str | None = None,
@@ -245,8 +267,9 @@ def default_lang_root(game: str | None = None,
     return load_game(game or DEFAULT_GAME, game_root or DEFAULT_GAME_ROOT).lang_root
 
 
-def load_language(lang: str = "en", lang_root: str | Path | None = None) -> LanguagePack:
-    root = Path(lang_root) if lang_root else default_lang_root()
+def load_language(lang: str = "en", lang_root: str | Path | None = None,
+                  game: str | None = None) -> LanguagePack:
+    root = Path(lang_root) if lang_root else default_lang_root(game)
     if not root.is_absolute():
         root = ROOT / root
     pack_root = root / lang
@@ -255,7 +278,10 @@ def load_language(lang: str = "en", lang_root: str | Path | None = None) -> Lang
         raise SystemExit(f"language manifest not found: {manifest}")
     data = json.loads(manifest.read_text(encoding="utf-8"))
     code = str(data.get("lang") or lang)
-    return LanguagePack(code=code, root=pack_root, _data=data)
+    if game is None:
+        from langrisser.game import DEFAULT_GAME
+        game = DEFAULT_GAME
+    return LanguagePack(code=code, root=pack_root, game=game, _data=data)
 
 
 def add_language_args(ap: argparse.ArgumentParser) -> None:
@@ -267,6 +293,7 @@ def add_language_args(ap: argparse.ArgumentParser) -> None:
 
 
 def language_from_args(args: argparse.Namespace) -> LanguagePack:
+    game = getattr(args, "game", None)
     root = getattr(args, "lang_root", None) or default_lang_root(
-        getattr(args, "game", None), getattr(args, "game_root", None))
-    return load_language(args.lang, root)
+        game, getattr(args, "game_root", None))
+    return load_language(args.lang, root, game)

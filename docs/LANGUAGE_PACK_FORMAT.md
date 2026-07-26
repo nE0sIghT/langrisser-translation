@@ -6,9 +6,9 @@ paths; it resolves them through `manifest.json`.
 
 Generated source dumps stay under `work/`:
 
-- `work/scriptdump/` — JP SCEN/SCEN2 script dump.
-- `work/systemdump/` — SYSTEM.BIN string inspection dumps.
-- `work/extracted/` — files extracted from the original BIN.
+- `work/l5/scriptdump/` — JP SCEN/SCEN2 script dump.
+- `work/l5/systemdump/` — SYSTEM.BIN string inspection dumps.
+- `work/l5/extracted/` — files extracted from the original BIN.
 
 Do not commit those generated dumps. They are reproducible from the user's own
 disc image.
@@ -39,7 +39,7 @@ data/games/<game>/lang/<code>/
 ```
 
 `SCEN/` contains only completed translated chunks. Work-in-progress chunks live
-in `work/wip_<code>/SCEN/`.
+in `work/l5/wip_<code>/SCEN/`.
 
 `releases/<slug>/` contains target-language text that exists only in that
 release. It is keyed by release rather than by console because the delta is
@@ -74,7 +74,7 @@ language's output field.
 
 `system_strings.json` intentionally contains no extracted Japanese text or
 offset metadata. `langrisser/system_dump.py` regenerates those fields under
-`work/systemdump/system_strings.json`; the packer joins the durable overlay to
+`work/l5/systemdump/system_strings.json`; the packer joins the durable overlay to
 that source by ids such as `table:08052:1` and `offset:176A0`.
 
 ## Manifest
@@ -250,7 +250,7 @@ python3 -m langrisser.review_html --lang ru --scenario 1
 ```
 
 The JP dump drives the records, English is the default reference language, and
-all HTML output stays under `work/review/<lang>/`.
+all HTML output stays under `work/l5/review/<lang>/`.
 
 Target terminology can be checked independently of script completion:
 
@@ -299,8 +299,8 @@ The initializer copies source structure while clearing target values. It leaves
 `SCEN/` empty unless `--copy-script` is explicitly passed.
 
 The full PPF build completes the tracked assignment baseline into a generated
-`work/build/font_slot_assignments.<lang>.csv`, then rebuilds the font, rewraps
-a copy under `work/build/translation.<lang>/` and validates it before
+`work/l5/build/font_slot_assignments.<lang>.csv`, then rebuilds the font, rewraps
+a copy under `work/l5/build/translation.<lang>/` and validates it before
 insertion. The build never rewrites tracked translation sources. This makes
 newly required pairs part of the actual build instead of an optional
 maintenance step.
@@ -320,13 +320,13 @@ python3 -m langrisser.build_font --lang ru
 
 For language suffix `<s>`:
 
-- `work/tables/lang5_<s>.tbl`
-- `work/build/SCEN.<s>.DAT`
-- `work/build/SCEN2.<s>.DAT`
-- `work/build/SYSTEM.BIN.<s>`
-- `work/build/IMG.DAT.<s>`
-- `work/build/SLPS_018.19.<s>`
-- `work/build/langrisser_v_<s>.bin`
+- `work/l5/tables/lang5_<s>.tbl`
+- `work/l5/build/SCEN.<s>.DAT`
+- `work/l5/build/SCEN2.<s>.DAT`
+- `work/l5/build/SYSTEM.BIN.<s>`
+- `work/l5/build/IMG.DAT.<s>`
+- `work/l5/build/SLPS_018.19.<s>`
+- `work/l5/build/langrisser_v_<s>.bin`
 - `patches/langrisser_v_<s>.ppf`
 
 All outputs are generated and untracked.

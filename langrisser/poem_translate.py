@@ -62,9 +62,9 @@ def find_overflow_group(asset: bytes, main_start: int, main_packets: int,
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
-    ap.add_argument("--imgdat", default="work/extracted/IMG.DAT")
+    ap.add_argument("--imgdat", default="work/l5/extracted/IMG.DAT")
     ap.add_argument("--poem", default=None)
-    ap.add_argument("--out-imgdat", default="work/build/IMG.DAT.poem")
+    ap.add_argument("--out-imgdat", default="work/l5/build/IMG.DAT.poem")
     ap.add_argument("--out-preview", default=None)
     ap.add_argument("--font", default=FONT)
     args = ap.parse_args()

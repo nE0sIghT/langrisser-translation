@@ -8,7 +8,7 @@ the shipped wrapper does not need it.
 
 `langrisser/rewrap.py` uses `semantic_plate_slots()` as the authoritative source for
 per-record speaker plates. `langrisser/scendump.py` uses the same function to emit
-`# spk: <name>` comments and the `speaker` column in `work/scriptdump/all_records.csv`.
+`# spk: <name>` comments and the `speaker` column in `work/l5/scriptdump/all_records.csv`.
 
 The extractor does **not** execute the VM. It scans the chunk VM block for
 self-contained 12-byte display/window commands and accepts one when:
@@ -99,7 +99,7 @@ PARKED      stopped on purpose; do not resume without a new requirement
 | --- | --- | --- | --- |
 | DONE | Text records use 16-bit tokens, not Shift-JIS text. | Round-trip tooling and font/token work. | Keep this as a hard constraint. |
 | DONE | Printable token ID equals glyph index for native glyphs. | Font mapping and scenario decode work. | Keep using glyph-index tokens. |
-| DONE | Story chunks have an initial local speaker-name pool. | `work/scriptdump` chunk dumps; first `FFFF` records decode as names. | Use as candidate plate list only. |
+| DONE | Story chunks have an initial local speaker-name pool. | `work/l5/scriptdump` chunk dumps; first `FFFF` records decode as names. | Use as candidate plate list only. |
 | DONE | Dialogue records contain `FB00 <id>` markers. | Script dump and token control analysis. | Use `FB00` IDs as dialogue segment keys. |
 | DONE | One record can contain multiple `FB00` markers. | Chunk 45 has Sigma/Lambda switches in one record. | Rewrap must be segment-aware. |
 | REJECTED | `FB00 <id>` directly indexes the speaker-name pool. | IDs exceed local name count and do not match visible speakers. | Never use as speaker slot. |

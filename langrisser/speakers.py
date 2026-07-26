@@ -738,8 +738,8 @@ def write_trace_csv(rows: list[VMTraceRow], out_path: Path) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
-    ap.add_argument("--scen2", default="work/extracted/SCEN2.DAT")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
+    ap.add_argument("--scen2", default="work/l5/extracted/SCEN2.DAT")
     ap.add_argument("--font-map", default="data/common/font_mapping/groups_report.csv")
     ap.add_argument("--out", default="work/vm_dialog_refs/speaker_refs.csv")
     ap.add_argument("--trace-out", help="write conservative bytecode trace CSV")

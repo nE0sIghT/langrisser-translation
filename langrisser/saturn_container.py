@@ -223,7 +223,7 @@ def build_parser() -> argparse.ArgumentParser:
     pl.set_defaults(func=cmd_list)
     pp = sub.add_parser("preview", help="render each image sub-asset to a PNG")
     pp.add_argument("container")
-    pp.add_argument("--out-dir", default="work/build/saturn/previews")
+    pp.add_argument("--out-dir", default="work/l5/build/saturn/previews")
     pp.add_argument("--cols", type=int, default=DEFAULT_CELL_COLS,
                     help="cell columns (width/8); default 40 = 320 px")
     pp.add_argument("--scale", type=int, default=1)

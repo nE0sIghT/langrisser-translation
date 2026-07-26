@@ -198,7 +198,7 @@ def row_for_chunk(chunk_idx: int, chunk: bytes, scan_full: bool) -> dict[str, st
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
     ap.add_argument("--chunks", default="1-42",
                     help="Chunk list/ranges, e.g. 1-42 or 2,37,42.")
     ap.add_argument("--csv", action="store_true", help="Write CSV instead of a readable table.")

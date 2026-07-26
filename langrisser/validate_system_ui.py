@@ -49,7 +49,7 @@ def main() -> None:
     add_language_args(ap)
     ap.add_argument("--tbl", default=None)
     ap.add_argument("--strings", default=None)
-    ap.add_argument("--system-source", default="work/systemdump/system_strings.json")
+    ap.add_argument("--system-source", default="work/l5/systemdump/system_strings.json")
     ap.add_argument(
         "--constraints",
         default="data/common/system_ui_constraints.json",

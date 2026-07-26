@@ -270,9 +270,9 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     add_language_args(ap)
-    ap.add_argument("--title", default="work/build/saturn/TITLE1.DAT")
-    ap.add_argument("--out-title", default="work/build/saturn/TITLE1.ru.DAT")
-    ap.add_argument("--out-preview", default="work/build/saturn/title_credits_preview.png")
+    ap.add_argument("--title", default="work/l5/build/saturn/TITLE1.DAT")
+    ap.add_argument("--out-title", default="work/l5/build/saturn/TITLE1.ru.DAT")
+    ap.add_argument("--out-preview", default="work/l5/build/saturn/title_credits_preview.png")
     ap.add_argument("--font", default=None,
                     help="credit font (default: the PS1 title-credit font)")
     ap.add_argument("--line", action="append",

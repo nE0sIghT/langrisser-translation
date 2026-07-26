@@ -381,10 +381,10 @@ def main() -> None:
                     default=None,
                     help="Translation maps (repeatable); defaults to menu+names maps.")
     ap.add_argument("--system-source",
-                    default="work/systemdump/system_strings.json",
+                    default="work/l5/systemdump/system_strings.json",
                     help="Generated SYSTEM source dump used to resolve overlay ids.")
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
-    ap.add_argument("--scen2", default="work/extracted/SCEN2.DAT")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
+    ap.add_argument("--scen2", default="work/l5/extracted/SCEN2.DAT")
     ap.add_argument("--max-slot", type=int, default=1820,
                     help="Highest usable glyph slot on the target platform "
                          "(PS1 plane: 1820; Saturn: 1819, see manifest).")
@@ -506,8 +506,8 @@ def main() -> None:
     }
     pool = [i for i in sacrificial_pool(
         groups_report, Path(args.scen), Path(args.scen2),
-        [Path(p) for p in ("work/extracted/SYSTEM.BIN", "work/extracted/ALLUSB.BIN",
-                           "work/extracted/ALLUSW.BIN")],
+        [Path(p) for p in ("work/l5/extracted/SYSTEM.BIN", "work/l5/extracted/ALLUSB.BIN",
+                           "work/l5/extracted/ALLUSW.BIN")],
         translated_keys, translated_chunks, args.max_slot, excluded,
         json.loads(Path(args.usage_scan).read_text(encoding="utf-8"))
         if args.usage_scan else None,

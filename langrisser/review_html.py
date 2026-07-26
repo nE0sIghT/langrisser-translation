@@ -456,13 +456,13 @@ def main() -> None:
         help="Review one scenario: 1..36, quiz, or opt:<name>.",
     )
     ap.add_argument("--reference-lang", default="en")
-    ap.add_argument("--jp-dump", default="work/scriptdump")
+    ap.add_argument("--jp-dump", default="work/l5/scriptdump")
     ap.add_argument("--translation-root", default=None,
                     help="Override the target language pack's text root.")
     ap.add_argument("--reference-root", default=None,
                     help="Override the reference language pack's text root.")
     ap.add_argument("--status", default=None)
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
     ap.add_argument("--out-dir", default=None)
     ap.add_argument("--stem", default="SCEN")
     args = ap.parse_args()

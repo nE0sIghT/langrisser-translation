@@ -46,8 +46,8 @@ def group_entries(data: bytes, group, cfg) -> list[list[int]]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--system", default="work/build/saturn/SYSTEM.DAT")
-    ap.add_argument("--ps1-system", default="work/extracted/SYSTEM.BIN")
+    ap.add_argument("--system", default="work/l5/build/saturn/SYSTEM.DAT")
+    ap.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN")
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--mapping", default=None,
                     help="SYSTEM mapping JSON (default: the release manifest's)")

@@ -75,7 +75,7 @@ def diff_regions(a: bytes, b: bytes) -> list[tuple[int, int]]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--orig", default="work/build/saturn/SYSTEM.DAT",
+    ap.add_argument("--orig", default="work/l5/build/saturn/SYSTEM.DAT",
                     help="Original extracted Saturn SYSTEM.DAT.")
     ap.add_argument("--system", required=True,
                     help="Packed/translated SYSTEM.DAT to validate.")

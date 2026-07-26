@@ -57,7 +57,7 @@ def main() -> None:
                     help="This game's SYSTEM.BIN (or Saturn SYSTEM.DAT).")
     ap.add_argument("--reference-game", default="l5",
                     help="Game whose font map is already known.")
-    ap.add_argument("--reference-system", default="work/extracted/SYSTEM.BIN")
+    ap.add_argument("--reference-system", default="work/l5/extracted/SYSTEM.BIN")
     ap.add_argument("--out", default=None,
                     help="Output CSV (default: the game manifest's font_map).")
     ap.add_argument("--out-unmatched", default=None,

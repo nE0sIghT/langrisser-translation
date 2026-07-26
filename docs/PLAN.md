@@ -166,7 +166,7 @@ Known first editorial target:
 ## Per-Scenario Procedure
 
 1. Generate or refresh the Japanese source dump from the original image.
-2. Stage the scenario in `work/wip_ru/`.
+2. Stage the scenario in `work/l5/wip_ru/`.
 3. Read every Japanese record and compare the corresponding English record.
 4. Translate Japanese to Russian without using English as the sole source.
 5. Correct English when Japanese confirms a meaning, subject, tone or

@@ -36,9 +36,9 @@ PS1_LAYOUT = BannerLayout(
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
-    ap.add_argument("--imgdat", default="work/extracted/IMG.DAT")
+    ap.add_argument("--imgdat", default="work/l5/extracted/IMG.DAT")
     ap.add_argument("--text", default=None)
-    ap.add_argument("--out-imgdat", default="work/build/IMG.DAT.scenario_clear")
+    ap.add_argument("--out-imgdat", default="work/l5/build/IMG.DAT.scenario_clear")
     ap.add_argument("--out-preview", default=None)
     ap.add_argument("--font", default=FONT)
     args = ap.parse_args()

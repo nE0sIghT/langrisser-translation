@@ -208,9 +208,9 @@ def redraw_plate_pixels(pixels: bytes | bytearray, palette: list[tuple[int, int,
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
-    ap.add_argument("--imgdat", default="work/extracted/IMG.DAT")
+    ap.add_argument("--imgdat", default="work/l5/extracted/IMG.DAT")
     ap.add_argument("--text", default=None)
-    ap.add_argument("--out-imgdat", default="work/build/IMG.DAT.now_loading")
+    ap.add_argument("--out-imgdat", default="work/l5/build/IMG.DAT.now_loading")
     ap.add_argument("--out-preview", default=None)
     ap.add_argument("--font", default=FONT)
     ap.add_argument("--cap-top", type=int, default=CAP_TOP)

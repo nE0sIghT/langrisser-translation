@@ -37,10 +37,10 @@ def main() -> None:
                     help="Source image (default: the release manifest's).")
     ap.add_argument("--translation-root", default=None,
                     help="Override the language pack's translated-text root.")
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
-    ap.add_argument("--scen2", default="work/extracted/SCEN2.DAT")
-    ap.add_argument("--system", default="work/extracted/SYSTEM.BIN")
-    ap.add_argument("--imgdat", default="work/extracted/IMG.DAT")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
+    ap.add_argument("--scen2", default="work/l5/extracted/SCEN2.DAT")
+    ap.add_argument("--system", default="work/l5/extracted/SYSTEM.BIN")
+    ap.add_argument("--imgdat", default="work/l5/extracted/IMG.DAT")
     add_game_args(ap)
     ap.add_argument("--patch-version", default="dev")
     ap.add_argument("--work-bin", default=None)
@@ -51,10 +51,11 @@ def main() -> None:
 
     lang = language_from_args(args)
     scripts = Path(__file__).parent
-    Path("work/build").mkdir(parents=True, exist_ok=True)
+    build_dir = lang.build_root
+    build_dir.mkdir(parents=True, exist_ok=True)
     translation_root = (Path(args.translation_root)
                         if args.translation_root else lang.dump_root)
-    build_translation_root = Path(f"work/build/translation.{lang.suffix}")
+    build_translation_root = build_dir / f"translation.{lang.suffix}"
     if build_translation_root.exists():
         shutil.rmtree(build_translation_root)
     shutil.copytree(translation_root, build_translation_root)
@@ -72,11 +73,11 @@ def main() -> None:
 
     # Rebuild the generated SYSTEM source first: the font allocator needs the
     # current stable ids to exclude JP glyphs still used by untranslated UI.
-    system_source = f"work/build/system_source.{suffix}.json"
+    system_source = f"{build_dir}/system_source.{suffix}.json"
     run("-m", "langrisser.system_dump",
         "--system-bin", args.system,
         "--out", system_source)
-    resolved_system_strings = f"work/build/system_strings.{suffix}.json"
+    resolved_system_strings = f"{build_dir}/system_strings.{suffix}.json"
     resolve_args = [
         "-m", "langrisser.resolve_system_strings",
         "--lang", args.lang,
@@ -91,7 +92,7 @@ def main() -> None:
     # Complete the durable assignment baseline with every pair required by the
     # current target corpus. The generated copy keeps ordinary builds from
     # modifying tracked language-pack data while preventing stale pair tables.
-    build_assignments = f"work/build/font_slot_assignments.{suffix}.csv"
+    build_assignments = f"{build_dir}/font_slot_assignments.{suffix}.csv"
     run("-m", "langrisser.assign_font_slots",
         "--lang", args.lang,
         "--lang-root", lang.root.parent,
@@ -109,7 +110,7 @@ def main() -> None:
         "--groups-report", game.font_map,
         "--assignments", build_assignments,
         "--system-bin", args.system,
-        "--out-system-bin", f"work/build/SYSTEM.BIN.{suffix}.font",
+        "--out-system-bin", f"{build_dir}/SYSTEM.BIN.{suffix}.font",
         "--out-tbl", tbl,
         "--font-size", str(lang.font_size),
     ]
@@ -119,7 +120,7 @@ def main() -> None:
         font_args.extend(["--caps-font", lang.caps_font,
                           "--caps-font-size", str(lang.caps_font_size)])
     run(*font_args)
-    reflowed_system_strings = f"work/build/system_strings.{suffix}.reflowed.json"
+    reflowed_system_strings = f"{build_dir}/system_strings.{suffix}.reflowed.json"
     run("-m", "langrisser.reflow_system_cards",
         "--strings", resolved_system_strings,
         "--out", reflowed_system_strings,
@@ -155,10 +156,10 @@ def main() -> None:
     # Name-entry screen (kana grid in SYSTEM.BIN + the EXE's input table).
     run("-m", "langrisser.patch_name_entry",
         "--grid", lang.name_entry_grid,
-        "--system-in", f"work/build/SYSTEM.BIN.{suffix}.font",
-        "--system-out", f"work/build/SYSTEM.BIN.{suffix}.ne",
-        "--exe-in", f"work/extracted/{exe_name}",
-        "--exe-out", f"work/build/{exe_name}.{suffix}",
+        "--system-in", f"{build_dir}/SYSTEM.BIN.{suffix}.font",
+        "--system-out", f"{build_dir}/SYSTEM.BIN.{suffix}.ne",
+        "--exe-in", f"work/l5/extracted/{exe_name}",
+        "--exe-out", f"{build_dir}/{exe_name}.{suffix}",
         "--tbl", tbl)
 
     # All SYSTEM.BIN UI text (names, descriptions, command help, save messages)
@@ -168,8 +169,8 @@ def main() -> None:
     # base + table[k]*2 (verified in the EXE, see SYSTEM_BIN_FORMAT.md), so the
     # regenerated table is followed correctly. --max-grow caps per-line growth.
     run("-m", "langrisser.system_pack",
-        "--system-in", f"work/build/SYSTEM.BIN.{suffix}.ne",
-        "--system-out", f"work/build/SYSTEM.BIN.{suffix}",
+        "--system-in", f"{build_dir}/SYSTEM.BIN.{suffix}.ne",
+        "--system-out", f"{build_dir}/SYSTEM.BIN.{suffix}",
         "--strings", reflowed_system_strings,
         "--layout", lang.system_layout,
         "--source-strings", system_source,
@@ -180,26 +181,26 @@ def main() -> None:
     run("-m", "langrisser.sceninsert", "--fixed-size-repack",
         "--scen", args.scen, "--scen2", args.scen2,
         "--dump-dir", build_translation_root, "--charmap", tbl,
-        "--out-scen", f"work/build/SCEN.{suffix}.DAT",
-        "--out-scen2", f"work/build/SCEN2.{suffix}.DAT")
+        "--out-scen", f"{build_dir}/SCEN.{suffix}.DAT",
+        "--out-scen2", f"{build_dir}/SCEN2.{suffix}.DAT")
 
     run("-m", "langrisser.imgdat", "title-credits",
         args.imgdat,
-        "--out-imgdat", f"work/build/IMG.DAT.{suffix}",
+        "--out-imgdat", f"{build_dir}/IMG.DAT.{suffix}",
         "--version", args.patch_version,
         "--credits-json", lang.title_credits,
-        "--out-raw-preview", f"work/build/title_credits_{suffix}_raw.png",
-        "--out-display", f"work/build/title_credits_{suffix}_display.png",
-        "--out-crop", f"work/build/title_credits_{suffix}_crop.png")
+        "--out-raw-preview", f"{build_dir}/title_credits_{suffix}_raw.png",
+        "--out-display", f"{build_dir}/title_credits_{suffix}_display.png",
+        "--out-crop", f"{build_dir}/title_credits_{suffix}_crop.png")
 
     # Redraw the translated prologue poem graphic on top of the title credits
     # (different asset, so the two IMG.DAT edits do not overlap).
     if has_target_text(lang.poem):
         run("-m", "langrisser.poem_translate",
-            "--imgdat", f"work/build/IMG.DAT.{suffix}",
+            "--imgdat", f"{build_dir}/IMG.DAT.{suffix}",
             "--poem", lang.poem,
-            "--out-imgdat", f"work/build/IMG.DAT.{suffix}",
-            "--out-preview", f"work/build/poem_{suffix}_preview.png")
+            "--out-imgdat", f"{build_dir}/IMG.DAT.{suffix}",
+            "--out-preview", f"{build_dir}/poem_{suffix}_preview.png")
     else:
         print(f"no target poem in {lang.poem}; preserving the original poem asset")
 
@@ -207,9 +208,9 @@ def main() -> None:
     if lang.scenario_clear:
         run("-m", "langrisser.scenario_clear",
             "--lang", args.lang, "--lang-root", lang.root.parent,
-            "--imgdat", f"work/build/IMG.DAT.{suffix}",
-            "--out-imgdat", f"work/build/IMG.DAT.{suffix}",
-            "--out-preview", f"work/build/scenario_clear_{suffix}_preview.png")
+            "--imgdat", f"{build_dir}/IMG.DAT.{suffix}",
+            "--out-imgdat", f"{build_dir}/IMG.DAT.{suffix}",
+            "--out-preview", f"{build_dir}/scenario_clear_{suffix}_preview.png")
     else:
         print("no scenario_clear text; preserving the original banner asset")
 
@@ -217,21 +218,21 @@ def main() -> None:
     if lang.now_loading:
         run("-m", "langrisser.now_loading",
             "--lang", args.lang, "--lang-root", lang.root.parent,
-            "--imgdat", f"work/build/IMG.DAT.{suffix}",
-            "--out-imgdat", f"work/build/IMG.DAT.{suffix}",
-            "--out-preview", f"work/build/now_loading_{suffix}_preview.png")
+            "--imgdat", f"{build_dir}/IMG.DAT.{suffix}",
+            "--out-imgdat", f"{build_dir}/IMG.DAT.{suffix}",
+            "--out-preview", f"{build_dir}/now_loading_{suffix}_preview.png")
     else:
         print("no now_loading text; preserving the original plate texture")
 
     injections = {
-        release.media_path("SCEN.DAT", game.code): Path(f"work/build/SCEN.{suffix}.DAT"),
-        release.media_path("SYSTEM.BIN", game.code): Path(f"work/build/SYSTEM.BIN.{suffix}"),
-        release.media_path("IMG.DAT", game.code): Path(f"work/build/IMG.DAT.{suffix}"),
-        exe: Path(f"work/build/{exe_name}.{suffix}"),
+        release.media_path("SCEN.DAT", game.code): Path(f"{build_dir}/SCEN.{suffix}.DAT"),
+        release.media_path("SYSTEM.BIN", game.code): Path(f"{build_dir}/SYSTEM.BIN.{suffix}"),
+        release.media_path("IMG.DAT", game.code): Path(f"{build_dir}/IMG.DAT.{suffix}"),
+        exe: Path(f"{build_dir}/{exe_name}.{suffix}"),
     }
     if Path(args.scen2).exists():
         injections[release.media_path("SCEN2.DAT", game.code)] = Path(
-            f"work/build/SCEN2.{suffix}.DAT")
+            f"{build_dir}/SCEN2.{suffix}.DAT")
     # The writer follows the release's medium and never grows the image:
     # relocation is unsafe on this disc, whose free tail region overlaps the
     # CD audio tracks, so file sizes must stay unchanged.

@@ -138,12 +138,17 @@ python3 -m langrisser.saturn_disc --cue iso/saturn/LANGRISSER_5.cue verify
 | `<pack>/font_slot_assignments.csv` | target glyph assignments |
 | `<pack>/name_entry_grid.json` | target name-entry alphabet layout |
 | `<pack>/review_status.csv` | per-record translation and JP cross-check status |
-| `work/extracted/` | extracted game files, generated |
-| `work/scriptdump/` | generated JP script dump, not tracked |
-| `work/systemdump/` | generated SYSTEM.BIN string dump, not tracked |
-| `work/wip_<lang>/` | partial translation staging area |
-| `work/build/` | generated build files and previews |
-| `patches/langrisser_v_<lang>.ppf` | generated PPF output |
+| `work/<game>/extracted/` | extracted game files, generated |
+| `work/<game>/scriptdump/` | generated JP script dump, not tracked |
+| `work/<game>/systemdump/` | generated SYSTEM.BIN string dump, not tracked |
+| `work/<game>/wip_<lang>/` | partial translation staging area |
+| `work/<game>/build/` | generated build files and previews |
+| `patches/<patch_stem>_<lang>.ppf` | generated PPF output (`langrisser_v_ru.ppf`) |
+
+Everything generated is scoped by game, because otherwise two games' builds
+write the same files: `work/l5/build/SCEN.ru.DAT` and `work/l4/build/SCEN.ru.DAT`
+are different discs' data under one name. The patch stem comes from the game
+manifest, so Langrisser V keeps `langrisser_v_<lang>.ppf`.
 
 Do not commit generated JP script dumps, extracted game files, build outputs or
 partial translated chunks.
@@ -181,12 +186,12 @@ extraction, review, validation and build flow.
 Extract original game files:
 
 ```bash
-mkdir -p work/extracted
-python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/SCEN.DAT  work/extracted/SCEN.DAT
-python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/SCEN2.DAT work/extracted/SCEN2.DAT
-python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/SYSTEM.BIN work/extracted/SYSTEM.BIN
-python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/IMG.DAT    work/extracted/IMG.DAT
-python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /SLPS_018.19  work/extracted/SLPS_018.19
+mkdir -p work/l5/extracted
+python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/SCEN.DAT  work/l5/extracted/SCEN.DAT
+python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/SCEN2.DAT work/l5/extracted/SCEN2.DAT
+python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/SYSTEM.BIN work/l5/extracted/SYSTEM.BIN
+python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/IMG.DAT    work/l5/extracted/IMG.DAT
+python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /SLPS_018.19  work/l5/extracted/SLPS_018.19
 ```
 
 Dump source text and verify the no-edit round trip:
@@ -197,7 +202,7 @@ python3 -m langrisser.system_dump
 python3 -m langrisser.verify_roundtrip
 ```
 
-Generated JP source stays under `work/scriptdump/` and `work/systemdump/`.
+Generated JP source stays under `work/l5/scriptdump/` and `work/l5/systemdump/`.
 These dumps are required for translation and building but are not committed.
 
 For Langrisser IV, point the same tools at disc A with `--game l4` (its files
@@ -223,7 +228,7 @@ with an empty `char` and a group saying what they are:
 
 ```bash
 python3 -m langrisser.derive_font_map --game l4 \
-  --system work/l4/SYSTEM.BIN --reference-system work/extracted/SYSTEM.BIN \
+  --system work/l4/SYSTEM.BIN --reference-system work/l5/extracted/SYSTEM.BIN \
   --out-unmatched work/l4/font_map_unmatched.txt
 ```
 
@@ -255,7 +260,7 @@ Review or edit these files for the target language:
 
 `system_strings.json` is a target-only `stable id -> translated text` overlay.
 Offsets, budgets and Japanese source come from the generated
-`work/systemdump/system_strings.json`. Exact JP strings already present in the
+`work/l5/systemdump/system_strings.json`. Exact JP strings already present in the
 language pack's `names.csv` or `glossary.csv` are inherited automatically during
 the build; do not duplicate those canonical translations in the SYSTEM overlay.
 Set `system_complete` in the language manifest only after the strict resolver
@@ -266,8 +271,8 @@ exceptions required by longer target-language strings. Add exceptions only after
 confirming that the affected UI field can display them.
 
 The full patch build derives any missing target-language pairs into
-`work/build/font_slot_assignments.<lang>.csv`, rebuilds the font, rewraps a copy
-under `work/build/translation.<lang>/` with that exact table and validates it
+`work/l5/build/font_slot_assignments.<lang>.csv`, rebuilds the font, rewraps a copy
+under `work/l5/build/translation.<lang>/` with that exact table and validates it
 before insertion. It never rewrites tracked translation sources. To persist a
 new assignment baseline for review, run:
 
@@ -287,7 +292,7 @@ python3 -m langrisser.scenario --lang <lang> dump 1
 python3 -m langrisser.scenario --lang <lang> prefill 1
 ```
 
-`prefill` writes partial chunks to `work/wip_<lang>/SCEN/`. Move a chunk to
+`prefill` writes partial chunks to `work/l5/wip_<lang>/SCEN/`. Move a chunk to
 `data/lang/<lang>/SCEN/` only after it is fully translated and validates.
 
 Source priority for translation and review:
@@ -319,7 +324,7 @@ For Russian, enforce speaker coverage and conservative plate width:
 python3 -m langrisser.validate_terms --lang ru --require-complete --require-speakers --max-plate-chars 10
 ```
 
-The review generator writes `work/review/<lang>/index.html` and one page per
+The review generator writes `work/l5/review/<lang>/index.html` and one page per
 selected chunk. It shows JP, reference EN and target text together with speaker
 plates, controls and page boundaries. Use `--scenario quiz`, `--scenario 1`, or
 `--scenario opt:<name>` to follow play order; omit `--scenario` for the complete
@@ -365,10 +370,10 @@ including startup-menu VRAM-atlas rows and other tight fixed-width fields.
 
 Generated outputs for language suffix `<s>`:
 
-- `work/build/langrisser_v_<s>.bin`
+- `work/l5/build/langrisser_v_<s>.bin`
 - `patches/langrisser_v_<s>.ppf`
-- generated DAT/SYSTEM/EXE intermediates under `work/build/`
-- preview images under `work/build/`
+- generated DAT/SYSTEM/EXE intermediates under `work/l5/build/`
+- preview images under `work/l5/build/`
 
 Release build:
 
@@ -393,7 +398,7 @@ Verify the disc and extract the Saturn side once:
 ```bash
 python3 -m langrisser.saturn_disc --cue iso/saturn/LANGRISSER_5.cue verify
 for f in SYSTEM.DAT SCEN.DAT CLEAR.DAT TITLE1.DAT TITLE2.DAT OPEN.DAT; do
-  python3 -m langrisser.saturn_disc extract $f work/build/saturn/$f
+  python3 -m langrisser.saturn_disc extract $f work/l5/build/saturn/$f
 done
 ```
 
@@ -404,7 +409,7 @@ python3 -m langrisser.saturn_build --lang ru
 python3 -m langrisser.saturn_build --lang ru --remaster-disc
 ```
 
-This also needs the PS1 base extracts (`work/extracted/SCEN.DAT`, `SCEN2.DAT`,
+This also needs the PS1 base extracts (`work/l5/extracted/SCEN.DAT`, `SCEN2.DAT`,
 `SYSTEM.BIN`): the PS1 originals are the *reference* every Saturn
 correspondence is proven against. The builder runs, in order: platform text
 overrides → native-glyph plan → Saturn-side slot usage scan → font → reflow
@@ -413,7 +418,7 @@ Loading → SCEN insert → SCENARIO CLEAR, title credits and the prologue poem.
 
 Strict mode stops on any unresolved `data/releases/l5-saturn-jp/` mapping gap;
 `--allow-unmapped` is a diagnostic only. The non-remaster command emits
-translated extracted files under `work/build/saturn/`; `--remaster-disc` emits
+translated extracted files under `work/l5/build/saturn/`; `--remaster-disc` emits
 a translated mixed-mode Saturn BIN/CUE in the same directory. Saturn output
 grows `SCEN.DAT` and `OPEN.DAT`, so the generated `.cue` is part of the build
 artifact.
@@ -427,7 +432,7 @@ python3 -m langrisser.saturn_scen_audit   --write-mapping   # SCEN records
 python3 -m langrisser.saturn_system_audit --write-mapping   # SYSTEM entries
 ```
 
-They emit `work/build/saturn/scen_platform_review.md` with the Saturn original
+They emit `work/l5/build/saturn/scen_platform_review.md` with the Saturn original
 decoded through `data/releases/l5-saturn-jp/kanji_map.csv`, the closest PS1 record
 and its current translations — everything needed to author the platform record.
 

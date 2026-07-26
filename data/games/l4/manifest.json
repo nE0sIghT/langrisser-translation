@@ -1,6 +1,7 @@
 {
   "game": "l4",
   "label": "Langrisser IV: The Sword of Light",
+  "patch_stem": "langrisser_iv",
   "engine": "l45",
   "font_map": "font_map.csv",
   "lang_root": "lang"

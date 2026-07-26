@@ -78,7 +78,7 @@ short tail lines.
 
 ```bash
 # 1. dump every string (offset table aware) to a generated inspection JSON
-python3 -m langrisser.system_dump --out work/systemdump/system_strings.json
+python3 -m langrisser.system_dump --out work/l5/systemdump/system_strings.json
 
 # 2. translate the target-only stable-id overlay:
 #    data/games/<game>/lang/<lang>/system_strings.json
@@ -86,15 +86,15 @@ python3 -m langrisser.system_dump --out work/systemdump/system_strings.json
 
 # 3. resolve exact canonical names/terms inherited from the language pack
 python3 -m langrisser.resolve_system_strings --lang <lang> \
-    --system-source work/systemdump/system_strings.json \
-    --out work/build/system_strings.<lang>.json
+    --system-source work/l5/systemdump/system_strings.json \
+    --out work/l5/build/system_strings.<lang>.json
 
 # 4. pack back into SYSTEM.BIN
 python3 -m langrisser.system_pack \
-    --system-in work/build/SYSTEM.BIN.font \
-    --system-out work/build/SYSTEM.BIN.<lang> \
-    --source-strings work/systemdump/system_strings.json \
-    --strings work/build/system_strings.<lang>.json --strict
+    --system-in work/l5/build/SYSTEM.BIN.font \
+    --system-out work/l5/build/SYSTEM.BIN.<lang> \
+    --source-strings work/l5/systemdump/system_strings.json \
+    --strings work/l5/build/system_strings.<lang>.json --strict
 ```
 
 The generated source dump contains ids, offsets, budgets and JP text. It stays

@@ -163,7 +163,7 @@ def decode_poem_subasset(sub: bytes) -> list[bytearray]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
-    ap.add_argument("--open", default="work/build/saturn/OPEN.DAT")
+    ap.add_argument("--open", default="work/l5/build/saturn/OPEN.DAT")
     ap.add_argument("--poem", default=None)
     ap.add_argument("--out-open", default=None)
     ap.add_argument("--out-preview", default=None)
@@ -173,8 +173,8 @@ def main() -> None:
     args = ap.parse_args()
     lang = language_from_args(args)
     poem_path = Path(args.poem) if args.poem else lang.poem
-    out_open = args.out_open or f"work/build/saturn/OPEN.{lang.suffix}.DAT"
-    out_preview = args.out_preview or f"work/build/saturn/open_poem_{lang.suffix}_preview.png"
+    out_open = args.out_open or f"work/l5/build/saturn/OPEN.{lang.suffix}.DAT"
+    out_preview = args.out_preview or f"work/l5/build/saturn/open_poem_{lang.suffix}_preview.png"
     data = bytearray(Path(args.open).read_bytes())
     entries = parse_open_toc(data)
     off, size = entries[SUBASSET_INDEX]

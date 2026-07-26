@@ -120,7 +120,7 @@ def build_chunk(src_path: Path, overrides: dict[int, str]) -> tuple[list[str], l
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
-    ap.add_argument("--jp-dump", default="work/scriptdump")
+    ap.add_argument("--jp-dump", default="work/l5/scriptdump")
     ap.add_argument("--overrides", default=None)
     ap.add_argument("--out-dir", default=None)
     args = ap.parse_args()

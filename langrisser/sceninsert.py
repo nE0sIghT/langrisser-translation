@@ -268,15 +268,15 @@ def insert_file(src: Path, dump_root: Path, out_path: Path, codec: Codec,
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_game_args(ap)
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
     ap.add_argument("--scen2", default=None,
                     help="Second script file (Langrisser V mirrors SCEN in SCEN2).")
-    ap.add_argument("--dump-dir", default="work/scriptdump")
+    ap.add_argument("--dump-dir", default="work/l5/scriptdump")
     ap.add_argument("--charmap", default=None,
                     help="groups_report.csv or a HHHH=c .tbl file "
                          "(default: the game's font map)")
-    ap.add_argument("--out-scen", default="work/build/SCEN.DAT")
-    ap.add_argument("--out-scen2", default="work/build/SCEN2.DAT")
+    ap.add_argument("--out-scen", default="work/l5/build/SCEN.DAT")
+    ap.add_argument("--out-scen2", default="work/l5/build/SCEN2.DAT")
     ap.add_argument("--allow-grow", action="store_true",
                     help="Allow text blocks (and the container) to grow.")
     ap.add_argument("--fixed-size-repack", action="store_true",

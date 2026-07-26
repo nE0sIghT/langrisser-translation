@@ -26,7 +26,7 @@ be broken.
 - **No partially translated chunks in `data/games/<game>/lang/<lang>/SCEN/`.**
   Untranslated kanji whose glyph slots were sacrificed for target-language
   glyphs fail the encode step and break the build. Work-in-progress lives in
-  `work/wip_<lang>/`
+  `work/l5/wip_<lang>/`
   (`langrisser/tm_prefill.py` writes there).
 
 ## Mandatory checks before claiming success
@@ -50,7 +50,7 @@ game, add a row to `docs/SPEAKER_TEST_SET.md`.
 
 ## Translation conventions
 
-- Source of meaning: the JP dump in `work/scriptdump/`. `work/translation.txt`
+- Source of meaning: the JP dump in `work/l5/scriptdump/`. `work/translation.txt`
   (borgor's GameFAQs guide:
   https://gamefaqs.gamespot.com/saturn/562834-langrisser-v-the-end-of-legend/faqs/41339)
   may be copied verbatim where its wording fits the JP line and the byte budget;

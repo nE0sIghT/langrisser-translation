@@ -45,9 +45,9 @@ def check_codec(src: Path, codec: Codec) -> int:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--scen", default="work/extracted/SCEN.DAT")
-    ap.add_argument("--scen2", default="work/extracted/SCEN2.DAT")
-    ap.add_argument("--system", default="work/extracted/SYSTEM.BIN")
+    ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
+    ap.add_argument("--scen2", default="work/l5/extracted/SCEN2.DAT")
+    ap.add_argument("--system", default="work/l5/extracted/SYSTEM.BIN")
     ap.add_argument("--charmap", default=str(COMMON_FONT_MAP))
     ap.add_argument("--jp-tbl", default=str(COMMON_JP_TBL))
     args = ap.parse_args()

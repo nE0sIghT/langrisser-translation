@@ -363,9 +363,9 @@ def add_decoded_previews(hits: list[dict], data: bytes, codemap: dict[int, str],
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--scen", default="work/build/saturn/SCEN.DAT")
+    ap.add_argument("--scen", default="work/l5/build/saturn/SCEN.DAT")
     ap.add_argument("--tbl", default="data/common/tables/lang5_jp.tbl")
-    ap.add_argument("--out", default="work/build/saturn/scen_scan.json")
+    ap.add_argument("--out", default="work/l5/build/saturn/scen_scan.json")
     ap.add_argument("--scan-start", type=lambda value: int(value, 0), default=0)
     ap.add_argument("--scan-end", type=lambda value: int(value, 0), default=0x60000)
     ap.add_argument("--min-words", type=int, default=8)

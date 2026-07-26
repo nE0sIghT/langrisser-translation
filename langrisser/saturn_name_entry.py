@@ -80,13 +80,13 @@ def main() -> None:
     add_language_args(ap)
     ap.add_argument("--grid", default=None)
     ap.add_argument("--tbl", default=None)
-    ap.add_argument("--system-in", default="work/build/saturn/SYSTEM.ru.DAT")
+    ap.add_argument("--system-in", default="work/l5/build/saturn/SYSTEM.ru.DAT")
     ap.add_argument("--system-out", default=None)
     args = ap.parse_args()
 
     lang = language_from_args(args)
     grid = Path(args.grid) if args.grid else lang.name_entry_grid
-    tbl = Path(args.tbl) if args.tbl else Path(f"work/build/saturn/lang5_{lang.suffix}.saturn.tbl")
+    tbl = Path(args.tbl) if args.tbl else Path(f"work/l5/build/saturn/lang5_{lang.suffix}.saturn.tbl")
     out = Path(args.system_out) if args.system_out else Path(args.system_in)
 
     tok2char = load_charmap_tbl(tbl)

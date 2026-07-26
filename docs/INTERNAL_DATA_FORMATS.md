@@ -78,7 +78,7 @@ text_id`. Plate selection is:
   a zero-based local speaker-pool slot.
 
 `langrisser/scendump.py` uses this same extractor for `# spk:` comments and
-`work/scriptdump/all_records.csv`. No hand-written speaker map is canonical.
+`work/l5/scriptdump/all_records.csv`. No hand-written speaker map is canonical.
 
 Detailed dispatch-level evidence is in:
 - `docs/DISASM_SUMMARY.md`

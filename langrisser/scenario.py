@@ -22,7 +22,7 @@ from langrisser.project import COMMON_SCENARIO_MAP, add_language_args, language_
 
 ROOT = Path(__file__).resolve().parent.parent
 MAP_PATH = COMMON_SCENARIO_MAP
-JP_DUMP = ROOT / "work/scriptdump/SCEN"
+JP_DUMP = ROOT / "work/l5/scriptdump/SCEN"
 TARGET_DUMP = ROOT / "data/games/l5/lang/en/SCEN"
 TAG_RE = re.compile(r"<\$[0-9A-F]{4}>")
 
