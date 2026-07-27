@@ -1,15 +1,36 @@
 {
   "_comment": [
-    "Saturn SYSTEM mapping data for this release. Structure only: no extracted",
-    "Japanese text. The stable ids below are the PS1 SYSTEM dump's, which the",
-    "language pack is keyed by. An entry maps to one of those ids, to a",
-    "language-specific override under the pack's releases/<slug>/, or preserves",
-    "its original token stream when it is non-text or patched by a separate",
-    "Saturn adapter."
+    "Saturn SYSTEM correspondence for this release, recorded once by",
+    "langrisser.saturn_reconcile system. Structure only: no extracted Japanese",
+    "text. Every group entry of this build is covered, so a build reads the",
+    "correspondence from here instead of comparing the two originals again;",
+    "the group and index numbers are the PS1 SYSTEM dump's, because Langrisser V",
+    "was translated on PS1 first and the language pack is keyed by them.",
+    "An entry maps to one of those ids, to a language-specific override",
+    "under the pack's releases/<slug>/, or preserves its original token",
+    "stream when it is non-text or patched by a separate Saturn adapter."
   ],
   "unresolved_groups": {},
   "groups": {
     "0": {
+      "entries": [
+        {
+          "saturn": 190,
+          "platform": "group:0:190"
+        },
+        {
+          "saturn": 212,
+          "platform": "group:0:212"
+        },
+        {
+          "saturn": 255,
+          "platform": "group:0:255"
+        },
+        {
+          "saturn": 256,
+          "platform": "group:0:256"
+        }
+      ],
       "ranges": [
         {
           "saturn": 0,
@@ -31,34 +52,9 @@
           "ps1": 255,
           "count": 35
         }
-      ],
-      "entries": [
-        {
-          "saturn": 190,
-          "platform": "group:0:190"
-        },
-        {
-          "saturn": 212,
-          "platform": "group:0:212"
-        },
-        {
-          "saturn": 255,
-          "platform": "group:0:255"
-        },
-        {
-          "saturn": 256,
-          "platform": "group:0:256"
-        }
       ]
     },
     "1": {
-      "ranges": [
-        {
-          "saturn": 25,
-          "ps1": 25,
-          "count": 4
-        }
-      ],
       "entries": [
         {
           "saturn": 0,
@@ -220,36 +216,138 @@
           "saturn": 43,
           "platform": "group:1:43"
         }
+      ],
+      "ranges": [
+        {
+          "saturn": 25,
+          "ps1": 25,
+          "count": 4
+        }
       ]
     },
-    "14": {
+    "2": {
       "ranges": [
         {
           "saturn": 0,
           "ps1": 0,
-          "count": 26
+          "count": 190
+        }
+      ]
+    },
+    "3": {
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 0,
+          "count": 130
+        }
+      ]
+    },
+    "4": {
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 0,
+          "count": 20
+        }
+      ]
+    },
+    "5": {
+      "entries": [
+        {
+          "saturn": 3,
+          "platform": "group:5:3",
+          "space_override": true,
+          "reason": "shared translation exceeds the Saturn group budget"
         },
         {
-          "saturn": 33,
-          "ps1": 33,
-          "count": 3
-        },
-        {
-          "saturn": 37,
-          "ps1": 37,
-          "count": 3
-        },
-        {
-          "saturn": 45,
-          "ps1": 45,
-          "count": 3
-        },
-        {
-          "saturn": 49,
-          "ps1": 49,
-          "count": 91
+          "saturn": 30,
+          "platform": "group:5:30",
+          "space_override": true,
+          "reason": "shared translation exceeds the Saturn group budget"
         }
       ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 0,
+          "count": 33
+        }
+      ]
+    },
+    "6": {
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 0,
+          "count": 65
+        }
+      ]
+    },
+    "7": {
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 0,
+          "count": 25
+        }
+      ]
+    },
+    "8": {
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 0,
+          "count": 96
+        }
+      ]
+    },
+    "9": {
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 0,
+          "count": 330
+        }
+      ]
+    },
+    "10": {
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 0,
+          "count": 330
+        }
+      ]
+    },
+    "11": {
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 0,
+          "count": 252
+        }
+      ]
+    },
+    "12": {
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 0,
+          "count": 376
+        }
+      ]
+    },
+    "13": {
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 0,
+          "count": 228
+        }
+      ]
+    },
+    "14": {
       "entries": [
         {
           "saturn": 26,
@@ -307,41 +405,36 @@
           "saturn": 48,
           "platform": "group:14:48"
         }
-      ]
-    },
-    "15": {
+      ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 0,
-          "count": 4
+          "count": 26
         },
         {
-          "saturn": 7,
-          "ps1": 7,
-          "count": 5
-        },
-        {
-          "saturn": 12,
-          "ps1": 16,
-          "count": 13
-        },
-        {
-          "saturn": 29,
+          "saturn": 33,
           "ps1": 33,
-          "count": 37
+          "count": 3
         },
         {
-          "saturn": 67,
-          "ps1": 71,
-          "count": 5
+          "saturn": 37,
+          "ps1": 37,
+          "count": 3
         },
         {
-          "saturn": 75,
-          "ps1": 79,
-          "count": 13
+          "saturn": 45,
+          "ps1": 45,
+          "count": 3
+        },
+        {
+          "saturn": 49,
+          "ps1": 49,
+          "count": 91
         }
-      ],
+      ]
+    },
+    "15": {
       "entries": [
         {
           "saturn": 4,
@@ -387,28 +480,37 @@
           "saturn": 74,
           "platform": "group:15:74"
         }
-      ]
-    },
-    "5": {
-      "entries": [
-        {
-          "saturn": 3,
-          "platform": "group:5:3",
-          "space_override": true,
-          "reason": "shared translation exceeds the Saturn group budget"
-        },
-        {
-          "saturn": 30,
-          "platform": "group:5:30",
-          "space_override": true,
-          "reason": "shared translation exceeds the Saturn group budget"
-        }
       ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 0,
-          "count": 33
+          "count": 4
+        },
+        {
+          "saturn": 7,
+          "ps1": 7,
+          "count": 5
+        },
+        {
+          "saturn": 12,
+          "ps1": 16,
+          "count": 13
+        },
+        {
+          "saturn": 29,
+          "ps1": 33,
+          "count": 37
+        },
+        {
+          "saturn": 67,
+          "ps1": 71,
+          "count": 5
+        },
+        {
+          "saturn": 75,
+          "ps1": 79,
+          "count": 13
         }
       ]
     }

@@ -149,10 +149,15 @@ data/releases/
     kanji_map.csv
 ```
 
-The common language pack is PS1-based because the existing translation and
-review data were built from the PS1 `SCEN.DAT` and `SYSTEM.BIN` dumps. A
-non-PS1 build may reuse common target strings only when platform mapping proves
-that a platform entry corresponds to a PS1 chunk record or SYSTEM stable id.
+The common language pack's ids are the PS1 script's and SYSTEM dump's, because
+Langrisser V was translated on PS1 first and the existing translation and review
+data were keyed by them. Another release reuses those target strings through its
+own mapping files, which say which of its positions carries each id.
+
+Those mappings are complete: `langrisser.saturn_reconcile` compares the two
+originals once and records every entry, so a build reads the correspondence from
+`data/` and never opens another release's disc. Reconciliation is the only step
+allowed to.
 
 `scen_mapping.json`:
 
@@ -160,8 +165,9 @@ that a platform entry corresponds to a PS1 chunk record or SYSTEM stable id.
   as missing translations;
 - `unresolved_chunks`: durable no-source-text tracker of Saturn chunks that
   still need explicit mapping;
-- `chunks`: per-chunk explicit mapping for Saturn entries that cannot be proven
-  by automatic identity or unique stable-token alignment.
+- `chunks`: per-chunk mapping covering every Saturn entry — `ranges` for the
+  runs reconciliation proved correspond one-for-one, `entries` for the
+  hand-written decisions no alignment can reproduce.
 
 Chunk mapping entries use zero-based platform entry indices and one-based PS1
 record numbers:

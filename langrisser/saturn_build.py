@@ -146,7 +146,6 @@ def main() -> None:
         "--translation-root", build_translation_root,
         "--strings", resolved_system_strings,
         "--saturn-orig", system_in,
-        "--ps1-system", args.ps1_system,
         "--scen-mapping", release.scen_mapping,
         "--system-mapping", release.system_mapping)
 
@@ -257,7 +256,6 @@ def main() -> None:
         "--release-root", args.release_root,
         "--system-in", system_font,
         "--system-out", system_out,
-        "--ps1-system", args.ps1_system,
         "--strings", reflowed_system_strings,
         "--release-strings", lang.override_system_strings(release.code),
         "--tbl", tbl,

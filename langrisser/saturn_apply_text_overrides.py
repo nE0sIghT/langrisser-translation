@@ -26,9 +26,8 @@ import json
 import re
 from pathlib import Path
 
-from langrisser.offsetgroups import PS1 as PS1_CFG
 from langrisser.offsetgroups import SATURN as SATURN_CFG
-from langrisser.offsetgroups import find_groups, group_key
+from langrisser.offsetgroups import find_groups, group_key, parse_group_key
 from langrisser.project import add_language_args, language_from_args
 from langrisser.release import add_release_args, release_from_args
 from langrisser.saturn_apply import load_mapping as load_scen_mapping
@@ -98,32 +97,35 @@ def override_scen(translation_root: Path, platform_scen: Path, mapping: dict) ->
 
 
 def shadow_system(strings_path: Path, overlay: dict, mapping: dict,
-                  saturn_orig: bytes, ps1_system: bytes) -> tuple[int, int]:
-    """Replace or drop PS1 strings shadowed by platform entries.
+                  saturn_orig: bytes) -> tuple[int, int]:
+    """Replace or drop pack strings shadowed by release entries.
 
-    A shadowed UI line whose platform overlay carries the Saturn text (same
+    A shadowed UI line whose release overlay carries this build's text (same
     index) is *replaced*, so the downstream validators check exactly what
     ships; only entries with no overlay counterpart are removed.
+
+    Which pack strings this build actually shows is the recorded mapping: an
+    id no group entry points at is not on this build, whatever it is on
+    another one.
     """
     translations = json.loads(strings_path.read_text(encoding="utf-8"))
     sat_groups = find_groups(saturn_orig, SATURN_CFG)
-    ps1_groups = find_groups(ps1_system, PS1_CFG)
     removed = replaced = 0
     for group_id, spec in (mapping.get("groups") or {}).items():
         gi = int(group_id)
-        n = len(sat_groups[gi][1])
-        targets = expand_group_map(spec, n)
-        used_ps1 = {t for t in targets.values() if isinstance(t, int)}
-        used_ps1 |= {int(str(t["ps1_id"]).rsplit(":", 1)[1])
-                     for t in targets.values()
-                     if isinstance(t, dict) and "ps1_id" in t}
-        for k in range(len(ps1_groups[gi][1])):
-            if k in used_ps1:
-                continue
+        targets = expand_group_map(spec, len(sat_groups[gi][1]))
+        used = {t for t in targets.values() if isinstance(t, int)}
+        used |= {int(str(t["ps1_id"]).rsplit(":", 1)[1])
+                 for t in targets.values()
+                 if isinstance(t, dict) and "ps1_id" in t}
+        shadowed = sorted(
+            index for group, index in
+            filter(None, (parse_group_key(key) for key in translations))
+            if group == gi and index not in used
+        )
+        for k in shadowed:
             key = group_key(gi, k)
-            if key not in translations:
-                continue
-            platform_text = overlay.get(group_key(gi, k))
+            platform_text = overlay.get(key)
             if platform_text is not None:
                 translations[key] = platform_text
                 replaced += 1
@@ -144,7 +146,6 @@ def main() -> None:
     ap.add_argument("--strings", required=True,
                     help="Resolved common SYSTEM strings JSON, rewritten in place.")
     ap.add_argument("--saturn-orig", required=True)
-    ap.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN")
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--scen-mapping", default=None,
                     help="SCEN mapping JSON (default: the release manifest's)")
@@ -171,7 +172,6 @@ def main() -> None:
         overlay,
         load_system_mapping(system_mapping),
         Path(args.saturn_orig).read_bytes(),
-        Path(args.ps1_system).read_bytes(),
     )
     print(f"platform text overrides: {replaced} SCEN records replaced, "
           f"{sys_replaced} SYSTEM strings replaced, "

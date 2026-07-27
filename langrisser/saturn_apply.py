@@ -326,7 +326,7 @@ def apply_scen(data: bytes, lang_scen_dir: Path, codec: Codec,
             elif target is None and ps1_scen is None:
                 chunk_fatal.append(
                     f"chunk {chunk_index:03d} entry {saturn_index}: no recorded "
-                    "correspondence; run langrisser.saturn_reconcile")
+                    "correspondence; run langrisser.saturn_reconcile scen")
                 new_entries.append(entries[saturn_index])
             elif isinstance(target, dict) and target.get("unmatched"):
                 if strict:

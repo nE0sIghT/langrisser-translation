@@ -40,6 +40,7 @@ Read-only tooling added for this investigation:
 | `langrisser/saturn_font.py` | Render Saturn `SYSTEM.DAT` glyph slots and diff them against the PS1 font |
 | `langrisser/saturn_scen.py` | Shared SCEN.DAT read/rebuild model (catalog, block header, field_3c text pool) |
 | `langrisser/saturn_apply.py` | Apply the universal language-pack translation to the Saturn SCEN text pool |
+| `langrisser/saturn_reconcile.py` | One-off: compare this release's originals against another's and record the script/SYSTEM correspondence into `data/` |
 | `langrisser/saturn_system_pack.py` | Pack the SYSTEM UI translation into the Saturn `SYSTEM.DAT` groups |
 | `langrisser/saturn_system_validate.py` | Validate the packed `SYSTEM.DAT` write contract (pointer directory, group spans) |
 | `langrisser/saturn_build.py` | Build-time Saturn flow: font + SYSTEM text + SCEN text + decoded graphics |
@@ -1117,8 +1118,9 @@ pass 1 on the full normalized originals (kanji included, trailing `FFFF`
 stripped), pass 2 for records containing unresolved rare kanji — stable
 signature (kana/ASCII/controls) match verified position-by-position with
 wildcards allowed only at the unresolved spots. Insertions/deletions on
-either side align automatically and need no mapping ranges; explicit `ps1`
-mapping targets are verified with the same proof. This replaced the earlier
+either side align without hand-written ranges. This runs in
+`langrisser/saturn_reconcile.py`, once: what it proves is written to the
+release mapping as ranges, and the build reads those instead. This replaced the earlier
 speaker-checked prefix alignment, which silently mis-placed translations in
 narration-heavy blocks (no `FB00` speaker to compare — block 39 had 245
 wrongly-fed entries).
@@ -1310,7 +1312,7 @@ for text.
 | `ADPCM/**/*.XA` extents point directly to physical raw sectors. | Rejected | Physical sector is ISO extent minus the 225-sector pregap. |
 | `SYSTEM.DAT` text tables are PS1-style little-endian groups. | Rejected | Little-endian scan finds no groups; swapped/on-disc BE scan finds 16 valid groups. |
 | `SYSTEM.DAT` keeps the same broad text-table concept as PS1. | Confirmed | 16 swapped/on-disc BE groups decode to unit/menu/system strings; total 2639 strings. |
-| Saturn `SYSTEM.DAT` groups correspond 1:1 to PS1 `SYSTEM.BIN` groups. | Confirmed | Both 16 groups in the same order; 14/16 have identical entry counts; the unit-name group is 127/130 byte-identical by index (3 diffs are glyph-slot reordering). |
+| Saturn `SYSTEM.DAT` groups correspond 1:1 to PS1 `SYSTEM.BIN` groups. | Confirmed | Both 16 groups in the same order; 14/16 have identical entry counts; the unit-name group is 127/130 byte-identical by index (3 diffs are glyph-slot reordering). `langrisser.saturn_reconcile system` resolved all 2639 entries (2042 by alignment, 597 already written by hand, 0 undecided) and recorded them in `system_mapping.json`. |
 | Saturn `SCEN.DAT` top-level entries are `(event id, pointer)`. | Rejected | First field multiplied by `0x800` gives every payload start; second field is always `used_size <= allocated_size`, with zero padding after it. |
 | Saturn `SCEN.DAT` top-level catalog is `(start_sector, used_size)`. | Confirmed | All 131 entries validate; first payload starts at `0x800`, allocation is sector-aligned, all padding bytes are zero. |
 | Saturn `SCEN.DAT` payloads have a fixed header with section offsets. | Confirmed | All 131 blocks have ordered section offsets from `0x30` through `resource_table_offset`. |

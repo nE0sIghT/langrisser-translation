@@ -1,11 +1,13 @@
 {
   "_comment": [
-    "Saturn SCEN mapping data for this release. Structure only: no extracted",
-    "Japanese text. The chunk and record numbers below are the PS1 script's,",
-    "because Langrisser V was translated on PS1 first and the language pack is",
-    "keyed by them. Chunks not listed here are eligible for automatic identity",
-    "or proven stable-token alignment; chunks listed as empty are known",
-    "service/name-pool blocks and are preserved, not translated."
+    "Saturn script correspondence for this release, recorded once by",
+    "langrisser.saturn_reconcile scen. Structure only: no extracted Japanese",
+    "text. Every script entry of this build is covered, so a build reads the",
+    "correspondence from here instead of comparing the two originals again;",
+    "the chunk and record numbers are the PS1 script's, because Langrisser V",
+    "was translated on PS1 first and the language pack is keyed by them.",
+    "Chunks listed as empty are known service/name-pool blocks and are",
+    "preserved, not translated."
   ],
   "empty_chunks": [],
   "unresolved_chunks": {},

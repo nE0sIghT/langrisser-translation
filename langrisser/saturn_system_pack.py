@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """Pack the universal SYSTEM translation into the Saturn SYSTEM.DAT groups.
 
-Saturn `SYSTEM.DAT` uses the same offset-table group model as PS1, and its 16
-groups correspond 1:1 to the PS1 `SYSTEM.BIN` groups in order (14/16 with
-identical entry counts). This reuses the shared `langrisser.offsetgroups` model with
-the Saturn BE config and the PS1 codec to rebuild each group's
-`[u16 offset table][strings]` in place with the translated text. Same-count
-groups use direct PS1 index mapping; count-different or reordered groups must be
-described by the release's `system_mapping.json` and any Saturn-only
-target strings under `<pack>/platforms/saturn/system_strings.json`.
+Saturn `SYSTEM.DAT` uses the same offset-table group model as PS1, so this
+reuses the shared `langrisser.offsetgroups` model with the Saturn BE config to
+rebuild each group's `[u16 offset table][strings]` in place with the translated
+text.
+
+Which pack string each Saturn entry carries is read from the release's
+`system_mapping.json`, which must cover every entry of every group. That
+correspondence was compared against the other release's original once, by
+`langrisser.saturn_reconcile system`, and written down; packing does not
+re-derive it and never opens another console's disc. Entries the pack has no
+string for are named there as language-specific overrides under
+`<pack>/releases/<slug>/system_strings.json`, or preserved as-is.
 
 Fixed-size per group: the group stays at its base and within its original byte
 budget, so nothing that points at it moves. A group whose rebuild would exceed
@@ -25,11 +29,10 @@ from pathlib import Path
 
 from langrisser.platform import add_platform_args, platform_from_args
 from langrisser.release import add_release_args, release_from_args
-from langrisser.project import COMMON_FONT_MAP, add_language_args, language_from_args
+from langrisser.project import add_language_args, language_from_args
 from langrisser.binfmt import BE
 from langrisser.game import add_game_args, game_from_args
-from langrisser.offsetgroups import PS1, SATURN, find_groups, group_key, run_length
-from langrisser.saturn_apply import Normalizer, load_font_map_csv, proven_equal
+from langrisser.offsetgroups import SATURN, find_groups, group_key, run_length
 from langrisser.scen import Codec, load_charmap_tbl
 from langrisser.system_pack import (load_card_layout, load_system_layout,
                                reserve_leading_cells)
@@ -133,7 +136,6 @@ def main() -> None:
                     help="Input SYSTEM.DAT with the target font applied.")
     ap.add_argument("--system-out", default=None,
                     help="Output translated SYSTEM.DAT.")
-    ap.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN")
     ap.add_argument("--strings", default=None,
                     help="Resolved common SYSTEM strings JSON.")
     ap.add_argument("--release-strings", default=None,
@@ -173,9 +175,7 @@ def main() -> None:
     )
     codec = Codec(load_charmap_tbl(tbl))
     data = bytearray(system_in.read_bytes())
-    ps1_data = Path(args.ps1_system).read_bytes()
     sat_groups = find_groups(data, SATURN)
-    ps1_groups = find_groups(ps1_data, PS1)
     source_by_id = {
         entry["id"]: entry
         for entry in json.loads(Path(args.system_source).read_text(encoding="utf-8"))
@@ -184,17 +184,6 @@ def main() -> None:
         Path(args.layout) if args.layout else lang.system_layout, source_by_id)
     card_line_cells = load_card_layout(
         Path(args.card_layout) if args.card_layout else game_from_args(args).system_card_layout)
-    norm = Normalizer(load_font_map_csv(COMMON_FONT_MAP),
-                      load_font_map_csv(release.kanji_map))
-
-    def ps1_words(gi: int, k: int) -> list[int] | None:
-        if gi >= len(ps1_groups):
-            return None
-        _, table, base = ps1_groups[gi]
-        if not 0 <= k < len(table):
-            return None
-        off = base + table[k] * 2
-        return PS1.order.words(ps1_data, off, run_length(ps1_data, off, PS1))
     translations = json.loads(strings_path.read_text(encoding="utf-8"))
     platform_strings_path = (
         Path(args.release_strings) if args.release_strings
@@ -220,20 +209,16 @@ def main() -> None:
         group_end = group_end_offset(data, table, base, SATURN)
         budget = (group_end - table_off) // 2   # offset table + strings, in words
         spec = group_specs.get(gi)
-        ps1_table_off = ps1_groups[gi][0] if gi < len(ps1_groups) else None
-        if spec is None and (gi >= len(ps1_groups) or len(ps1_groups[gi][1]) != n):
+        if spec is None:
             if args.allow_unmapped:
                 skipped_groups += 1
                 continue
-            ps_count = len(ps1_groups[gi][1]) if gi < len(ps1_groups) else "missing"
-            fatal.append(
-                f"group {gi}: Saturn count {n}, PS1 count {ps_count}, "
-                "no platform mapping"
-            )
+            fatal.append(f"group {gi}: no recorded correspondence; "
+                         "run langrisser.saturn_reconcile system")
             continue
         seqs: list[list[int]] = []
-        explicit_map = expand_group_map(spec, n) if spec is not None else None
-        if explicit_map is not None and len(explicit_map) != n:
+        explicit_map = expand_group_map(spec, n)
+        if len(explicit_map) != n:
             missing = [idx for idx in range(n) if idx not in explicit_map]
             fatal.append(f"group {gi}: mapping does not cover entries {missing[:12]}")
             continue
@@ -268,29 +253,10 @@ def main() -> None:
                     return
                 seqs.append(seq)
 
-            if explicit_map is None:
-                entry_id = group_key(gi, k)
-                text = translations.get(entry_id)
-                if text and not proven_equal(norm, orig, ps1_words(gi, k) or []):
-                    fatal.append(
-                        f"group {gi} entry {k}: Saturn original differs from "
-                        "the PS1 record (needs a platform mapping)")
-                place(text, entry_id)
-                continue
             target = explicit_map[k]
             if isinstance(target, int):
-                if ps1_table_off is None:
-                    fatal.append(f"group {gi}: PS1 group missing for mapped entry {k}")
-                    seqs.append(orig)
-                    continue
                 entry_id = group_key(gi, target)
-                text = translations.get(entry_id)
-                if text and not proven_equal(norm, orig, ps1_words(gi, target) or []):
-                    fatal.append(
-                        f"group {gi} entry {k}: mapped PS1 record {target} "
-                        "differs from the Saturn original (needs a platform "
-                        "mapping)")
-                place(text, entry_id)
+                place(translations.get(entry_id), entry_id)
             elif "ps1_id" in target:
                 ps1_id = str(target["ps1_id"])
                 place(translations.get(ps1_id), ps1_id)
