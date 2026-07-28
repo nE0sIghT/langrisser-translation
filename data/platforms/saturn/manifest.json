@@ -1,4 +1,6 @@
 {
   "platform": "saturn",
-  "label": "Sega Saturn"
+  "label": "Sega Saturn",
+  "endian": "be",
+  "_endian_comment": "SH-2: multi-byte fields are stored big-endian."
 }

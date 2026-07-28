@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
-"""Resolve a language pack's complete SYSTEM.BIN translation overlay.
+"""Resolve a language pack's complete SYSTEM translation overlay for one build.
 
 Explicit stable-id overrides win. Omitted entries whose Japanese source exactly
 matches a canonical names.csv or glossary.csv term inherit that translation.
 The generated result belongs under work/; only explicit context-dependent text
 is stored in system_strings.json.
+
+The source dump is one build's SYSTEM, so it holds the pack ids that build
+actually shows - the Saturn print of Langrisser V carries 2557 of the pack's
+2628. Explicit ids it does not carry are reported and skipped rather than
+treated as mistakes; a real typo shows up the same way on every build, and on
+the release the pack was keyed from it is the only thing in that count.
 """
 import argparse
 import csv
@@ -67,11 +73,7 @@ def main() -> None:
         raise SystemExit(f"{source_path}: duplicate stable ids")
 
     explicit = load_object(strings_path)
-    unknown = sorted(set(explicit) - set(source_by_id))
-    if unknown:
-        raise SystemExit(
-            f"{strings_path}: unknown SYSTEM ids, first: {unknown[:5]}"
-        )
+    absent = sorted(set(explicit) - set(source_by_id))
     terms = load_terms([lang.glossary, lang.names])
 
     resolved: dict[str, str] = {}
@@ -110,10 +112,14 @@ def main() -> None:
         json.dumps(resolved, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    used = len(explicit) - len(absent)
+    tail = f", {len(absent)} not on this build" if absent else ""
     print(
         f"resolved {len(resolved)} SYSTEM strings "
-        f"({len(explicit)} explicit, {inherited} canonical) -> {out}"
+        f"({used} explicit, {inherited} canonical{tail}) -> {out}"
     )
+    if absent:
+        print(f"  not carried here, first: {absent[:5]}")
 
 
 if __name__ == "__main__":

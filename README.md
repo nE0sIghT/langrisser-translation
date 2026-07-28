@@ -201,6 +201,11 @@ python3 -m langrisser.system_dump
 python3 -m langrisser.verify_roundtrip
 ```
 
+`system_dump` dumps whichever release it is pointed at: the byte order comes
+from the platform, the group offsets from the release manifest, and the pack
+ids from the release's `system_mapping.json`, so the budgets and indents are
+that build's own while the ids stay the ones the translation is keyed by.
+
 Generated JP source stays under `work/l5/scriptdump/` and `work/l5/systemdump/`.
 These dumps are required for translation and building but are not committed.
 
@@ -424,9 +429,25 @@ a translated mixed-mode Saturn BIN/CUE in the same directory. Saturn output
 grows `SCEN.DAT` and `OPEN.DAT`, so the generated `.cue` is part of the build
 artifact.
 
-When the Saturn originals diverge from PS1 (edited lines, pad buttons, the
-save menu), the audits regenerate the proven mappings and list what still
-needs Saturn-specific translation:
+### Reconciliation: filling `data/` from another release's disc
+
+A Saturn build reads its own disc plus `data/` and nothing else. What it needs
+to know about the PS1 print — which pack record each script entry carries,
+which pack string each SYSTEM entry carries, what each reordered glyph slot is —
+is compared once and written down. Reconciliation is the only step allowed to
+open another release's disc, it is not part of any build, and it is re-runnable:
+what it derived is marked `proved` and rebuilt, while hand-written decisions are
+carried through untouched.
+
+```bash
+python3 -m langrisser.derive_font_map --game l5 --release l5-saturn-jp \
+    --bank-only --system work/l5/build/saturn/SYSTEM.DAT   # the glyph bank
+python3 -m langrisser.saturn_reconcile scen                # script records
+python3 -m langrisser.saturn_reconcile system              # SYSTEM entries
+```
+
+Where the Saturn originals diverge from PS1 (edited lines, pad buttons, the
+save menu), the audits list what still needs Saturn-specific translation:
 
 ```bash
 python3 -m langrisser.saturn_scen_audit   --write-mapping   # SCEN records
@@ -453,7 +474,8 @@ and its current translations — everything needed to author the platform record
   translated PS1 text only when both Japanese originals are provably identical
   as normalized text (kana/ASCII plus the derived Saturn kanji map). Where they
   differ, the Saturn text is its own and the strict build fails until it is
-  written.
+  written. That comparison happens once, in reconciliation; a build reads the
+  answer from the release mapping.
 - Each console has its own budgets. A group packs into its own byte span and
   every line into its own cell width, so a shared translation may need a
   shorter platform form on one console (`space_override` in the SYSTEM

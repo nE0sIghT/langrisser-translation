@@ -4,6 +4,8 @@
   "patch_stem": "langrisser_v",
   "engine": "l45",
   "font_map": "../../common/font_mapping/groups_report.csv",
+  "kanji_bank_start": "0x185",
+  "_kanji_bank_start_comment": "First slot of the kanji bank. Below it every release of this game holds the same glyphs in the same order (kana, ASCII, punctuation); from it on a release may order its own subset differently, which is what its kanji_map.csv records.",
   "text_table": "../../common/tables/lang5_jp.tbl",
   "lang_root": "lang",
   "system_card_layout": "system_card_layout.json",

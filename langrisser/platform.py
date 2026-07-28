@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from langrisser.binfmt import ByteOrder
 from langrisser.project import ROOT
 
 DEFAULT_PLATFORM_ROOT = ROOT / "data" / "platforms"
@@ -36,6 +37,16 @@ class PlatformPack:
     @property
     def label(self) -> str:
         return str(self._data.get("label") or self.code)
+
+    @property
+    def order(self) -> ByteOrder:
+        """Byte order of multi-byte fields in this console's data.
+
+        The one thing about a container that really is the console's: the
+        same logical structure is little-endian in a PS1 file and big-endian
+        in a Saturn one because that is how each CPU reads it.
+        """
+        return ByteOrder(str(self._data.get("endian") or "le"))
 
 
 def load_platform(platform: str, platform_root: str | Path = DEFAULT_PLATFORM_ROOT) -> PlatformPack:

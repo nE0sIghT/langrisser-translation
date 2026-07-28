@@ -1,4 +1,6 @@
 {
   "platform": "ps1",
-  "label": "PlayStation"
+  "label": "PlayStation",
+  "endian": "le",
+  "_endian_comment": "MIPS R3000A: multi-byte fields are stored little-endian."
 }

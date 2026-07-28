@@ -28,7 +28,8 @@ points at the glyph). Special codes:
 Glyph 1820 starts at `0x7FF8` and occupies bytes through `0x8009`. The bytes
 from `0x800A` through `0x8051` are non-text prelude data, so
 `langrisser/system_dump.py` starts at the first verified string-group table,
-`0x8052`; that group's first string base is `0x8298`. `langrisser/build_font.py`
+which for this build is `0x8052` (each release records its own as
+`system_scan_start`); that group's first string base is `0x8298`. `langrisser/build_font.py`
 rewrites glyphs only up to slot 1820 to draw the target alphabet. Runtime font
 cell behavior and the verified 12x12 boundary probes are documented in
 `docs/FONT_RENDERING_MODEL.md` (see also `IMG_DAT_FORMAT.md` for the unrelated
@@ -102,8 +103,11 @@ under ignored `work/`. The durable language file is only a JSON object from a
 stable source id to context-dependent target text. Exact source strings found
 in the language pack's `names.csv` or `glossary.csv` are inherited
 automatically and must not be duplicated in the overlay. Grouped ids use
-`table:<table-offset>:<index>`; loose directly addressed strings use
-`offset:<string-offset>`.
+`group:<ordinal>:<index>`; text runs outside the group tables use
+`loose:<n>`. Neither names an address, so one translation serves every build;
+the release manifest's `system_groups`/`system_loose` turn a name back into an
+address, and a release that seats the pack's strings differently says so in its
+`system_mapping.json`.
 
 `langrisser/system_pack.py` has two modes:
 

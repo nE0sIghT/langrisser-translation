@@ -16,7 +16,8 @@
     }
   },
   "offsets": {
-    "system_directory": "0x8000"
+    "system_directory": "0x8000",
+    "system_scan_start": "0x7000"
   },
   "max_font_slot": 1819,
   "_max_font_slot_comment": "Slot 1820's 18 bytes cross file offset 0x8000, where SYSTEM.DAT keeps the group pointer directory.",
@@ -52,5 +53,7 @@
     "0x15A3C",
     "0x16D3C"
   ],
-  "_system_groups_comment": "File offset of each SYSTEM text group's offset table, in scan order. Pack keys name a group by its position in this list, so the list is what turns a pack key into an address on this build."
+  "_system_groups_comment": "File offset of each SYSTEM text group's offset table, in scan order. Pack keys name a group by its position in this list, so the list is what turns a pack key into an address on this build.",
+  "system_loose": [],
+  "_system_loose_comment": "Text runs outside the group tables, in scan order. This build has none: every SYSTEM string it shows belongs to a group."
 }

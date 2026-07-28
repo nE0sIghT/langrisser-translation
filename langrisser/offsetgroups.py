@@ -17,6 +17,7 @@ See docs/SYSTEM_BIN_FORMAT.md (PS1) and docs/SATURN_DISC_FORMAT.md (Saturn).
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -60,6 +61,24 @@ def load_font_map_csv(path: str | Path | None) -> dict[int, str]:
     for row in csv.DictReader(open(path, encoding="utf-8")):
         if row["index_dec"].isdigit() and row["char"]:
             out[int(row["index_dec"])] = row["char"]
+    return out
+
+
+def build_codemap(font_map: dict[int, str], kanji_map: dict[int, str],
+                  bank_start: int | None) -> dict[int, str]:
+    """Slot->character for one build's own token bank.
+
+    Below `bank_start` the game's plane holds the same glyphs on every
+    release, so its map applies. From there on only the release's own map
+    names a token: an unmapped bank slot stays unnamed rather than borrowing
+    the game's character, which would decode as a plausible but wrong kanji.
+    """
+    if bank_start is None or not kanji_map:
+        # No recorded delta: this release holds the game's own plane, bank
+        # included, which is the case for the one the pack was keyed from.
+        return {**font_map, **kanji_map}
+    out = {slot: char for slot, char in font_map.items() if slot < bank_start}
+    out.update(kanji_map)
     return out
 
 
@@ -125,6 +144,80 @@ def parse_group_key(key: str) -> tuple[int, int] | None:
         return int(parts[1]), int(parts[2])
     except ValueError:
         return None
+
+
+def load_system_mapping(path: Path | None) -> dict:
+    """Load a release's SYSTEM mapping: which pack string each entry carries."""
+    if path is None:
+        return {"groups": {}}
+    if not Path(path).exists():
+        raise SystemExit(f"SYSTEM mapping not found: {path}")
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise SystemExit(f"{path}: SYSTEM mapping must be an object")
+    data.setdefault("groups", {})
+    return data
+
+
+def expand_group_map(spec: dict, entry_count: int) -> dict[int, object]:
+    """Return `{entry_index: pack_entry_index | decision}` for one group.
+
+    A decision is what no index can express: `platform` names a
+    language-specific override, `preserve` keeps the original token stream,
+    `ps1_id` names a pack string by its full id rather than by position.
+    """
+    out: dict[int, object] = {}
+    for item in spec.get("ranges", []):
+        saturn = int(item["saturn"])
+        count = int(item["count"])
+        if "ps1" in item:
+            ps1 = int(item["ps1"])
+            for off in range(count):
+                out[saturn + off] = ps1 + off
+        elif "platform" in item:
+            platform = str(item["platform"])
+            if count != 1:
+                raise SystemExit(
+                    "SYSTEM range platform mappings must be explicit entries; "
+                    f"got {item}"
+                )
+            out[saturn] = {"platform": platform}
+        elif item.get("preserve"):
+            for off in range(count):
+                out[saturn + off] = {"preserve": True}
+        else:
+            raise SystemExit(f"SYSTEM range mapping needs ps1/platform/preserve: {item}")
+    for item in spec.get("entries", []):
+        saturn = int(item["saturn"])
+        if "ps1" in item:
+            out[saturn] = int(item["ps1"])
+        elif "ps1_id" in item:
+            out[saturn] = {"ps1_id": str(item["ps1_id"])}
+        elif "platform" in item:
+            out[saturn] = {"platform": str(item["platform"])}
+        elif item.get("preserve"):
+            out[saturn] = {"preserve": True}
+        else:
+            raise SystemExit(f"SYSTEM entry mapping needs ps1/ps1_id/platform/preserve: {item}")
+    bad = [idx for idx in out if idx < 0 or idx >= entry_count]
+    if bad:
+        raise SystemExit(f"SYSTEM mapping has out-of-range entries: {bad[:5]}")
+    return out
+
+
+def pack_id_for(target: object, group_index: int, entry_index: int) -> str | None:
+    """The pack string a mapped entry carries, or None if it carries none.
+
+    With no mapping at all the build's own positions are the pack's names,
+    which is the case for the release the pack was first keyed from.
+    """
+    if target is None:
+        return group_key(group_index, entry_index)
+    if isinstance(target, int):
+        return group_key(group_index, target)
+    if isinstance(target, dict) and "ps1_id" in target:
+        return str(target["ps1_id"])
+    return None
 
 
 def read_table(data: bytes, pos: int, cfg: GroupConfig = PS1) -> list[int] | None:

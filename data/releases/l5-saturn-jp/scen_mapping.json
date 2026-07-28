@@ -13,33 +13,6 @@
   "unresolved_chunks": {},
   "chunks": {
     "0": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 8
-        },
-        {
-          "saturn": 9,
-          "ps1": 10,
-          "count": 3
-        },
-        {
-          "saturn": 12,
-          "ps1": 17,
-          "count": 68
-        },
-        {
-          "saturn": 81,
-          "ps1": 86,
-          "count": 112
-        },
-        {
-          "saturn": 194,
-          "ps1": 199,
-          "count": 6
-        }
-      ],
       "entries": [
         {
           "saturn": 8,
@@ -55,6 +28,38 @@
           "platform": 193,
           "replaces_ps1": 198
         }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 8,
+          "proved": true
+        },
+        {
+          "saturn": 9,
+          "ps1": 10,
+          "count": 3,
+          "proved": true
+        },
+        {
+          "saturn": 12,
+          "ps1": 17,
+          "count": 68,
+          "proved": true
+        },
+        {
+          "saturn": 81,
+          "ps1": 86,
+          "count": 112,
+          "proved": true
+        },
+        {
+          "saturn": 194,
+          "ps1": 199,
+          "count": 6,
+          "proved": true
+        }
       ]
     },
     "1": {
@@ -62,7 +67,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 123
+          "count": 123,
+          "proved": true
         }
       ]
     },
@@ -71,7 +77,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 135
+          "count": 135,
+          "proved": true
         }
       ]
     },
@@ -80,57 +87,66 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 123
+          "count": 123,
+          "proved": true
         },
         {
           "saturn": 123,
           "ps1": 125,
-          "count": 27
+          "count": 27,
+          "proved": true
         }
       ]
     },
     "4": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 101
-        },
-        {
-          "saturn": 102,
-          "ps1": 103,
-          "count": 4
-        },
-        {
-          "saturn": 106,
-          "ps1": 123,
-          "count": 1
-        },
-        {
-          "saturn": 107,
-          "ps1": 107,
-          "count": 1
-        },
-        {
-          "saturn": 108,
-          "ps1": 124,
-          "count": 1
-        },
-        {
-          "saturn": 109,
-          "ps1": 108,
-          "count": 15
-        },
-        {
-          "saturn": 124,
-          "ps1": 125,
-          "count": 6
-        }
-      ],
       "entries": [
         {
           "saturn": 101,
           "platform": 101
+        }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 101,
+          "proved": true
+        },
+        {
+          "saturn": 102,
+          "ps1": 103,
+          "count": 4,
+          "proved": true
+        },
+        {
+          "saturn": 106,
+          "ps1": 123,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 107,
+          "ps1": 107,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 108,
+          "ps1": 124,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 109,
+          "ps1": 108,
+          "count": 15,
+          "proved": true
+        },
+        {
+          "saturn": 124,
+          "ps1": 125,
+          "count": 6,
+          "proved": true
         }
       ]
     },
@@ -139,27 +155,30 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 106
+          "count": 106,
+          "proved": true
         }
       ]
     },
     "6": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 57
-        },
-        {
-          "saturn": 58,
-          "ps1": 59,
-          "count": 54
-        }
-      ],
       "entries": [
         {
           "saturn": 57,
           "platform": 57
+        }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 57,
+          "proved": true
+        },
+        {
+          "saturn": 58,
+          "ps1": 59,
+          "count": 54,
+          "proved": true
         }
       ]
     },
@@ -168,7 +187,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 74
+          "count": 74,
+          "proved": true
         }
       ]
     },
@@ -177,7 +197,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 82
+          "count": 82,
+          "proved": true
         }
       ]
     },
@@ -186,53 +207,24 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 84
+          "count": 84,
+          "proved": true
         },
         {
           "saturn": 84,
           "ps1": 86,
-          "count": 3
+          "count": 3,
+          "proved": true
         },
         {
           "saturn": 87,
           "ps1": 90,
-          "count": 38
+          "count": 38,
+          "proved": true
         }
       ]
     },
     "10": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 78
-        },
-        {
-          "saturn": 78,
-          "ps1": 81,
-          "count": 4
-        },
-        {
-          "saturn": 82,
-          "ps1": 87,
-          "count": 1
-        },
-        {
-          "saturn": 83,
-          "ps1": 92,
-          "count": 30
-        },
-        {
-          "saturn": 114,
-          "ps1": 123,
-          "count": 11
-        },
-        {
-          "saturn": 126,
-          "ps1": 135,
-          "count": 43
-        }
-      ],
       "entries": [
         {
           "saturn": 113,
@@ -242,6 +234,44 @@
           "saturn": 125,
           "platform": 125
         }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 78,
+          "proved": true
+        },
+        {
+          "saturn": 78,
+          "ps1": 81,
+          "count": 4,
+          "proved": true
+        },
+        {
+          "saturn": 82,
+          "ps1": 87,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 83,
+          "ps1": 92,
+          "count": 30,
+          "proved": true
+        },
+        {
+          "saturn": 114,
+          "ps1": 123,
+          "count": 11,
+          "proved": true
+        },
+        {
+          "saturn": 126,
+          "ps1": 135,
+          "count": 43,
+          "proved": true
+        }
       ]
     },
     "11": {
@@ -249,37 +279,42 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 55
+          "count": 55,
+          "proved": true
         },
         {
           "saturn": 55,
           "ps1": 58,
-          "count": 61
+          "count": 61,
+          "proved": true
         },
         {
           "saturn": 116,
           "ps1": 121,
-          "count": 26
+          "count": 26,
+          "proved": true
         }
       ]
     },
     "12": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 103
-        },
-        {
-          "saturn": 104,
-          "ps1": 105,
-          "count": 10
-        }
-      ],
       "entries": [
         {
           "saturn": 103,
           "platform": 103
+        }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 103,
+          "proved": true
+        },
+        {
+          "saturn": 104,
+          "ps1": 105,
+          "count": 10,
+          "proved": true
         }
       ]
     },
@@ -288,7 +323,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 118
+          "count": 118,
+          "proved": true
         }
       ]
     },
@@ -297,7 +333,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 132
+          "count": 132,
+          "proved": true
         }
       ]
     },
@@ -306,73 +343,24 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 31
+          "count": 31,
+          "proved": true
         },
         {
           "saturn": 31,
           "ps1": 33,
-          "count": 100
+          "count": 100,
+          "proved": true
         },
         {
           "saturn": 131,
           "ps1": 134,
-          "count": 16
+          "count": 16,
+          "proved": true
         }
       ]
     },
     "16": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 46
-        },
-        {
-          "saturn": 57,
-          "ps1": 47,
-          "count": 38
-        },
-        {
-          "saturn": 95,
-          "ps1": 88,
-          "count": 1
-        },
-        {
-          "saturn": 96,
-          "ps1": 90,
-          "count": 1
-        },
-        {
-          "saturn": 97,
-          "ps1": 89,
-          "count": 1
-        },
-        {
-          "saturn": 98,
-          "ps1": 91,
-          "count": 4
-        },
-        {
-          "saturn": 102,
-          "ps1": 99,
-          "count": 9
-        },
-        {
-          "saturn": 111,
-          "ps1": 145,
-          "count": 12
-        },
-        {
-          "saturn": 123,
-          "ps1": 108,
-          "count": 11
-        },
-        {
-          "saturn": 134,
-          "ps1": 131,
-          "count": 6
-        }
-      ],
       "entries": [
         {
           "saturn": 46,
@@ -429,6 +417,68 @@
           "platform": 56,
           "auto_from_ps1": 130
         }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 46,
+          "proved": true
+        },
+        {
+          "saturn": 57,
+          "ps1": 47,
+          "count": 38,
+          "proved": true
+        },
+        {
+          "saturn": 95,
+          "ps1": 88,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 96,
+          "ps1": 90,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 97,
+          "ps1": 89,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 98,
+          "ps1": 91,
+          "count": 4,
+          "proved": true
+        },
+        {
+          "saturn": 102,
+          "ps1": 99,
+          "count": 9,
+          "proved": true
+        },
+        {
+          "saturn": 111,
+          "ps1": 145,
+          "count": 12,
+          "proved": true
+        },
+        {
+          "saturn": 123,
+          "ps1": 108,
+          "count": 11,
+          "proved": true
+        },
+        {
+          "saturn": 134,
+          "ps1": 131,
+          "count": 6,
+          "proved": true
+        }
       ]
     },
     "17": {
@@ -436,17 +486,20 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 98
+          "count": 98,
+          "proved": true
         },
         {
           "saturn": 98,
           "ps1": 101,
-          "count": 5
+          "count": 5,
+          "proved": true
         },
         {
           "saturn": 103,
           "ps1": 107,
-          "count": 10
+          "count": 10,
+          "proved": true
         }
       ]
     },
@@ -455,33 +508,12 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 114
+          "count": 114,
+          "proved": true
         }
       ]
     },
     "19": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 32
-        },
-        {
-          "saturn": 40,
-          "ps1": 34,
-          "count": 76
-        },
-        {
-          "saturn": 116,
-          "ps1": 111,
-          "count": 31
-        },
-        {
-          "saturn": 147,
-          "ps1": 144,
-          "count": 6
-        }
-      ],
       "entries": [
         {
           "saturn": 32,
@@ -523,6 +555,32 @@
           "platform": 39,
           "auto_from_ps1": 157
         }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 32,
+          "proved": true
+        },
+        {
+          "saturn": 40,
+          "ps1": 34,
+          "count": 76,
+          "proved": true
+        },
+        {
+          "saturn": 116,
+          "ps1": 111,
+          "count": 31,
+          "proved": true
+        },
+        {
+          "saturn": 147,
+          "ps1": 144,
+          "count": 6,
+          "proved": true
+        }
       ]
     },
     "20": {
@@ -530,37 +588,44 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 16
+          "count": 16,
+          "proved": true
         },
         {
           "saturn": 16,
           "ps1": 19,
-          "count": 7
+          "count": 7,
+          "proved": true
         },
         {
           "saturn": 23,
           "ps1": 27,
-          "count": 60
+          "count": 60,
+          "proved": true
         },
         {
           "saturn": 83,
           "ps1": 88,
-          "count": 4
+          "count": 4,
+          "proved": true
         },
         {
           "saturn": 87,
           "ps1": 93,
-          "count": 16
+          "count": 16,
+          "proved": true
         },
         {
           "saturn": 103,
           "ps1": 111,
-          "count": 5
+          "count": 5,
+          "proved": true
         },
         {
           "saturn": 108,
           "ps1": 117,
-          "count": 6
+          "count": 6,
+          "proved": true
         }
       ]
     },
@@ -569,73 +634,36 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 83
+          "count": 83,
+          "proved": true
         },
         {
           "saturn": 83,
           "ps1": 85,
-          "count": 14
+          "count": 14,
+          "proved": true
         },
         {
           "saturn": 97,
           "ps1": 109,
-          "count": 3
+          "count": 3,
+          "proved": true
         },
         {
           "saturn": 100,
           "ps1": 102,
-          "count": 4
+          "count": 4,
+          "proved": true
         },
         {
           "saturn": 104,
           "ps1": 107,
-          "count": 1
+          "count": 1,
+          "proved": true
         }
       ]
     },
     "22": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 26
-        },
-        {
-          "saturn": 46,
-          "ps1": 47,
-          "count": 19
-        },
-        {
-          "saturn": 65,
-          "ps1": 67,
-          "count": 2
-        },
-        {
-          "saturn": 69,
-          "ps1": 72,
-          "count": 1
-        },
-        {
-          "saturn": 71,
-          "ps1": 74,
-          "count": 1
-        },
-        {
-          "saturn": 72,
-          "ps1": 76,
-          "count": 2
-        },
-        {
-          "saturn": 75,
-          "ps1": 80,
-          "count": 27
-        },
-        {
-          "saturn": 103,
-          "ps1": 108,
-          "count": 20
-        }
-      ],
       "entries": [
         {
           "saturn": 26,
@@ -737,92 +765,104 @@
           "saturn": 102,
           "platform": 102
         }
-      ]
-    },
-    "23": {
+      ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 23
+          "count": 26,
+          "proved": true
         },
         {
-          "saturn": 24,
-          "ps1": 25,
-          "count": 56
+          "saturn": 46,
+          "ps1": 47,
+          "count": 19,
+          "proved": true
+        },
+        {
+          "saturn": 65,
+          "ps1": 67,
+          "count": 2,
+          "proved": true
+        },
+        {
+          "saturn": 69,
+          "ps1": 72,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 71,
+          "ps1": 74,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 72,
+          "ps1": 76,
+          "count": 2,
+          "proved": true
+        },
+        {
+          "saturn": 75,
+          "ps1": 80,
+          "count": 27,
+          "proved": true
+        },
+        {
+          "saturn": 103,
+          "ps1": 108,
+          "count": 20,
+          "proved": true
         }
-      ],
+      ]
+    },
+    "23": {
       "entries": [
         {
           "saturn": 23,
           "platform": 23
         }
-      ]
-    },
-    "24": {
+      ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 87
+          "count": 23,
+          "proved": true
         },
         {
-          "saturn": 87,
-          "ps1": 89,
-          "count": 166
+          "saturn": 24,
+          "ps1": 25,
+          "count": 56,
+          "proved": true
         }
-      ],
+      ]
+    },
+    "24": {
       "entries": [
         {
           "saturn": 253,
           "platform": 253,
           "auto_from_ps1": 255
         }
-      ]
-    },
-    "25": {
+      ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 41
+          "count": 87,
+          "proved": true
         },
         {
-          "saturn": 41,
-          "ps1": 43,
-          "count": 16
-        },
-        {
-          "saturn": 57,
-          "ps1": 130,
-          "count": 4
-        },
-        {
-          "saturn": 61,
-          "ps1": 59,
-          "count": 1
-        },
-        {
-          "saturn": 62,
-          "ps1": 134,
-          "count": 6
-        },
-        {
-          "saturn": 68,
-          "ps1": 61,
-          "count": 49
-        },
-        {
-          "saturn": 118,
-          "ps1": 111,
-          "count": 9
-        },
-        {
-          "saturn": 128,
-          "ps1": 121,
-          "count": 9
+          "saturn": 87,
+          "ps1": 89,
+          "count": 166,
+          "proved": true
         }
-      ],
+      ]
+    },
+    "25": {
       "entries": [
         {
           "saturn": 117,
@@ -834,71 +874,59 @@
           "platform": 127,
           "auto_from_ps1": 120
         }
-      ]
-    },
-    "26": {
+      ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 37
+          "count": 41,
+          "proved": true
         },
         {
-          "saturn": 37,
-          "ps1": 110,
-          "count": 19
+          "saturn": 41,
+          "ps1": 43,
+          "count": 16,
+          "proved": true
         },
         {
-          "saturn": 56,
-          "ps1": 38,
-          "count": 12
+          "saturn": 57,
+          "ps1": 130,
+          "count": 4,
+          "proved": true
         },
         {
-          "saturn": 70,
-          "ps1": 52,
-          "count": 5
-        },
-        {
-          "saturn": 76,
-          "ps1": 58,
-          "count": 1
-        },
-        {
-          "saturn": 77,
-          "ps1": 143,
-          "count": 3
-        },
-        {
-          "saturn": 80,
+          "saturn": 61,
           "ps1": 59,
-          "count": 9
+          "count": 1,
+          "proved": true
         },
         {
-          "saturn": 90,
-          "ps1": 69,
-          "count": 22
+          "saturn": 62,
+          "ps1": 134,
+          "count": 6,
+          "proved": true
         },
         {
-          "saturn": 113,
-          "ps1": 92,
-          "count": 4
+          "saturn": 68,
+          "ps1": 61,
+          "count": 49,
+          "proved": true
         },
         {
-          "saturn": 117,
-          "ps1": 97,
-          "count": 13
+          "saturn": 118,
+          "ps1": 111,
+          "count": 9,
+          "proved": true
         },
         {
-          "saturn": 130,
-          "ps1": 129,
-          "count": 11
-        },
-        {
-          "saturn": 141,
-          "ps1": 146,
-          "count": 10
+          "saturn": 128,
+          "ps1": 121,
+          "count": 9,
+          "proved": true
         }
-      ],
+      ]
+    },
+    "26": {
       "entries": [
         {
           "saturn": 68,
@@ -924,6 +952,80 @@
           "platform": 112,
           "auto_from_ps1": 91
         }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 37,
+          "proved": true
+        },
+        {
+          "saturn": 37,
+          "ps1": 110,
+          "count": 19,
+          "proved": true
+        },
+        {
+          "saturn": 56,
+          "ps1": 38,
+          "count": 12,
+          "proved": true
+        },
+        {
+          "saturn": 70,
+          "ps1": 52,
+          "count": 5,
+          "proved": true
+        },
+        {
+          "saturn": 76,
+          "ps1": 58,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 77,
+          "ps1": 143,
+          "count": 3,
+          "proved": true
+        },
+        {
+          "saturn": 80,
+          "ps1": 59,
+          "count": 9,
+          "proved": true
+        },
+        {
+          "saturn": 90,
+          "ps1": 69,
+          "count": 22,
+          "proved": true
+        },
+        {
+          "saturn": 113,
+          "ps1": 92,
+          "count": 4,
+          "proved": true
+        },
+        {
+          "saturn": 117,
+          "ps1": 97,
+          "count": 13,
+          "proved": true
+        },
+        {
+          "saturn": 130,
+          "ps1": 129,
+          "count": 11,
+          "proved": true
+        },
+        {
+          "saturn": 141,
+          "ps1": 146,
+          "count": 10,
+          "proved": true
+        }
       ]
     },
     "27": {
@@ -931,57 +1033,66 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 74
+          "count": 74,
+          "proved": true
         },
         {
           "saturn": 74,
           "ps1": 76,
-          "count": 32
+          "count": 32,
+          "proved": true
         }
       ]
     },
     "28": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 45
-        },
-        {
-          "saturn": 45,
-          "ps1": 136,
-          "count": 7
-        },
-        {
-          "saturn": 52,
-          "ps1": 46,
-          "count": 15
-        },
-        {
-          "saturn": 68,
-          "ps1": 62,
-          "count": 51
-        },
-        {
-          "saturn": 119,
-          "ps1": 114,
-          "count": 4
-        },
-        {
-          "saturn": 123,
-          "ps1": 119,
-          "count": 3
-        },
-        {
-          "saturn": 126,
-          "ps1": 123,
-          "count": 13
-        }
-      ],
       "entries": [
         {
           "saturn": 67,
           "platform": 67
+        }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 45,
+          "proved": true
+        },
+        {
+          "saturn": 45,
+          "ps1": 136,
+          "count": 7,
+          "proved": true
+        },
+        {
+          "saturn": 52,
+          "ps1": 46,
+          "count": 15,
+          "proved": true
+        },
+        {
+          "saturn": 68,
+          "ps1": 62,
+          "count": 51,
+          "proved": true
+        },
+        {
+          "saturn": 119,
+          "ps1": 114,
+          "count": 4,
+          "proved": true
+        },
+        {
+          "saturn": 123,
+          "ps1": 119,
+          "count": 3,
+          "proved": true
+        },
+        {
+          "saturn": 126,
+          "ps1": 123,
+          "count": 13,
+          "proved": true
         }
       ]
     },
@@ -990,68 +1101,18 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 60
+          "count": 60,
+          "proved": true
         },
         {
           "saturn": 60,
           "ps1": 62,
-          "count": 140
+          "count": 140,
+          "proved": true
         }
       ]
     },
     "30": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 6
-        },
-        {
-          "saturn": 6,
-          "ps1": 8,
-          "count": 1
-        },
-        {
-          "saturn": 7,
-          "ps1": 7,
-          "count": 1
-        },
-        {
-          "saturn": 8,
-          "ps1": 9,
-          "count": 13
-        },
-        {
-          "saturn": 21,
-          "ps1": 101,
-          "count": 5
-        },
-        {
-          "saturn": 26,
-          "ps1": 22,
-          "count": 2
-        },
-        {
-          "saturn": 29,
-          "ps1": 25,
-          "count": 2
-        },
-        {
-          "saturn": 32,
-          "ps1": 28,
-          "count": 58
-        },
-        {
-          "saturn": 91,
-          "ps1": 87,
-          "count": 6
-        },
-        {
-          "saturn": 97,
-          "ps1": 95,
-          "count": 6
-        }
-      ],
       "entries": [
         {
           "saturn": 28,
@@ -1066,6 +1127,68 @@
           "platform": 90,
           "auto_from_ps1": 86
         }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 6,
+          "proved": true
+        },
+        {
+          "saturn": 6,
+          "ps1": 8,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 7,
+          "ps1": 7,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 8,
+          "ps1": 9,
+          "count": 13,
+          "proved": true
+        },
+        {
+          "saturn": 21,
+          "ps1": 101,
+          "count": 5,
+          "proved": true
+        },
+        {
+          "saturn": 26,
+          "ps1": 22,
+          "count": 2,
+          "proved": true
+        },
+        {
+          "saturn": 29,
+          "ps1": 25,
+          "count": 2,
+          "proved": true
+        },
+        {
+          "saturn": 32,
+          "ps1": 28,
+          "count": 58,
+          "proved": true
+        },
+        {
+          "saturn": 91,
+          "ps1": 87,
+          "count": 6,
+          "proved": true
+        },
+        {
+          "saturn": 97,
+          "ps1": 95,
+          "count": 6,
+          "proved": true
+        }
       ]
     },
     "31": {
@@ -1073,103 +1196,48 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 30
+          "count": 30,
+          "proved": true
         },
         {
           "saturn": 30,
           "ps1": 34,
-          "count": 7
+          "count": 7,
+          "proved": true
         },
         {
           "saturn": 37,
           "ps1": 42,
-          "count": 1
+          "count": 1,
+          "proved": true
         },
         {
           "saturn": 38,
           "ps1": 132,
-          "count": 5
+          "count": 5,
+          "proved": true
         },
         {
           "saturn": 43,
           "ps1": 44,
-          "count": 65
+          "count": 65,
+          "proved": true
         },
         {
           "saturn": 108,
           "ps1": 110,
-          "count": 1
+          "count": 1,
+          "proved": true
         },
         {
           "saturn": 109,
           "ps1": 112,
-          "count": 20
+          "count": 20,
+          "proved": true
         }
       ]
     },
     "32": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 7
-        },
-        {
-          "saturn": 7,
-          "ps1": 11,
-          "count": 1
-        },
-        {
-          "saturn": 9,
-          "ps1": 8,
-          "count": 2
-        },
-        {
-          "saturn": 11,
-          "ps1": 12,
-          "count": 1
-        },
-        {
-          "saturn": 12,
-          "ps1": 18,
-          "count": 10
-        },
-        {
-          "saturn": 22,
-          "ps1": 106,
-          "count": 7
-        },
-        {
-          "saturn": 29,
-          "ps1": 31,
-          "count": 4
-        },
-        {
-          "saturn": 34,
-          "ps1": 36,
-          "count": 39
-        },
-        {
-          "saturn": 74,
-          "ps1": 76,
-          "count": 17
-        },
-        {
-          "saturn": 91,
-          "ps1": 95,
-          "count": 2
-        },
-        {
-          "saturn": 93,
-          "ps1": 98,
-          "count": 1
-        },
-        {
-          "saturn": 94,
-          "ps1": 101,
-          "count": 5
-        }
-      ],
       "entries": [
         {
           "saturn": 8,
@@ -1185,56 +1253,83 @@
           "platform": 73,
           "auto_from_ps1": 75
         }
-      ]
-    },
-    "33": {
+      ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 31
+          "count": 7,
+          "proved": true
         },
         {
-          "saturn": 31,
-          "ps1": 43,
-          "count": 3
+          "saturn": 7,
+          "ps1": 11,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 9,
+          "ps1": 8,
+          "count": 2,
+          "proved": true
+        },
+        {
+          "saturn": 11,
+          "ps1": 12,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 12,
+          "ps1": 18,
+          "count": 10,
+          "proved": true
+        },
+        {
+          "saturn": 22,
+          "ps1": 106,
+          "count": 7,
+          "proved": true
+        },
+        {
+          "saturn": 29,
+          "ps1": 31,
+          "count": 4,
+          "proved": true
         },
         {
           "saturn": 34,
-          "ps1": 135,
-          "count": 5
+          "ps1": 36,
+          "count": 39,
+          "proved": true
         },
         {
-          "saturn": 40,
-          "ps1": 46,
-          "count": 3
+          "saturn": 74,
+          "ps1": 76,
+          "count": 17,
+          "proved": true
         },
         {
-          "saturn": 45,
-          "ps1": 51,
-          "count": 16
+          "saturn": 91,
+          "ps1": 95,
+          "count": 2,
+          "proved": true
         },
         {
-          "saturn": 64,
-          "ps1": 69,
-          "count": 10
+          "saturn": 93,
+          "ps1": 98,
+          "count": 1,
+          "proved": true
         },
         {
-          "saturn": 75,
-          "ps1": 80,
-          "count": 4
-        },
-        {
-          "saturn": 80,
-          "ps1": 85,
-          "count": 26
-        },
-        {
-          "saturn": 107,
-          "ps1": 112,
-          "count": 23
+          "saturn": 94,
+          "ps1": 101,
+          "count": 5,
+          "proved": true
         }
-      ],
+      ]
+    },
+    "33": {
       "entries": [
         {
           "saturn": 39,
@@ -1279,71 +1374,93 @@
           "platform": 106,
           "auto_from_ps1": 111
         }
-      ]
-    },
-    "34": {
+      ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 29
+          "count": 31,
+          "proved": true
         },
         {
-          "saturn": 30,
-          "ps1": 32,
-          "count": 55
+          "saturn": 31,
+          "ps1": 43,
+          "count": 3,
+          "proved": true
         },
         {
-          "saturn": 85,
-          "ps1": 91,
-          "count": 10
+          "saturn": 34,
+          "ps1": 135,
+          "count": 5,
+          "proved": true
+        },
+        {
+          "saturn": 40,
+          "ps1": 46,
+          "count": 3,
+          "proved": true
+        },
+        {
+          "saturn": 45,
+          "ps1": 51,
+          "count": 16,
+          "proved": true
+        },
+        {
+          "saturn": 64,
+          "ps1": 69,
+          "count": 10,
+          "proved": true
+        },
+        {
+          "saturn": 75,
+          "ps1": 80,
+          "count": 4,
+          "proved": true
+        },
+        {
+          "saturn": 80,
+          "ps1": 85,
+          "count": 26,
+          "proved": true
+        },
+        {
+          "saturn": 107,
+          "ps1": 112,
+          "count": 23,
+          "proved": true
         }
-      ],
+      ]
+    },
+    "34": {
       "entries": [
         {
           "saturn": 29,
           "platform": 29
         }
-      ]
-    },
-    "35": {
+      ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 19
+          "count": 29,
+          "proved": true
         },
         {
-          "saturn": 19,
-          "ps1": 22,
-          "count": 4
+          "saturn": 30,
+          "ps1": 32,
+          "count": 55,
+          "proved": true
         },
         {
-          "saturn": 23,
-          "ps1": 81,
-          "count": 4
-        },
-        {
-          "saturn": 27,
-          "ps1": 26,
-          "count": 1
-        },
-        {
-          "saturn": 28,
-          "ps1": 85,
-          "count": 2
-        },
-        {
-          "saturn": 31,
-          "ps1": 30,
-          "count": 35
-        },
-        {
-          "saturn": 67,
-          "ps1": 66,
-          "count": 15
+          "saturn": 85,
+          "ps1": 91,
+          "count": 10,
+          "proved": true
         }
-      ],
+      ]
+    },
+    "35": {
       "entries": [
         {
           "saturn": 30,
@@ -1353,6 +1470,50 @@
           "saturn": 66,
           "platform": 66
         }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 19,
+          "proved": true
+        },
+        {
+          "saturn": 19,
+          "ps1": 22,
+          "count": 4,
+          "proved": true
+        },
+        {
+          "saturn": 23,
+          "ps1": 81,
+          "count": 4,
+          "proved": true
+        },
+        {
+          "saturn": 27,
+          "ps1": 26,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 28,
+          "ps1": 85,
+          "count": 2,
+          "proved": true
+        },
+        {
+          "saturn": 31,
+          "ps1": 30,
+          "count": 35,
+          "proved": true
+        },
+        {
+          "saturn": 67,
+          "ps1": 66,
+          "count": 15,
+          "proved": true
+        }
       ]
     },
     "36": {
@@ -1360,38 +1521,12 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 128
+          "count": 128,
+          "proved": true
         }
       ]
     },
     "37": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 9
-        },
-        {
-          "saturn": 10,
-          "ps1": 11,
-          "count": 6
-        },
-        {
-          "saturn": 17,
-          "ps1": 18,
-          "count": 4
-        },
-        {
-          "saturn": 23,
-          "ps1": 24,
-          "count": 10
-        },
-        {
-          "saturn": 33,
-          "ps1": 35,
-          "count": 3
-        }
-      ],
       "entries": [
         {
           "saturn": 9,
@@ -1413,41 +1548,41 @@
           "platform": 22,
           "replaces_ps1": 23
         }
-      ]
-    },
-    "38": {
+      ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 238
+          "count": 9,
+          "proved": true
         },
         {
-          "saturn": 239,
-          "ps1": 240,
-          "count": 1
+          "saturn": 10,
+          "ps1": 11,
+          "count": 6,
+          "proved": true
         },
         {
-          "saturn": 241,
-          "ps1": 242,
-          "count": 12
+          "saturn": 17,
+          "ps1": 18,
+          "count": 4,
+          "proved": true
         },
         {
-          "saturn": 254,
-          "ps1": 255,
-          "count": 6
+          "saturn": 23,
+          "ps1": 24,
+          "count": 10,
+          "proved": true
         },
         {
-          "saturn": 261,
-          "ps1": 262,
-          "count": 2
-        },
-        {
-          "saturn": 264,
-          "ps1": 265,
-          "count": 107
+          "saturn": 33,
+          "ps1": 35,
+          "count": 3,
+          "proved": true
         }
-      ],
+      ]
+    },
+    "38": {
       "entries": [
         {
           "saturn": 238,
@@ -1476,61 +1611,47 @@
           "saturn": 371,
           "platform": 371
         }
-      ]
-    },
-    "39": {
+      ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 16
+          "count": 238,
+          "proved": true
         },
         {
-          "saturn": 16,
-          "ps1": 18,
-          "count": 73
+          "saturn": 239,
+          "ps1": 240,
+          "count": 1,
+          "proved": true
         },
         {
-          "saturn": 89,
-          "ps1": 93,
-          "count": 3
+          "saturn": 241,
+          "ps1": 242,
+          "count": 12,
+          "proved": true
         },
         {
-          "saturn": 92,
-          "ps1": 97,
-          "count": 4
+          "saturn": 254,
+          "ps1": 255,
+          "count": 6,
+          "proved": true
         },
         {
-          "saturn": 96,
-          "ps1": 102,
-          "count": 2
+          "saturn": 261,
+          "ps1": 262,
+          "count": 2,
+          "proved": true
         },
         {
-          "saturn": 98,
-          "ps1": 108,
-          "count": 11
-        },
-        {
-          "saturn": 110,
-          "ps1": 120,
-          "count": 11
-        },
-        {
-          "saturn": 122,
-          "ps1": 132,
-          "count": 84
-        },
-        {
-          "saturn": 207,
-          "ps1": 217,
-          "count": 8
-        },
-        {
-          "saturn": 215,
-          "ps1": 233,
-          "count": 48
+          "saturn": 264,
+          "ps1": 265,
+          "count": 107,
+          "proved": true
         }
-      ],
+      ]
+    },
+    "39": {
       "entries": [
         {
           "saturn": 109,
@@ -1548,40 +1669,107 @@
           "saturn": 263,
           "platform": 263
         }
-      ]
-    },
-    "40": {
+      ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 25
+          "count": 16,
+          "proved": true
         },
         {
-          "saturn": 26,
-          "ps1": 27,
-          "count": 1
+          "saturn": 16,
+          "ps1": 18,
+          "count": 73,
+          "proved": true
         },
         {
-          "saturn": 27,
-          "ps1": 30,
-          "count": 32
+          "saturn": 89,
+          "ps1": 93,
+          "count": 3,
+          "proved": true
         },
         {
-          "saturn": 59,
-          "ps1": 64,
-          "count": 19
+          "saturn": 92,
+          "ps1": 97,
+          "count": 4,
+          "proved": true
         },
         {
-          "saturn": 78,
-          "ps1": 88,
-          "count": 48
+          "saturn": 96,
+          "ps1": 102,
+          "count": 2,
+          "proved": true
+        },
+        {
+          "saturn": 98,
+          "ps1": 108,
+          "count": 11,
+          "proved": true
+        },
+        {
+          "saturn": 110,
+          "ps1": 120,
+          "count": 11,
+          "proved": true
+        },
+        {
+          "saturn": 122,
+          "ps1": 132,
+          "count": 84,
+          "proved": true
+        },
+        {
+          "saturn": 207,
+          "ps1": 217,
+          "count": 8,
+          "proved": true
+        },
+        {
+          "saturn": 215,
+          "ps1": 233,
+          "count": 48,
+          "proved": true
         }
-      ],
+      ]
+    },
+    "40": {
       "entries": [
         {
           "saturn": 25,
           "platform": 25
+        }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 25,
+          "proved": true
+        },
+        {
+          "saturn": 26,
+          "ps1": 27,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 27,
+          "ps1": 30,
+          "count": 32,
+          "proved": true
+        },
+        {
+          "saturn": 59,
+          "ps1": 64,
+          "count": 19,
+          "proved": true
+        },
+        {
+          "saturn": 78,
+          "ps1": 88,
+          "count": 48,
+          "proved": true
         }
       ]
     },
@@ -1590,7 +1778,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 294
+          "count": 294,
+          "proved": true
         }
       ]
     },
@@ -1599,7 +1788,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 155
+          "count": 155,
+          "proved": true
         }
       ]
     },
@@ -1680,7 +1870,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 51
+          "count": 51,
+          "proved": true
         }
       ]
     },
@@ -1689,7 +1880,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 18
+          "count": 18,
+          "proved": true
         }
       ]
     },
@@ -1698,7 +1890,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 47
+          "count": 47,
+          "proved": true
         }
       ]
     },
@@ -1707,7 +1900,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 8
+          "count": 8,
+          "proved": true
         }
       ]
     },
@@ -1716,7 +1910,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 25
+          "count": 25,
+          "proved": true
         }
       ]
     },
@@ -1725,7 +1920,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 81
+          "count": 81,
+          "proved": true
         }
       ]
     },
@@ -1734,7 +1930,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 31
+          "count": 31,
+          "proved": true
         }
       ]
     },
@@ -1743,7 +1940,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 88
+          "count": 88,
+          "proved": true
         }
       ]
     },
@@ -1752,7 +1950,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 31
+          "count": 31,
+          "proved": true
         }
       ]
     },
@@ -1761,7 +1960,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 52
+          "count": 52,
+          "proved": true
         }
       ]
     },
@@ -1770,7 +1970,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 44
+          "count": 44,
+          "proved": true
         }
       ]
     },
@@ -1779,7 +1980,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 42
+          "count": 42,
+          "proved": true
         }
       ]
     },
@@ -1788,7 +1990,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 41
+          "count": 41,
+          "proved": true
         }
       ]
     },
@@ -1797,7 +2000,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 60
+          "count": 60,
+          "proved": true
         }
       ]
     },
@@ -1806,7 +2010,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 38
+          "count": 38,
+          "proved": true
         }
       ]
     },
@@ -1815,7 +2020,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 43
+          "count": 43,
+          "proved": true
         }
       ]
     },
@@ -1824,7 +2030,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 28
+          "count": 28,
+          "proved": true
         }
       ]
     },
@@ -1833,7 +2040,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 57
+          "count": 57,
+          "proved": true
         }
       ]
     },
@@ -1842,12 +2050,14 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 101
+          "count": 101,
+          "proved": true
         },
         {
           "saturn": 101,
           "ps1": 103,
-          "count": 1
+          "count": 1,
+          "proved": true
         }
       ]
     },
@@ -1856,12 +2066,14 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 35
+          "count": 35,
+          "proved": true
         },
         {
           "saturn": 35,
           "ps1": 37,
-          "count": 1
+          "count": 1,
+          "proved": true
         }
       ]
     },
@@ -1870,7 +2082,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 16
+          "count": 16,
+          "proved": true
         }
       ]
     },
@@ -1879,18 +2092,12 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 31
+          "count": 31,
+          "proved": true
         }
       ]
     },
     "67": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 53
-        }
-      ],
       "entries": [
         {
           "saturn": 53,
@@ -1900,6 +2107,14 @@
           "saturn": 54,
           "platform": 54
         }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 53,
+          "proved": true
+        }
       ]
     },
     "68": {
@@ -1907,7 +2122,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 37
+          "count": 37,
+          "proved": true
         }
       ]
     },
@@ -1916,12 +2132,14 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 65
+          "count": 65,
+          "proved": true
         },
         {
           "saturn": 65,
           "ps1": 68,
-          "count": 1
+          "count": 1,
+          "proved": true
         }
       ]
     },
@@ -1930,7 +2148,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 71
+          "count": 71,
+          "proved": true
         }
       ]
     },
@@ -1939,7 +2158,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 18
+          "count": 18,
+          "proved": true
         }
       ]
     },
@@ -1948,7 +2168,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 48
+          "count": 48,
+          "proved": true
         }
       ]
     },
@@ -1957,12 +2178,14 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 55
+          "count": 55,
+          "proved": true
         },
         {
           "saturn": 55,
           "ps1": 57,
-          "count": 1
+          "count": 1,
+          "proved": true
         }
       ]
     },
@@ -1971,7 +2194,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 59
+          "count": 59,
+          "proved": true
         }
       ]
     },
@@ -1980,7 +2204,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 62
+          "count": 62,
+          "proved": true
         }
       ]
     },
@@ -1989,7 +2214,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 24
+          "count": 24,
+          "proved": true
         }
       ]
     },
@@ -1998,12 +2224,14 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 32
+          "count": 32,
+          "proved": true
         },
         {
           "saturn": 32,
           "ps1": 34,
-          "count": 1
+          "count": 1,
+          "proved": true
         }
       ]
     },
@@ -2012,7 +2240,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 12
+          "count": 12,
+          "proved": true
         }
       ]
     },
@@ -2021,42 +2250,48 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 24
+          "count": 24,
+          "proved": true
         },
         {
           "saturn": 24,
           "ps1": 26,
-          "count": 1
+          "count": 1,
+          "proved": true
         }
       ]
     },
     "80": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 6
-        },
-        {
-          "saturn": 6,
-          "ps1": 10,
-          "count": 18
-        },
-        {
-          "saturn": 24,
-          "ps1": 40,
-          "count": 245
-        },
-        {
-          "saturn": 270,
-          "ps1": 286,
-          "count": 22
-        }
-      ],
       "entries": [
         {
           "saturn": 269,
           "platform": 269
+        }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 6,
+          "proved": true
+        },
+        {
+          "saturn": 6,
+          "ps1": 10,
+          "count": 18,
+          "proved": true
+        },
+        {
+          "saturn": 24,
+          "ps1": 40,
+          "count": 245,
+          "proved": true
+        },
+        {
+          "saturn": 270,
+          "ps1": 286,
+          "count": 22,
+          "proved": true
         }
       ]
     },
@@ -2101,7 +2336,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 8
+          "count": 8,
+          "proved": true
         }
       ]
     },
@@ -2110,12 +2346,14 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 7
+          "count": 7,
+          "proved": true
         },
         {
           "saturn": 7,
           "ps1": 9,
-          "count": 1
+          "count": 1,
+          "proved": true
         }
       ]
     },
@@ -2124,7 +2362,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 8
+          "count": 8,
+          "proved": true
         }
       ]
     },
@@ -2133,7 +2372,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 8
+          "count": 8,
+          "proved": true
         }
       ]
     },
@@ -2142,7 +2382,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 8
+          "count": 8,
+          "proved": true
         }
       ]
     },
@@ -2151,7 +2392,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 48
+          "count": 48,
+          "proved": true
         }
       ]
     },
@@ -2160,7 +2402,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 59
+          "count": 59,
+          "proved": true
         }
       ]
     },
@@ -2169,7 +2412,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 36
+          "count": 36,
+          "proved": true
         }
       ]
     },
@@ -2178,7 +2422,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 31
+          "count": 31,
+          "proved": true
         }
       ]
     },
@@ -2187,43 +2432,12 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 37
+          "count": 37,
+          "proved": true
         }
       ]
     },
     "92": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 23
-        },
-        {
-          "saturn": 23,
-          "ps1": 25,
-          "count": 1
-        },
-        {
-          "saturn": 24,
-          "ps1": 24,
-          "count": 1
-        },
-        {
-          "saturn": 25,
-          "ps1": 28,
-          "count": 6
-        },
-        {
-          "saturn": 33,
-          "ps1": 34,
-          "count": 2
-        },
-        {
-          "saturn": 36,
-          "ps1": 37,
-          "count": 8
-        }
-      ],
       "entries": [
         {
           "saturn": 31,
@@ -2239,6 +2453,44 @@
           "saturn": 35,
           "platform": 35
         }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 23,
+          "proved": true
+        },
+        {
+          "saturn": 23,
+          "ps1": 25,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 24,
+          "ps1": 24,
+          "count": 1,
+          "proved": true
+        },
+        {
+          "saturn": 25,
+          "ps1": 28,
+          "count": 6,
+          "proved": true
+        },
+        {
+          "saturn": 33,
+          "ps1": 34,
+          "count": 2,
+          "proved": true
+        },
+        {
+          "saturn": 36,
+          "ps1": 37,
+          "count": 8,
+          "proved": true
+        }
       ]
     },
     "93": {
@@ -2246,7 +2498,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 91
+          "count": 91,
+          "proved": true
         }
       ]
     },
@@ -2255,7 +2508,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 50
+          "count": 50,
+          "proved": true
         }
       ]
     },
@@ -2264,7 +2518,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 143
+          "count": 143,
+          "proved": true
         }
       ]
     },
@@ -2273,7 +2528,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 89
+          "count": 89,
+          "proved": true
         }
       ]
     },
@@ -2282,27 +2538,30 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 35
+          "count": 35,
+          "proved": true
         }
       ]
     },
     "98": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 49
-        },
-        {
-          "saturn": 50,
-          "ps1": 51,
-          "count": 27
-        }
-      ],
       "entries": [
         {
           "saturn": 49,
           "platform": 49
+        }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 49,
+          "proved": true
+        },
+        {
+          "saturn": 50,
+          "ps1": 51,
+          "count": 27,
+          "proved": true
         }
       ]
     },
@@ -2311,7 +2570,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 77
+          "count": 77,
+          "proved": true
         }
       ]
     },
@@ -2320,7 +2580,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 28
+          "count": 28,
+          "proved": true
         }
       ]
     },
@@ -2329,7 +2590,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 91
+          "count": 91,
+          "proved": true
         }
       ]
     },
@@ -2338,7 +2600,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 33
+          "count": 33,
+          "proved": true
         }
       ]
     },
@@ -2347,7 +2610,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 25
+          "count": 25,
+          "proved": true
         }
       ]
     },
@@ -2356,7 +2620,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 33
+          "count": 33,
+          "proved": true
         }
       ]
     },
@@ -2365,7 +2630,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 30
+          "count": 30,
+          "proved": true
         }
       ]
     },
@@ -2374,7 +2640,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 21
+          "count": 21,
+          "proved": true
         }
       ]
     },
@@ -2383,7 +2650,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 17
+          "count": 17,
+          "proved": true
         }
       ]
     },
@@ -2392,7 +2660,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 41
+          "count": 41,
+          "proved": true
         }
       ]
     },
@@ -2401,7 +2670,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 59
+          "count": 59,
+          "proved": true
         }
       ]
     },
@@ -2410,7 +2680,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 80
+          "count": 80,
+          "proved": true
         }
       ]
     },
@@ -2419,7 +2690,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 46
+          "count": 46,
+          "proved": true
         }
       ]
     },
@@ -2428,7 +2700,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 23
+          "count": 23,
+          "proved": true
         }
       ]
     },
@@ -2437,7 +2710,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 21
+          "count": 21,
+          "proved": true
         }
       ]
     },
@@ -2446,7 +2720,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 47
+          "count": 47,
+          "proved": true
         }
       ]
     },
@@ -2455,7 +2730,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 35
+          "count": 35,
+          "proved": true
         }
       ]
     },
@@ -2464,7 +2740,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 54
+          "count": 54,
+          "proved": true
         }
       ]
     },
@@ -2473,7 +2750,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 24
+          "count": 24,
+          "proved": true
         }
       ]
     },
@@ -2482,27 +2760,30 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 104
+          "count": 104,
+          "proved": true
         }
       ]
     },
     "119": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 36
-        },
-        {
-          "saturn": 37,
-          "ps1": 38,
-          "count": 12
-        }
-      ],
       "entries": [
         {
           "saturn": 36,
           "platform": 36
+        }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 36,
+          "proved": true
+        },
+        {
+          "saturn": 37,
+          "ps1": 38,
+          "count": 12,
+          "proved": true
         }
       ]
     },
@@ -2511,7 +2792,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 14
+          "count": 14,
+          "proved": true
         }
       ]
     },
@@ -2520,7 +2802,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 43
+          "count": 43,
+          "proved": true
         }
       ]
     },
@@ -2529,7 +2812,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 147
+          "count": 147,
+          "proved": true
         }
       ]
     },
@@ -2574,7 +2858,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 36
+          "count": 36,
+          "proved": true
         }
       ]
     },
@@ -2583,7 +2868,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 45
+          "count": 45,
+          "proved": true
         }
       ]
     },
@@ -2592,7 +2878,8 @@
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 14
+          "count": 14,
+          "proved": true
         }
       ]
     },
@@ -2669,38 +2956,22 @@
       ]
     },
     "129": {
-      "ranges": [
-        {
-          "saturn": 0,
-          "ps1": 1,
-          "count": 94
-        }
-      ],
       "entries": [
         {
           "saturn": 94,
           "platform": 94
         }
-      ]
-    },
-    "130": {
+      ],
       "ranges": [
         {
           "saturn": 0,
           "ps1": 1,
-          "count": 20
-        },
-        {
-          "saturn": 21,
-          "ps1": 22,
-          "count": 34
-        },
-        {
-          "saturn": 56,
-          "ps1": 57,
-          "count": 26
+          "count": 94,
+          "proved": true
         }
-      ],
+      ]
+    },
+    "130": {
       "entries": [
         {
           "saturn": 20,
@@ -2709,6 +2980,26 @@
         {
           "saturn": 55,
           "platform": 55
+        }
+      ],
+      "ranges": [
+        {
+          "saturn": 0,
+          "ps1": 1,
+          "count": 20,
+          "proved": true
+        },
+        {
+          "saturn": 21,
+          "ps1": 22,
+          "count": 34,
+          "proved": true
+        },
+        {
+          "saturn": 56,
+          "ps1": 57,
+          "count": 26,
+          "proved": true
         }
       ]
     }

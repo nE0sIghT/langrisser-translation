@@ -38,20 +38,23 @@ class Normalizer:
     """Normalize both consoles' token streams to comparable text.
 
     Tokens are font-slot numbers, so raw ids are incomparable across consoles
-    in the reordered kanji bank (>= 0x185). Normalization turns each token
-    into its character: the shared low range and controls directly, Saturn
-    kanji through the derived platform `kanji_map`. A rare Saturn kanji the
-    map could not resolve becomes a `WILDCARD` that never *proves* equality.
+    in the reordered kanji bank (from the game's `kanji_bank_start`).
+    Normalization turns each token into its character: the shared low range
+    and controls directly, Saturn kanji through the derived release
+    `kanji_map`. A rare Saturn kanji the map could not resolve becomes a
+    `WILDCARD` that never *proves* equality.
     """
 
-    def __init__(self, ps1_charmap: dict[int, str], kanji_map: dict[int, str]):
+    def __init__(self, ps1_charmap: dict[int, str], kanji_map: dict[int, str],
+                 bank_start: int | None):
         self.ps1_charmap = ps1_charmap
         self.kanji_map = kanji_map
+        self.bank_start = bank_start
 
     def _sym(self, token: int, saturn: bool) -> object:
         if token >= 0xE000:
             return f"<{token:04X}>"
-        if token < 0x0185 or not saturn:
+        if not saturn or self.bank_start is None or token < self.bank_start:
             return self.ps1_charmap.get(token, f"[{token:04X}]")
         char = self.kanji_map.get(token)
         return char if char is not None else WILDCARD
@@ -62,10 +65,13 @@ class Normalizer:
             toks.pop()
         return tuple(self._sym(t, saturn) for t in toks)
 
+    def signature(self, tokens: list[int]) -> tuple[int, ...]:
+        """This map's stable signature: see `stable_signature`."""
+        return stable_signature(tokens, self.bank_start or 0x10000)
+
 
 def monotone_alignment(
-    entries: list[list[int]], ps1_tokens: list[list[int]],
-    norm: Normalizer | None,
+    entries: list[list[int]], ps1_tokens: list[list[int]], norm: Normalizer,
 ) -> tuple[dict[int, int], list[int]]:
     """Prove Saturn->PS1 record correspondence; PS1 is a reference only.
 
@@ -88,40 +94,46 @@ def monotone_alignment(
                 out[a0 + k] = b0 + k
         return out
 
-    mapping: dict[int, int] = {}
-    if norm is not None:
-        sat_norm = [norm.normalize(e, saturn=True) for e in entries]
-        ps_norm = [norm.normalize(t, saturn=False) for t in ps1_tokens]
-        exact = blocks([hash(x) for x in sat_norm],
-                       [hash(x) for x in ps_norm])
-        mapping = {a: b + 1 for a, b in exact.items()}
-        rest_sat = [i for i in range(len(entries)) if i not in mapping]
-        rest_ps = [j for j in range(len(ps1_tokens))
-                   if j + 1 not in set(mapping.values())]
-        if rest_sat and rest_ps:
-            sig = blocks([hash(stable_signature(entries[i])) for i in rest_sat],
-                         [hash(stable_signature(ps1_tokens[j])) for j in rest_ps])
-            for ai, bj in sig.items():
-                si, pj = rest_sat[ai], rest_ps[bj]
-                a, b = sat_norm[si], ps_norm[pj]
-                if len(a) == len(b) and all(
-                    x is WILDCARD or x == y for x, y in zip(a, b)
-                ):
-                    mapping[si] = pj + 1
-    else:
-        sig = blocks([hash(stable_signature(e)) for e in entries],
-                     [hash(stable_signature(t)) for t in ps1_tokens])
-        mapping = {a: b + 1 for a, b in sig.items()}
+    sat_norm = [norm.normalize(e, saturn=True) for e in entries]
+    ps_norm = [norm.normalize(t, saturn=False) for t in ps1_tokens]
+    exact = blocks([hash(x) for x in sat_norm], [hash(x) for x in ps_norm])
+    mapping = {a: b + 1 for a, b in exact.items()}
+    rest_sat = [i for i in range(len(entries)) if i not in mapping]
+    rest_ps = [j for j in range(len(ps1_tokens))
+               if j + 1 not in set(mapping.values())]
+    if rest_sat and rest_ps:
+        sig = blocks([hash(norm.signature(entries[i])) for i in rest_sat],
+                     [hash(norm.signature(ps1_tokens[j])) for j in rest_ps])
+        for ai, bj in sig.items():
+            si, pj = rest_sat[ai], rest_ps[bj]
+            a, b = sat_norm[si], ps_norm[pj]
+            if len(a) == len(b) and all(
+                x is WILDCARD or x == y for x, y in zip(a, b)
+            ):
+                mapping[si] = pj + 1
     unmatched = [i for i in range(len(entries)) if i not in mapping]
     return mapping, unmatched
 
 
-def proven_equal(norm: Normalizer | None, sat_tokens: list[int],
+def normalizer_for(release, game: str | None = None) -> Normalizer:
+    """The comparison map for one release: the game's plane plus its own bank."""
+    from langrisser.game import load_game
+    if game is None:
+        codes = release.games
+        if len(codes) != 1:
+            raise SystemExit(
+                f"release {release.code} ships {len(codes)} games; name one")
+        game = codes[0]
+    pack = load_game(game)
+    return Normalizer(load_font_map_csv(pack.font_map),
+                      load_font_map_csv(release.kanji_map),
+                      pack.kanji_bank_start)
+
+
+def proven_equal(norm: Normalizer, sat_tokens: list[int],
                  ps1_rec: list[int]) -> bool:
     """One pair's proof: normalized-text equality, wildcards only at
-    unresolved rare kanji; falls back to the stable signature without a map."""
-    if norm is None:
-        return stable_signature(sat_tokens) == stable_signature(ps1_rec)
+    unresolved rare kanji."""
     a = norm.normalize(sat_tokens, saturn=True)
     b = norm.normalize(ps1_rec, saturn=False)
     if len(a) != len(b):
@@ -129,18 +141,18 @@ def proven_equal(norm: Normalizer | None, sat_tokens: list[int],
     return all(x is WILDCARD or x == y for x, y in zip(a, b))
 
 
-def stable_signature(tokens: list[int]) -> tuple[int, ...]:
-    """Return the PS1/Saturn-stable part of a JP token stream.
+def stable_signature(tokens: list[int], bank_start: int) -> tuple[int, ...]:
+    """Return the release-stable part of a JP token stream.
 
-    Kana, ASCII/punctuation and control words are shared between platforms.
-    The high kanji bank is reordered on Saturn, so it must not participate in
-    automated alignment. Control arguments are kept because speaker ids and
-    name macros are alignment-critical.
+    Kana, ASCII/punctuation and control words hold the same slots on every
+    release. The kanji bank from `bank_start` is reordered, so it must not
+    participate in automated alignment. Control arguments are kept because
+    speaker ids and name macros are alignment-critical.
     """
     out: list[int] = []
     prev: int | None = None
     for token in tokens:
-        keep = token < 0x0185 or token >= 0xE000
+        keep = token < bank_start or token >= 0xE000
         if prev == 0xF600 or (prev is not None and 0xFB00 <= prev <= 0xFBFF):
             keep = True
         if keep:
@@ -405,9 +417,7 @@ def main() -> None:
     codec = Codec(load_charmap_tbl(tbl))
     data = Path(args.scen).read_bytes()
     ps1_scen = Path(args.ps1_scen).read_bytes() if args.ps1_scen else None
-    from langrisser.project import COMMON_FONT_MAP
-    norm = Normalizer(load_font_map_csv(COMMON_FONT_MAP),
-                      load_font_map_csv(release.kanji_map))
+    norm = normalizer_for(release)
     scen_dir = (Path(args.translation_root) / lang.script_dir.name
                 if args.translation_root else lang.script_dir)
     out, stats = apply_scen(

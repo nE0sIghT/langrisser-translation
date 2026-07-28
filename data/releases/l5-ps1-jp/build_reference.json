@@ -3,10 +3,10 @@
   "_comment": "sha1 of every artifact this release builds, per language. Builds verify it as their last stage; re-record only when an output change is intended.",
   "artifacts": {
     "en": {
-      "stamp": "891e6f98",
+      "stamp": "ea16db4b",
       "files": {
         "/L5/IMG.DAT": {
-          "sha1": "90d84d46f7e6d40bdef5898977f902e0841ba898",
+          "sha1": "3b9d8d208f8da953a36d9eb4066686f93b8b43d7",
           "size": 3233792,
           "stamped": true
         },
@@ -27,30 +27,30 @@
           "size": 833536
         },
         "patch.ppf": {
-          "sha1": "a7176aa74141579103b20375cb30d046019c7830",
-          "size": 31532068,
+          "sha1": "6d45a3f99ee913dd6b52ea507e2e7b0ec6fc1b39",
+          "size": 31532410,
           "stamped": true
         }
       }
     },
     "ru": {
-      "stamp": "891e6f98",
+      "stamp": "ea16db4b",
       "files": {
         "/L5/IMG.DAT": {
-          "sha1": "0a4235f2c984f82a935d0d7c304ea12e1920f13e",
+          "sha1": "a5ee9e717da9837069d3f2d4b898b12a2d2cc77f",
           "size": 3233792,
           "stamped": true
         },
         "/L5/SCEN.DAT": {
-          "sha1": "ea626fbcb9c6a4b740165e439682b3cafbb48270",
+          "sha1": "8a74db2cbfc899a329bf759d40a8e7ca69956b43",
           "size": 23480320
         },
         "/L5/SCEN2.DAT": {
-          "sha1": "84abfc531ce4cf07daf40be09d8f0fe1fd061a56",
+          "sha1": "f3fb6c789f889040989ffba01e8af87321f17835",
           "size": 23463936
         },
         "/L5/SYSTEM.BIN": {
-          "sha1": "ea90e9e65bdf7f11aa8315dfef14f9ccf5fc0b80",
+          "sha1": "db98d0e5f89ec0666f619cf4dad356765e1e7c64",
           "size": 98320
         },
         "/SLPS_018.19": {
@@ -58,8 +58,8 @@
           "size": 833536
         },
         "patch.ppf": {
-          "sha1": "19659a469a43648dfce8629b221522911e4f8e27",
-          "size": 38839059,
+          "sha1": "2d5f044147fda98f53c29a34b145e97e2620149d",
+          "size": 38839585,
           "stamped": true
         }
       }

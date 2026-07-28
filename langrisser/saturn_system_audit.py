@@ -26,13 +26,11 @@ import argparse
 import json
 from pathlib import Path
 
-from langrisser.offsetgroups import PS1, SATURN, find_groups, run_length
-from langrisser.project import COMMON_FONT_MAP
+from langrisser.offsetgroups import (PS1, SATURN, expand_group_map, find_groups,
+                                     load_system_mapping, run_length)
 from langrisser.release import add_release_args, release_from_args
-from langrisser.saturn_apply import (Normalizer, load_font_map_csv,
-                                monotone_alignment)
+from langrisser.saturn_apply import monotone_alignment, normalizer_for
 from langrisser.game import add_game_args, game_from_args
-from langrisser.saturn_system_pack import expand_group_map, load_mapping
 
 
 def group_entries(data: bytes, group, cfg) -> list[list[int]]:
@@ -51,27 +49,23 @@ def main() -> None:
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--mapping", default=None,
                     help="SYSTEM mapping JSON (default: the release manifest's)")
-    ap.add_argument("--kanji-map", default=None,
-                    help="Kanji slot map CSV (default: the release manifest's)")
     add_game_args(ap)
     ap.add_argument("--lang-root", default=None,
                     help="Pack root (default: the game manifest's lang_root).")
     ap.add_argument("--langs", nargs="*", default=["ru", "en"])
     ap.add_argument("--write-mapping", action="store_true",
-                    help="Rewrite the group specs to the proven form.")
+                    help="Add the exceptional entries this run found to the "
+                         "group specs; nothing already recorded is removed.")
     args = ap.parse_args()
 
     release = release_from_args(args)
     mapping_path = Path(args.mapping) if args.mapping else release.system_mapping
-    kanji_map = Path(args.kanji_map) if args.kanji_map else release.kanji_map
-
-    norm = Normalizer(load_font_map_csv(COMMON_FONT_MAP),
-                      load_font_map_csv(kanji_map))
+    norm = normalizer_for(release)
     sat = Path(args.system).read_bytes()
     ps1 = Path(args.ps1_system).read_bytes()
     sat_groups = find_groups(sat, SATURN)
     ps1_groups = find_groups(ps1, PS1)
-    mapping = load_mapping(mapping_path)
+    mapping = load_system_mapping(mapping_path)
 
     new_groups: dict[str, dict] = {}
     stats = {"recover": 0, "platform": 0, "shifted": 0, "space_override": 0}
@@ -144,13 +138,25 @@ def main() -> None:
 
     if not args.write_mapping:
         return
-    mapping["groups"] = new_groups
+    # Add the exceptional entries this run found; the index ranges are
+    # reconciliation's and an entry already recorded is a decision, so
+    # nothing here removes one.
+    merged = {k: dict(v) for k, v in (mapping.get("groups") or {}).items()}
+    for group, spec in new_groups.items():
+        existing = merged.setdefault(group, {}).get("entries", [])
+        known = {int(item["saturn"]) for item in existing}
+        added = [item for item in spec.get("entries", [])
+                 if int(item["saturn"]) not in known]
+        if existing or added:
+            merged[group]["entries"] = existing + added
+    mapping["groups"] = dict(sorted(
+        ((k, v) for k, v in merged.items() if v), key=lambda kv: int(kv[0])))
     mapping_path.write_text(
         json.dumps(mapping, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     used = {
         str(item["platform"])
         for spec in new_groups.values()
-        for item in spec["entries"] if "platform" in item
+        for item in spec.get("entries", []) if "platform" in item
     }
     lang_root = Path(args.lang_root) if args.lang_root else game_from_args(args).lang_root
     for lang in args.langs:
@@ -164,7 +170,7 @@ def main() -> None:
                                    ensure_ascii=False, indent=2) + "\n",
                         encoding="utf-8")
         print(f"  {lang}: overlay {len(data)} -> {len(pruned)} strings")
-    print(f"mapping rewritten -> {mapping_path}")
+    print(f"mapping entries updated -> {mapping_path}")
 
 
 if __name__ == "__main__":

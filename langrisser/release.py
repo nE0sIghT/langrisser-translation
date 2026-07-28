@@ -144,11 +144,24 @@ class ReleasePack:
 
     def check_system_groups(self, scanned: list[int]) -> None:
         """Fail if the scan disagrees with the recorded group offsets."""
-        recorded = self.system_groups
-        if not recorded or recorded == scanned:
+        self._check_scan("group", self.system_groups, scanned)
+
+    def check_system_loose(self, scanned: list[int]) -> None:
+        """Fail if the scan disagrees with the recorded loose-run offsets.
+
+        A build with none recorded says so with an empty list; a heuristic
+        that starts finding runs in the gaps between groups then shows up as
+        a mismatch instead of quietly adding strings nobody translated.
+        """
+        if "system_loose" not in self._data:
+            return
+        self._check_scan("loose-run", self.system_loose, scanned)
+
+    def _check_scan(self, what: str, recorded: list[int], scanned: list[int]) -> None:
+        if recorded == scanned or (not recorded and what == "group"):
             return
         raise SystemExit(
-            f"release {self.code}: SYSTEM group scan disagrees with the "
+            f"release {self.code}: SYSTEM {what} scan disagrees with the "
             f"recorded offsets; every pack key would change meaning.\n"
             f"  recorded: {[f'0x{v:04X}' for v in recorded]}\n"
             f"  scanned:  {[f'0x{v:04X}' for v in scanned]}")
@@ -168,6 +181,24 @@ class ReleasePack:
         """The container family this release was built on."""
         from langrisser.engine import load_engine
         return load_engine(self.engine)
+
+    @property
+    def platform_pack(self):
+        """The console this release runs on."""
+        from langrisser.platform import load_platform
+        return load_platform(self.platform)
+
+    @property
+    def group_config(self):
+        """How to read this build's SYSTEM offset-table groups.
+
+        The two things that vary: the console's byte order, and where this
+        build's first text group sits. Everything else about the group model
+        is shared (`langrisser.offsetgroups`).
+        """
+        from langrisser.offsetgroups import GroupConfig
+        return GroupConfig(order=self.platform_pack.order,
+                           scan_start=self.offset("system_scan_start"))
 
     @property
     def max_font_slot(self) -> int:

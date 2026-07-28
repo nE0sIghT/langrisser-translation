@@ -24,10 +24,9 @@ from pathlib import Path
 
 from langrisser.game import add_game_args, game_from_args
 from langrisser.release import add_release_args, release_from_args
-from langrisser.offsetgroups import PS1, GroupConfig
+from langrisser.offsetgroups import find_groups, run_length
 from langrisser.project import add_language_args, language_from_args
 from langrisser.scen import Codec, load_charmap_tbl
-from langrisser.system_dump import find_groups, run_length
 
 FFFF = 0xFFFF
 
@@ -135,12 +134,11 @@ def main() -> None:
 
     codec = Codec(load_charmap_tbl(tbl))
     data = bytearray(Path(args.system_in).read_bytes())
-    groups = find_groups(data, GroupConfig(
-        order=PS1.order, scan_start=release.offset("system_scan_start")))
+    groups = find_groups(data, release.group_config)
     if not source_strings_path.exists():
         raise SystemExit(
             f"SYSTEM source dump not found: {source_strings_path}; "
-            "run scripts/system_dump.py first"
+            "run langrisser.system_dump first"
         )
     source_entries = json.loads(source_strings_path.read_text(encoding="utf-8"))
     translations = json.loads(strings_path.read_text(encoding="utf-8"))
@@ -151,7 +149,7 @@ def main() -> None:
     if any("id" not in entry for entry in source_entries):
         raise SystemExit(
             f"outdated SYSTEM source dump: {source_strings_path}; "
-            "regenerate it with scripts/system_dump.py"
+            "regenerate it with langrisser.system_dump"
         )
 
     source_by_id = {e["id"]: e for e in source_entries}

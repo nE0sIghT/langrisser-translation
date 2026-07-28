@@ -52,6 +52,9 @@ def main() -> None:
     ap.add_argument("--tbl", default=None)
     ap.add_argument("--strings", default=None)
     ap.add_argument("--system-source", default="work/l5/systemdump/system_strings.json")
+    ap.add_argument("--release-strings", default=None,
+                    help="Language-specific release SYSTEM overlay JSON: the "
+                         "text this build ships where the pack has none.")
     ap.add_argument("--constraints", default=None,
                     help="UI cell budgets (default: the game manifest's).")
     args = ap.parse_args()
@@ -67,9 +70,25 @@ def main() -> None:
 
     codec = Codec(load_charmap_tbl(tbl))
     overlay = load_object(strings_path)
+    release_overlay = (load_object(Path(args.release_strings))
+                       if args.release_strings and Path(args.release_strings).exists()
+                       else {})
     source_data = json.loads(source_path.read_text(encoding="utf-8"))
     source = {entry["id"]: entry["jp"] for entry in source_data}
     constraints = load_object(constraints_path)
+
+    def shipped(entry_id: str) -> str | None:
+        """What this build shows for an id, or None if it has no such string.
+
+        The pack's translation first, then the release's own overlay for the
+        entries this build words differently, then the untranslated original.
+        An id in none of the three is not on this build at all.
+        """
+        for table in (overlay, release_overlay):
+            if entry_id in table:
+                return "" if table[entry_id] == "{BLANK}" else table[entry_id]
+        jp = source.get(entry_id)
+        return None if jp is None else ("" if jp == "{BLANK}" else jp)
 
     problems = 0
     for sequence in constraints.get("atlas_sequences", []):
@@ -77,13 +96,11 @@ def main() -> None:
         columns = int(sequence["columns"])
         slot = int(sequence.get("start_slot", 0))
         for entry_id in sequence["ids"]:
-            if entry_id not in source:
+            text = shipped(entry_id)
+            if text is None:
                 print(f"{name}: unknown SYSTEM id {entry_id}")
                 problems += 1
                 continue
-            text = overlay.get(entry_id, source[entry_id])
-            if text == "{BLANK}":
-                text = ""
             try:
                 length = encoded_length(codec, text)
             except ValueError as exc:
@@ -109,13 +126,11 @@ def main() -> None:
         max_cells = int(field["max_cells"])
         entry_ids = field.get("ids", [field.get("id")])
         for entry_id in entry_ids:
-            if entry_id not in source:
+            text = shipped(entry_id)
+            if text is None:
                 print(f"{name}: unknown SYSTEM id {entry_id}")
                 problems += 1
                 continue
-            text = overlay.get(entry_id, source[entry_id])
-            if text == "{BLANK}":
-                text = ""
             try:
                 length = encoded_length(codec, text)
             except ValueError as exc:
@@ -139,18 +154,14 @@ def main() -> None:
         suffix_id = field["suffix_id"]
         suffix_start = int(field["suffix_start"])
         max_cells = int(field["max_cells"])
-        missing = [entry_id for entry_id in (prefix_id, suffix_id)
-                   if entry_id not in source]
+        prefix = shipped(prefix_id)
+        suffix = shipped(suffix_id)
+        missing = [entry_id for entry_id, text in
+                   ((prefix_id, prefix), (suffix_id, suffix)) if text is None]
         if missing:
             print(f"{name}: unknown SYSTEM id(s): {', '.join(missing)}")
             problems += 1
             continue
-        prefix = overlay.get(prefix_id, source[prefix_id])
-        suffix = overlay.get(suffix_id, source[suffix_id])
-        if prefix == "{BLANK}":
-            prefix = ""
-        if suffix == "{BLANK}":
-            suffix = ""
         try:
             prefix_len = encoded_length(codec, prefix)
             suffix_tokens = encoded_tokens(codec, suffix)

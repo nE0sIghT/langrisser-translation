@@ -1110,9 +1110,14 @@ rather than redoing it. A Saturn entry takes a PS1 record's translation
 text is its own. Raw token ids in the reordered kanji bank
 (`>= 0x185`) are incomparable across consoles — but *normalized to text*
 through the tracked `data/releases/l5-saturn-jp/kanji_map.csv` (same CSV convention
-as the common `groups_report.csv`, holding *only* the reordered kanji bank —
-~1030 tokens voted from positionally-matched pair tokens by
-`saturn_scen_audit.py`; the shared range is never duplicated) they compare directly. The apply
+as the common `groups_report.csv`, holding *only* the reordered kanji bank from
+the game's `kanji_bank_start`; the shared range is never duplicated) they
+compare directly. The map is measured, not inferred: `derive_font_map.py
+--bank-only` matches each Saturn glyph bitmap against the already-mapped PS1
+plane, which names 1418 of the bank's 1429 glyphs. The earlier map was voted
+from positionally matched record pairs, and that put the wrong character in
+eleven slots (`巫` read as `祭`, `訓` as `価`) and left seventy-nine unnamed.
+The apply
 (`monotone_alignment`) runs an order-preserving longest matching per block:
 pass 1 on the full normalized originals (kanji included, trailing `FFFF`
 stripped), pass 2 for records containing unresolved rare kanji — stable
@@ -1133,9 +1138,8 @@ the PS1-only record they supersede) or stay explicitly preserved with
 `"pending_review": true` until translated — anything else fails the build.
 `langrisser/saturn_scen_audit.py` regenerates the minimal mapping and emits
 `work/l5/build/saturn/scen_platform_review.md`: each pending record with the
-Saturn original decoded through the *derived Saturn kanji map* (~1030 tokens
-voted from positionally-matched pair tokens, `kanji_map.csv`) plus
-the closest PS1 record and its current ru/en text.
+Saturn original decoded through the derived Saturn kanji map
+(`kanji_map.csv`) plus the closest PS1 record and its current ru/en text.
 
 ### Universality
 

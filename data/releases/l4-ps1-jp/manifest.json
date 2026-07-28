@@ -21,6 +21,8 @@
   "offsets": {
     "system_scan_start": "0x9042"
   },
+  "max_font_slot": 2050,
+  "_max_font_slot_comment": "Slot 2051's 18 bytes would cross file offset 0x9042, where this build's first SYSTEM text group starts.",
   "system_groups": [
     "0x9042",
     "0x9FB2",

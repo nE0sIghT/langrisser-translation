@@ -32,7 +32,8 @@ from langrisser.release import add_release_args, release_from_args
 from langrisser.project import add_language_args, language_from_args
 from langrisser.binfmt import BE
 from langrisser.game import add_game_args, game_from_args
-from langrisser.offsetgroups import SATURN, find_groups, group_key, run_length
+from langrisser.offsetgroups import (SATURN, expand_group_map, find_groups, group_key,
+                                     load_system_mapping, run_length)
 from langrisser.scen import Codec, load_charmap_tbl
 from langrisser.system_pack import (load_card_layout, load_system_layout,
                                reserve_leading_cells)
@@ -60,59 +61,6 @@ def build_group_blob(seqs: list[list[int]]) -> list[int]:
         strings.append(FFFF)
         pos += len(seq) + 1
     return offsets + strings
-
-
-def load_mapping(path: Path | None) -> dict:
-    if path is None:
-        return {"groups": {}}
-    if not path.exists():
-        raise SystemExit(f"Saturn SYSTEM mapping not found: {path}")
-    data = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
-        raise SystemExit(f"{path}: SYSTEM mapping must be an object")
-    data.setdefault("groups", {})
-    return data
-
-
-def expand_group_map(spec: dict, entry_count: int) -> dict[int, object]:
-    """Return `{saturn_index: ps1_index_or_platform_id}`."""
-    out: dict[int, object] = {}
-    for item in spec.get("ranges", []):
-        saturn = int(item["saturn"])
-        count = int(item["count"])
-        if "ps1" in item:
-            ps1 = int(item["ps1"])
-            for off in range(count):
-                out[saturn + off] = ps1 + off
-        elif "platform" in item:
-            platform = str(item["platform"])
-            if count != 1:
-                raise SystemExit(
-                    "SYSTEM range platform mappings must be explicit entries; "
-                    f"got {item}"
-                )
-            out[saturn] = {"platform": platform}
-        elif item.get("preserve"):
-            for off in range(count):
-                out[saturn + off] = {"preserve": True}
-        else:
-            raise SystemExit(f"SYSTEM range mapping needs ps1/platform/preserve: {item}")
-    for item in spec.get("entries", []):
-        saturn = int(item["saturn"])
-        if "ps1" in item:
-            out[saturn] = int(item["ps1"])
-        elif "ps1_id" in item:
-            out[saturn] = {"ps1_id": str(item["ps1_id"])}
-        elif "platform" in item:
-            out[saturn] = {"platform": str(item["platform"])}
-        elif item.get("preserve"):
-            out[saturn] = {"preserve": True}
-        else:
-            raise SystemExit(f"SYSTEM entry mapping needs ps1/ps1_id/platform/preserve: {item}")
-    bad = [idx for idx in out if idx < 0 or idx >= entry_count]
-    if bad:
-        raise SystemExit(f"SYSTEM mapping has out-of-range Saturn entries: {bad[:5]}")
-    return out
 
 
 def encoded_from_text(codec: Codec, text: str | None, orig: list[int],
@@ -194,7 +142,7 @@ def main() -> None:
         if platform_strings_path.exists() else {}
     )
     mapping_path = Path(args.mapping) if args.mapping else release.system_mapping
-    mapping = load_mapping(mapping_path)
+    mapping = load_system_mapping(mapping_path)
     group_specs = {int(k): v for k, v in (mapping.get("groups") or {}).items()}
 
     changed = 0

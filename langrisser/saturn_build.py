@@ -4,7 +4,7 @@
 Platform is a build-time choice: the same pack that produces the PS1 PPF drives
 this Saturn flow. It reuses the shared stages unchanged:
 
-1. regenerate the common PS1 SYSTEM source and resolved target strings;
+1. dump this release's own SYSTEM source and resolve the target strings;
 2. complete font assignments into a build copy and emit a Saturn `.tbl`;
 3. reflow, validate and rewrap a generated translation copy with that table;
 4. pack Saturn `SYSTEM.DAT` through platform mappings;
@@ -104,6 +104,9 @@ def main() -> None:
                 f"missing {path}; extract it first: "
                 f"python3 -m langrisser.saturn_disc extract {path.name} {path}"
             )
+    # What still reads the PS1 files: the glyph plan and the shared script
+    # validators. Everything the correspondence decides now comes from the
+    # release mappings, which reconciliation wrote.
     for path in (Path(args.ps1_scen), Path(args.ps1_scen2), Path(args.ps1_system)):
         if not path.exists():
             raise SystemExit(
@@ -121,9 +124,14 @@ def main() -> None:
     system_font = saturn / f"SYSTEM.DAT.{lang.suffix}.font"
     tbl = saturn / f"lang5_{lang.suffix}.saturn.tbl"
 
-    system_source = build_dir / f"system_source.{lang.suffix}.json"
+    # The JP source of the UI text, read from this build's own SYSTEM: its
+    # word budgets, its leading indent cells, and the pack ids it carries,
+    # resolved through the release's recorded SYSTEM mapping.
+    system_source = build_dir / f"system_source.{lang.suffix}.saturn.json"
     run("-m", "langrisser.system_dump",
-        "--system-bin", args.ps1_system,
+        "--release", release.code,
+        "--release-root", args.release_root,
+        "--system-bin", system_in,
         "--out", system_source)
     resolved_system_strings = build_dir / f"system_strings.{lang.suffix}.json"
     resolve_args = [
@@ -230,6 +238,7 @@ def main() -> None:
         "--lang-root", lang.root.parent,
         "--tbl", tbl,
         "--strings", reflowed_system_strings,
+        "--release-strings", lang.override_system_strings(release.code),
         "--system-source", system_source)
     run("-m", "langrisser.rewrap",
         "--lang", args.lang,

@@ -3,7 +3,7 @@
   "_comment": "sha1 of every artifact this release builds, per language. Builds verify it as their last stage; re-record only when an output change is intended.",
   "artifacts": {
     "en": {
-      "stamp": "6f961708",
+      "stamp": "ea16db4b",
       "files": {
         "/OPEN.DAT": {
           "sha1": "44f9db88bbd71f1971fdfff1519a9246e292444e",
@@ -18,19 +18,19 @@
           "size": 121344
         },
         "/TITLE1.DAT": {
-          "sha1": "2f7697d6aa2e5b18641b633df33b9970f629f7d8",
+          "sha1": "046ef8482b2c324262a60c2c14dc0b2dc398257e",
           "size": 140648,
           "stamped": true
         },
         "/TITLE2.DAT": {
-          "sha1": "dbdbf2b45c210b765ab4446d0d78ee0e5299a79a",
+          "sha1": "279d7fa089b0beaa1d2795668e68e0c3b0bae37c",
           "size": 135592,
           "stamped": true
         }
       }
     },
     "ru": {
-      "stamp": "6f961708",
+      "stamp": "ea16db4b",
       "files": {
         "/CLEAR.DAT": {
           "sha1": "10cd231c21edc9e96c5bae103912d15902db5b28",
@@ -41,21 +41,21 @@
           "size": 378204
         },
         "/SCEN.DAT": {
-          "sha1": "a148191a6eb1ab344d56f6ebb9c7dd4cbfb47293",
+          "sha1": "6723adba15c71322bac800e6e6bc595610934ab8",
           "size": 22915072
         },
         "/SYSTEM.DAT": {
-          "sha1": "c9a22613745921646729137cef1e0e9d0e2fb8e1",
+          "sha1": "f2f8b03c07f7822842ff338469e43e2ddbf79a81",
           "size": 121344
         },
         "/TITLE1.DAT": {
-          "sha1": "e06260dea24f3af742a194d260119ae4d910f064",
-          "size": 134632,
+          "sha1": "3a529e55dbde212dd8c601d17aea987709f0befa",
+          "size": 134696,
           "stamped": true
         },
         "/TITLE2.DAT": {
-          "sha1": "b5e35ec53152db6856d3e8a5494058d088bc1914",
-          "size": 129576,
+          "sha1": "9720a3f52bcf563822cdd1aba557586f105401fd",
+          "size": 129640,
           "stamped": true
         }
       }

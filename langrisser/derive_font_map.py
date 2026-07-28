@@ -1,28 +1,37 @@
 #!/usr/bin/env python3
-"""Derive a game's glyph slot->character map from an already-mapped game.
+"""Derive a glyph slot->character map from an already-mapped plane.
 
-Every game in this series generates its own glyph plane: the low range
-(kana, ASCII, punctuation) is identical across releases, but the kanji bank
-holds a per-script subset in its own order. The bitmaps themselves are the
-same artwork, so a new game's map can be recovered mechanically: for each of
-its 12x12 tiles, look for a byte-identical tile in the reference game's plane
-and inherit that character.
+Every game in this series generates its own glyph plane, and so does every
+release of it: the low range (kana, ASCII, punctuation) is identical, but the
+kanji bank holds a subset in its own order. The bitmaps themselves are the same
+artwork, so a map can be recovered mechanically: for each 12x12 tile, look for a
+byte-identical tile in the reference plane and inherit that character.
 
-This is the same evidence-based approach `saturn_fix_native_glyphs` uses for
-the Saturn plane, generalized to a whole plane, and it emits the shared
-font-map CSV convention (`index_dec,index_hex,group,char,source`) so the
-result drops straight into a game manifest's `font_map`.
+Two outputs, one derivation:
 
-Tiles with no match are the game's own kanji; they are reported (and
+* by default the whole plane, which is a game's `font_map`;
+* with `--bank-only`, just the reordered kanji bank, which is a release's
+  `kanji_map.csv` - the delta that lets its tokens be read as text.
+
+Both use the shared CSV convention (`index_dec,index_hex,group,char,source`).
+
+This is measurement, not inference, and it is how the map should be built: the
+Saturn bank was first voted from positionally matched record pairs, which put
+the wrong character in eleven slots and left seventy-nine unnamed.
+
+Tiles with no match are the plane's own glyphs; they are reported (and
 optionally listed) for OCR/manual mapping, which is how the reference map was
-built in the first place.
+built in the first place. In `--bank-only` mode whatever the existing map says
+about them is carried over rather than dropped.
+
+Reading two releases' planes makes this reconciliation work: it fills `data/`
+once, and no build runs it.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
-from collections import Counter
 from pathlib import Path
 
 from langrisser.build_font import GLYPH_BYTES
@@ -58,18 +67,24 @@ def main() -> None:
     ap.add_argument("--reference-game", default="l5",
                     help="Game whose font map is already known.")
     ap.add_argument("--reference-system", default="work/l5/extracted/SYSTEM.BIN")
+    ap.add_argument("--bank-only", action="store_true",
+                    help="Map only the reordered kanji bank: a release's delta.")
     ap.add_argument("--out", default=None,
-                    help="Output CSV (default: the game manifest's font_map).")
+                    help="Output CSV (default: the game's font_map, or the "
+                         "release's kanji_map with --bank-only).")
     ap.add_argument("--out-unmatched", default=None,
                     help="Write the unmatched slot list here for OCR/manual work.")
     args = ap.parse_args()
 
     game = load_game(args.game, args.game_root)
-    release = release_from_args(args, platform="ps1")
+    release = release_from_args(args)
     reference = load_game(args.reference_game, args.game_root)
     data = Path(args.system).read_bytes()
     ref_data = Path(args.reference_system).read_bytes()
     ref_map = load_map(reference.font_map)
+    if args.bank_only and game.kanji_bank_start is None:
+        raise SystemExit(f"game {game.code} declares no kanji_bank_start")
+    first_slot = game.kanji_bank_start if args.bank_only else 0
 
     # Reference bitmaps -> character. Ties keep the lowest slot, which is the
     # one the encoder would pick anyway.
@@ -79,10 +94,12 @@ def main() -> None:
         if any(tile):
             by_bits.setdefault(tile, char)
 
-    last = plane_end(data, release.offset("system_scan_start"))
+    # The plane's own ceiling, not the text scan floor: a build may keep
+    # unrelated data between the two (Saturn's group pointer directory).
+    last = plane_end(data, (release.max_font_slot + 1) * GLYPH_BYTES)
     derived: dict[int, str] = {}
     unmatched: list[int] = []
-    for slot in range(last + 1):
+    for slot in range(first_slot, last + 1):
         tile = bytes(data[slot * GLYPH_BYTES:(slot + 1) * GLYPH_BYTES])
         if not any(tile):
             continue
@@ -92,21 +109,42 @@ def main() -> None:
         else:
             derived[slot] = char
 
-    out = Path(args.out) if args.out else game.font_map
+    out = Path(args.out) if args.out else (
+        release.kanji_map if args.bank_only else game.font_map)
+    source = f"bitmap:{reference.code}_font"
+    rows = {slot: {"group": "confirmed", "char": char, "source": source}
+            for slot, char in derived.items()}
+    kept = 0
+    if out.exists():
+        # A slot the reference plane does not hold keeps whatever the map
+        # already says about it - the readings that were filled in by hand,
+        # and the rows recording a tile that is not a character at all. Only
+        # what this run can measure is rewritten, so re-running is safe.
+        previous = {int(row["index_dec"]): row
+                    for row in csv.DictReader(open(out, encoding="utf-8"))
+                    if row["index_dec"].isdigit()}
+        for slot in unmatched:
+            if slot in previous:
+                rows[slot] = previous[slot]
+                kept += 1
+
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(
             fh, fieldnames=["index_dec", "index_hex", "group", "char", "source"],
             lineterminator="\n")
         writer.writeheader()
-        for slot, char in sorted(derived.items()):
+        for slot, row in sorted(rows.items()):
             writer.writerow({
                 "index_dec": slot, "index_hex": f"{slot:X}",
-                "group": "confirmed", "char": char,
-                "source": f"bitmap:{reference.code}_font",
+                "group": row["group"], "char": row["char"],
+                "source": row["source"],
             })
-    print(f"{game.code}: plane ends at slot {last}; derived {len(derived)} glyphs "
-          f"from {reference.code}, {len(unmatched)} unmatched -> "
+    what = "kanji bank" if args.bank_only else "plane"
+    where = release.code if args.bank_only else game.code
+    print(f"{where}: {what} ends at slot {last}; derived {len(derived)} glyphs "
+          f"from {reference.code}, {len(unmatched)} unmatched"
+          f"{f' ({kept} kept as recorded)' if kept else ''} -> "
           f"{out.relative_to(ROOT) if out.is_relative_to(ROOT) else out}")
     if args.out_unmatched:
         Path(args.out_unmatched).write_text(

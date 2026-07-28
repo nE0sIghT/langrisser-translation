@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Dump every translatable SYSTEM.BIN string from its offset-table groups.
+"""Dump every translatable SYSTEM string of a release from its offset-table groups.
 
-SYSTEM.BIN stores its UI text (unit/class/item/weapon/spell names, their
-triangle-button descriptions, and the menu command help) as a sequence of
+A build's SYSTEM file stores its UI text (unit/class/item/weapon/spell names,
+their triangle-button descriptions, and the menu command help) as a sequence of
 *groups*. Each group is::
 
     [ u16 offset table : N entries ][ N glyph-code strings ]
@@ -19,87 +19,101 @@ This is the single source of truth for what text the game shows: there is no
 heuristic FFFF scan and no minimum-length filter, so short tails and the first
 string of a group (which an FFFF scan would glue onto the table) are captured
 exactly. See docs/SYSTEM_BIN_FORMAT.md.
+
+It dumps whichever release is being built, not one particular console: the byte
+order comes from the platform, the scan start and group offsets from the release
+manifest, and the reordered kanji bank from the release's `kanji_map.csv`. The
+ids are the pack's, resolved through the release's recorded `system_mapping.json`
+- so the lengths and indents are this build's own while the names stay the ones
+the translation is keyed by.
 """
 import argparse
 import json
-import struct
 from pathlib import Path
 
 from langrisser.game import add_game_args, game_from_args
 from langrisser.release import add_release_args, release_from_args
 from langrisser.offsetgroups import (
-    PS1,
-    GroupConfig,
+    build_codemap,
     decode_run,
+    expand_group_map,
     find_groups,
-    group_key,
-    loose_key,
     load_codemap,
     load_font_map_csv,
+    load_system_mapping,
+    loose_key,
+    pack_id_for,
     run_length,
 )
-from langrisser.patch_name_entry import grid_span as name_entry_grid_span
+from langrisser.patch_name_entry import grid_spans
 
-SCAN_START = 0x8052      # first verified text group table
 MAX_STEP = 0x30          # max plausible string length (+terminator) in words
 
 # The offset-table group model (read_table/base_for/group_at/find_groups plus
-# load_codemap/decode_run/run_length) lives in langrisser.offsetgroups so the Saturn
-# tooling reuses it with a big-endian config. It is imported here and re-exported
-# for the packer and other PS1 callers, which use the default PS1 config.
+# load_codemap/decode_run/run_length) lives in langrisser.offsetgroups so every
+# release reuses it with its own config.
 
 # The katakana name-entry grid lives inside group 0 but is owned by
-# patch_name_entry.py, which rewrites it as fixed 5-single-glyph runs.
-# The unified text flow must NOT capture it: re-encoding those runs as ordinary
-# text picks readability pair-glyphs (e.g. "ab" in one cell), which collapses
-# the 5-column grid and corrupts the rename screen. Its span comes from the
-# patcher (the single source of the grid location); see name_entry_grid_span.
+# patch_name_entry.py / saturn_name_entry.py, which rewrite it as fixed
+# 5-single-glyph runs. The unified text flow must NOT capture it: re-encoding
+# those runs as ordinary text picks readability pair-glyphs (e.g. "ab" in one
+# cell), which collapses the 5-column grid and corrupts the rename screen. Its
+# spans come from the patcher (the single source of the grid location).
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_game_args(ap)
     add_release_args(ap)
-    ap.add_argument("--system-bin", default="work/l5/extracted/SYSTEM.BIN")
+    ap.add_argument("--system-bin", default="work/l5/extracted/SYSTEM.BIN",
+                    help="The release's extracted SYSTEM file.")
     ap.add_argument("--tbl", default=None,
-                    help="JP token table (default: the game's font map).")
+                    help="Override the token table (default: the font maps).")
     ap.add_argument("--out", default="work/l5/systemdump/system_strings.json")
     args = ap.parse_args()
 
-    # Each build's text groups start at their own offset; everything else in
-    # the group model is shared.
     game = game_from_args(args)
-    release = release_from_args(args, platform="ps1")
-    cfg = GroupConfig(order=PS1.order,
-                      scan_start=release.offset("system_scan_start"))
+    release = release_from_args(args)
+    cfg = release.group_config
     data = Path(args.system_bin).read_bytes()
-    # The game's tracked font map is the slot->character source of truth; the
-    # HHHH=text table stays available as an override.
-    table = Path(args.tbl) if args.tbl else game.text_table
-    codemap = load_codemap(str(table)) if table else load_font_map_csv(game.font_map)
+    # Slot->character comes from the game's tracked font map plus this
+    # release's delta for the kanji bank it reordered; a curated HHHH=text
+    # table stays available as an override.
+    if args.tbl:
+        codemap = load_codemap(args.tbl)
+    else:
+        codemap = build_codemap(load_font_map_csv(game.font_map),
+                                load_font_map_csv(release.kanji_map),
+                                game.kanji_bank_start)
     groups = find_groups(data, cfg)
     release.check_system_groups([table_off for table_off, _, _ in groups])
-    grid_span = name_entry_grid_span(data, codemap)
+    grid = grid_spans(data, codemap, cfg.order)
+    specs = {int(k): v for k, v in
+             (load_system_mapping(release.system_mapping).get("groups") or {}).items()}
 
     entries = []
     covered = bytearray(len(data))  # mark bytes that belong to a group
     for gi, (table_off, table, base) in enumerate(groups):
         n = len(table)
         last_off = base + table[-1] * 2
-        end = last_off + (run_length(data, last_off) + 1) * 2
+        end = last_off + (run_length(data, last_off, cfg) + 1) * 2
         for b in range(table_off, end):
             covered[b] = 1
+        targets = expand_group_map(specs[gi], n) if gi in specs else {}
         for k in range(n):
             off = base + table[k] * 2
             if k + 1 < n:
                 words = table[k + 1] - table[k] - 1
             else:
-                words = run_length(data, off)
-            if grid_span and grid_span[0] <= off < grid_span[1]:
-                continue  # name-entry grid run: owned by langrisser.patch_name_entry
-            run = list(struct.unpack_from("<%dH" % words, data, off)) if words else []
+                words = run_length(data, off, cfg)
+            if any(start <= off < stop for start, stop in grid):
+                continue  # name-entry grid run: owned by the name-entry patcher
+            entry_id = pack_id_for(targets.get(k) if targets else None, gi, k)
+            if entry_id is None:
+                continue  # release-only text or preserved: not a pack string
+            run = cfg.order.words(data, off, words)
             entries.append({
-                "id": group_key(gi, k),
+                "id": entry_id,
                 "group": gi,
                 "table": f"0x{table_off:05X}",
                 "index": k,
@@ -115,16 +129,21 @@ def main() -> None:
     # Loose strings: FFFF-terminated runs in the text region that are not part of
     # any offset-table group (e.g. the memory-card error messages). They have no
     # table to regenerate, so the packer keeps them at their fixed offset.
-    region_end = max((int(e["offset"], 16) + e["words"] * 2 for e in entries), default=cfg.scan_start)
+    region_end = max((int(e["offset"], 16) + e["words"] * 2 for e in entries),
+                     default=cfg.scan_start)
     loose_offsets: list[int] = []
     pos = cfg.scan_start
     while pos < region_end:
         if covered[pos]:
             pos += 2
             continue
-        words = run_length(data, pos)
-        if words >= 1 and not covered[pos]:
-            run = list(struct.unpack_from("<%dH" % words, data, pos))
+        words = run_length(data, pos, cfg)
+        # A run that reaches into a group is not a loose string: it is the
+        # gap padding before that group's table, read past its own end
+        # because no terminator sits in the gap.
+        end = pos + (words + 1) * 2
+        if words >= 1 and end <= len(covered) and not any(covered[pos:end]):
+            run = cfg.order.words(data, pos, words)
             text = decode_run(run, codemap)
             if words <= MAX_STEP and any(
                 "぀" <= ch <= "ヿ" or "一" <= ch <= "鿿" for ch in text
@@ -141,12 +160,15 @@ def main() -> None:
                 })
                 loose_offsets.append(pos)
         pos += (words + 1) * 2
+    release.check_system_loose(loose_offsets)
 
     entries.sort(key=lambda e: int(e["offset"], 16))
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.out).write_text(json.dumps(entries, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"dumped {len(entries)} strings from {len(groups)} groups -> {args.out}")
+    Path(args.out).write_text(json.dumps(entries, ensure_ascii=False, indent=1),
+                              encoding="utf-8")
+    print(f"dumped {len(entries)} strings from {len(groups)} groups "
+          f"of {release.code} -> {args.out}")
 
 
 if __name__ == "__main__":

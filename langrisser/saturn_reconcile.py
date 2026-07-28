@@ -31,46 +31,65 @@ import argparse
 import json
 from pathlib import Path
 
-from langrisser.offsetgroups import PS1, SATURN, find_groups, run_length
-from langrisser.project import COMMON_FONT_MAP
+from langrisser.offsetgroups import (PS1, SATURN, expand_group_map, find_groups,
+                                     load_system_mapping, run_length)
 from langrisser.release import add_release_args, release_from_args
-from langrisser.saturn_apply import (Normalizer, expand_record_map, load_font_map_csv,
-                                     load_mapping, monotone_alignment,
+from langrisser.saturn_apply import (expand_record_map, load_mapping,
+                                     monotone_alignment, normalizer_for,
                                      ps1_chunk_records, proven_equal)
 from langrisser.saturn_scen import local_index_entries, parse_catalog
-from langrisser.saturn_system_pack import expand_group_map
-from langrisser.saturn_system_pack import load_mapping as load_system_mapping
 
 
-def collapse(targets: dict[int, int]) -> list[dict[str, int]]:
+def collapse(targets: dict[int, int]) -> list[dict[str, object]]:
     """Turn per-entry correspondence into runs.
 
     A run is consecutive Saturn entries whose pack records are consecutive
     too, which is what the text looks like wherever the two builds agree.
+    `proved` marks it as this tool's own output, so a later run with better
+    evidence replaces it instead of treating it as a hand-written decision.
     """
-    runs: list[dict[str, int]] = []
+    runs: list[dict[str, object]] = []
     for saturn in sorted(targets):
         ps1 = targets[saturn]
         if runs:
             last = runs[-1]
             if (saturn == last["saturn"] + last["count"]
                     and ps1 == last["ps1"] + last["count"]):
-                last["count"] += 1
+                last["count"] += 1  # type: ignore[operator]
                 continue
-        runs.append({"saturn": saturn, "ps1": ps1, "count": 1})
+        runs.append({"saturn": saturn, "ps1": ps1, "count": 1, "proved": True})
     return runs
 
 
-def merge_spec(spec: dict, fresh: dict[int, int]) -> dict[str, object]:
-    """Hand-written decisions first, derived runs after."""
-    merged: dict[str, object] = {}
+def written_by_hand(spec: dict, rederive: bool = False) -> dict:
+    """The part of a spec reconciliation must not touch and re-derives around.
+
+    With `rederive`, every index range is dropped and derived again, which is
+    how a range recorded before `proved` existed - or one whose evidence has
+    since improved - gets rebuilt. A range the alignment then cannot reproduce
+    shows up as undecided, so nothing is lost quietly.
+    """
+    def derivable(item: dict) -> bool:
+        return "ps1" in item if rederive else bool(item.get("proved"))
+
+    kept = {k: v for k, v in spec.items() if k not in ("ranges", "entries")}
+    ranges = [item for item in spec.get("ranges", []) if not derivable(item)]
+    if ranges:
+        kept["ranges"] = ranges
+    if spec.get("entries"):
+        kept["entries"] = spec["entries"]
+    return kept
+
+
+def merge_spec(spec: dict, fresh: dict[int, int], rederive: bool = False) -> dict[str, object]:
+    """Hand-written decisions first, freshly derived runs after."""
+    hand = written_by_hand(spec, rederive)
+    merged: dict[str, object] = {k: v for k, v in hand.items() if k != "ranges"}
     ranges = collapse(fresh)
     if ranges:
         merged["ranges"] = ranges
-    if spec.get("entries"):
-        merged["entries"] = spec["entries"]
-    if spec.get("ranges"):
-        merged.setdefault("ranges", []).extend(spec["ranges"])  # type: ignore[union-attr]
+    if hand.get("ranges"):
+        merged.setdefault("ranges", []).extend(hand["ranges"])  # type: ignore[union-attr]
     return merged
 
 
@@ -99,8 +118,7 @@ def reconcile_scen(args) -> None:
     release = release_from_args(args)
     mapping_path = Path(args.mapping) if args.mapping else release.scen_mapping
     mapping = load_mapping(mapping_path)
-    norm = Normalizer(load_font_map_csv(COMMON_FONT_MAP),
-                      load_font_map_csv(release.kanji_map))
+    norm = normalizer_for(release)
     data = Path(args.scen).read_bytes()
     ps1 = Path(args.ps1_scen).read_bytes()
 
@@ -115,7 +133,8 @@ def reconcile_scen(args) -> None:
         if entries is None or chunk in empty:
             continue
         spec = specs.get(chunk, {})
-        explicit = expand_record_map(spec, len(entries)) if spec else {}
+        hand = written_by_hand(spec, args.rederive)
+        explicit = expand_record_map(hand, len(entries)) if hand else {}
         try:
             ps1_records = ps1_chunk_records(ps1, chunk)
         except Exception:
@@ -124,7 +143,7 @@ def reconcile_scen(args) -> None:
                    if ps1_records else ({}, []))
 
         fresh = {i: rec for i, rec in auto.items() if i not in explicit}
-        merged = merge_spec(spec, fresh)
+        merged = merge_spec(spec, fresh, args.rederive)
         if merged:
             out[str(chunk)] = merged
         derived += len(fresh)
@@ -156,8 +175,7 @@ def reconcile_system(args) -> None:
     release = release_from_args(args)
     mapping_path = Path(args.mapping) if args.mapping else release.system_mapping
     mapping = load_system_mapping(mapping_path)
-    norm = Normalizer(load_font_map_csv(COMMON_FONT_MAP),
-                      load_font_map_csv(release.kanji_map))
+    norm = normalizer_for(release)
     data = Path(args.system).read_bytes()
     ps1 = Path(args.ps1_system).read_bytes()
 
@@ -171,7 +189,8 @@ def reconcile_system(args) -> None:
     for gi in range(len(sat_groups)):
         entries = group_records(data, sat_groups, gi, SATURN)
         spec = specs.get(gi, {})
-        explicit = expand_group_map(spec, len(entries)) if spec else {}
+        hand = written_by_hand(spec, args.rederive)
+        explicit = expand_group_map(hand, len(entries)) if hand else {}
         records = group_records(ps1, ps1_groups, gi, PS1)
 
         # Same position, same text is the common case and proves itself; the
@@ -183,12 +202,17 @@ def reconcile_system(args) -> None:
             if k < len(records) and proven_equal(norm, entries[k], records[k]):
                 auto[k] = k
         rest = [k for k in range(len(entries)) if k not in explicit and k not in auto]
-        if rest and records:
-            aligned, _ = monotone_alignment([entries[k] for k in rest], records, norm)
+        # Only records nothing claims yet: a group holds repeated blanks, and
+        # aligning against the whole group would hand one of them to a second
+        # entry as well.
+        free = [k for k in range(len(records)) if k not in set(auto.values())]
+        if rest and free:
+            aligned, _ = monotone_alignment([entries[k] for k in rest],
+                                            [records[k] for k in free], norm)
             for position, record in aligned.items():
-                auto[rest[position]] = record - 1
+                auto[rest[position]] = free[record - 1]
 
-        merged = merge_spec(spec, auto)
+        merged = merge_spec(spec, auto, args.rederive)
         if merged:
             out[str(gi)] = merged
         derived += len(auto)
@@ -210,6 +234,10 @@ def main() -> None:
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--mapping", default=None,
                     help="Mapping to update (default: the release manifest's).")
+    ap.add_argument("--rederive", action="store_true",
+                    help="Rebuild every index range from the originals, keeping "
+                         "only the hand-written decisions. Use when the evidence "
+                         "improved, e.g. a fuller kanji map.")
     ap.add_argument("--dry-run", action="store_true",
                     help="Report what would be recorded without writing.")
     sub = ap.add_subparsers(dest="what", required=True)

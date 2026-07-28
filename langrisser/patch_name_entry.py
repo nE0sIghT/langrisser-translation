@@ -19,6 +19,7 @@ import json
 import struct
 from pathlib import Path
 
+from langrisser.binfmt import LE, ByteOrder
 from langrisser.project import add_language_args, language_from_args
 from langrisser.scen import load_charmap_tbl
 
@@ -71,24 +72,31 @@ def char_to_tok(tok2char: dict[int, str]) -> dict[str, int]:
     return c2t
 
 
-def grid_span(blob: bytes, tok2char: dict[int, str]) -> tuple[int, int] | None:
-    """Byte span [start, end) of the name-entry grid in `blob`, or None.
+def grid_spans(blob: bytes, tok2char: dict[int, str],
+               order: ByteOrder = LE) -> list[tuple[int, int]]:
+    """Byte spans [start, end) of every name-entry grid copy in `blob`.
 
     The engine references the grid by a hard-coded absolute address; there is no
     pointer in the data to read, so the region is located by its content (the
     first run's kana), exactly as the patcher does. This is the single source of
     the grid location: the unified SYSTEM text flow imports it to leave the grid
     alone (re-encoding those runs as ordinary text would break the rename screen).
+
+    A build may keep more than one copy - Saturn holds both the display grid
+    and the flat input table in `SYSTEM.DAT`, PS1 keeps the grid alone - so
+    every occurrence is returned rather than requiring uniqueness.
     """
     c2t = char_to_tok(tok2char)
     try:
-        anchor = struct.pack(f"<{RUN_LEN}H", *(c2t[ch] for ch in ORIG_RUNS[0]))
+        anchor = b"".join(order.pack_u16(c2t[ch]) for ch in ORIG_RUNS[0])
     except KeyError:
-        return None
+        return []
+    spans: list[tuple[int, int]] = []
     pos = blob.find(anchor)
-    if pos < 0 or blob.find(anchor, pos + 2) != -1:
-        return None
-    return pos, pos + len(ORIG_RUNS) * (RUN_LEN + 1) * 2
+    while pos >= 0:
+        spans.append((pos, pos + len(ORIG_RUNS) * (RUN_LEN + 1) * 2))
+        pos = blob.find(anchor, pos + 2)
+    return spans
 
 
 def patch_system(blob: bytearray, orig: list[list[int]], new: list[list[int]]) -> None:

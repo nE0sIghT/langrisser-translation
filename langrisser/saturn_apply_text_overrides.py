@@ -27,11 +27,11 @@ import re
 from pathlib import Path
 
 from langrisser.offsetgroups import SATURN as SATURN_CFG
-from langrisser.offsetgroups import find_groups, group_key, parse_group_key
+from langrisser.offsetgroups import (expand_group_map, find_groups, group_key,
+                                     load_system_mapping, parse_group_key)
 from langrisser.project import add_language_args, language_from_args
 from langrisser.release import add_release_args, release_from_args
 from langrisser.saturn_apply import load_mapping as load_scen_mapping
-from langrisser.saturn_system_pack import expand_group_map, load_mapping as load_system_mapping
 from langrisser.sceninsert import parse_dump_file
 
 

@@ -64,6 +64,19 @@ class GamePack:
         return _path(self.root, str(self._data["font_map"]))  # type: ignore[return-value]
 
     @property
+    def kanji_bank_start(self) -> int | None:
+        """First glyph slot of the kanji bank, or None if the game has none.
+
+        Below it every release holds the same glyphs in the same order, so a
+        token means the same thing everywhere. From it on a release may order
+        its own subset differently, and only its `kanji_map.csv` says what a
+        token is; borrowing the game's character for an unmapped bank slot
+        would read as a plausible but wrong kanji.
+        """
+        value = self._data.get("kanji_bank_start")
+        return int(str(value), 0) if value is not None else None
+
+    @property
     def text_table(self) -> Path | None:
         """Curated `HHHH=text` token table, when the game has one.
 
