@@ -183,6 +183,12 @@ record numbers:
 }
 ```
 
+A release override is for text that really is release-specific - Saturn pad
+buttons, an edited line, a record the other build does not have. Text both
+builds share belongs in the common `SCEN/`, even when only the strict build
+would have noticed it missing: an override there hides the gap on every other
+release instead of closing it.
+
 A Saturn-only translated record uses a sparse platform chunk file:
 
 ```json

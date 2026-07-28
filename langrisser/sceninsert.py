@@ -187,6 +187,32 @@ def dump_path_for(dump_root: Path, primary_stem: str,
     return dump_root / primary_stem / name
 
 
+def coverage(src: Path, dump_root: Path,
+             fallback_dump_stems: tuple[str, ...] = ()) -> tuple[int, int, list[int]]:
+    """Records this dump translates, records the file holds, chunks it misses.
+
+    A chunk with no dump file ships its original text, silently: the insert
+    has nothing to write and leaves the bytes alone. Counting it is the only
+    way a missing translation shows up at all.
+    """
+    data = src.read_bytes()
+    total = translated = 0
+    missing: list[int] = []
+    for cidx, (s, e) in enumerate(read_chunk_spans(data)):
+        try:
+            block = find_text_block(data[s:e])
+        except ValueError:
+            continue          # data-only chunk: it carries no text to translate
+        total += block.record_count
+        dump_path = dump_path_for(dump_root, src.stem, fallback_dump_stems, cidx)
+        edits = parse_dump_file(dump_path) if dump_path.exists() else {}
+        covered = sum(1 for r in range(1, block.record_count + 1) if r in edits)
+        translated += covered
+        if covered < block.record_count:
+            missing.append(cidx)
+    return translated, total, missing
+
+
 def insert_file(src: Path, dump_root: Path, out_path: Path, codec: Codec,
                 allow_grow: bool = False, fixed_size_repack: bool = False,
                 fallback_dump_stems: tuple[str, ...] = ()) -> int:
@@ -261,7 +287,15 @@ def insert_file(src: Path, dump_root: Path, out_path: Path, codec: Codec,
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_bytes(result)
-    print(f"{src.name}: chunks_changed={changed} -> {out_path}")
+    done, total, missing = coverage(src, dump_root, fallback_dump_stems)
+    note = ""
+    if done < total:
+        shown = ", ".join(f"{c:03d}" for c in missing[:10])
+        more = f" +{len(missing) - 10}" if len(missing) > 10 else ""
+        note = (f"; {total - done} records still original in "
+                f"{len(missing)} chunk(s): {shown}{more}")
+    print(f"{src.name}: chunks_changed={changed} "
+          f"translated={done}/{total}{note} -> {out_path}")
     return changed
 
 

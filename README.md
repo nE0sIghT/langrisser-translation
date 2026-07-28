@@ -209,6 +209,11 @@ that build's own while the ids stay the ones the translation is keyed by.
 Generated JP source stays under `work/l5/scriptdump/` and `work/l5/systemdump/`.
 These dumps are required for translation and building but are not committed.
 
+The insert reports how much of the script it actually wrote
+(`translated=10244/10244`) and names the chunks it left as the original. A
+chunk with no translation file is inserted as nothing at all, so without that
+count a missing file looks exactly like a finished one.
+
 For Langrisser IV, point the same tools at disc A with `--game l4` (its files
 live under `/L4`, and it has no `SCEN2.DAT`):
 

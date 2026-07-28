@@ -1794,74 +1794,22 @@
       ]
     },
     "43": {
-      "entries": [
+      "ranges": [
         {
           "saturn": 0,
-          "platform": 0
-        },
-        {
-          "saturn": 1,
-          "platform": 1
-        },
-        {
-          "saturn": 2,
-          "platform": 2
-        },
-        {
-          "saturn": 3,
-          "platform": 3
-        },
-        {
-          "saturn": 4,
-          "platform": 4
-        },
-        {
-          "saturn": 5,
-          "platform": 5
-        },
-        {
-          "saturn": 6,
-          "platform": 6
-        },
-        {
-          "saturn": 7,
-          "platform": 7
+          "ps1": 1,
+          "count": 8,
+          "proved": true
         }
       ]
     },
     "44": {
-      "entries": [
+      "ranges": [
         {
           "saturn": 0,
-          "platform": 0
-        },
-        {
-          "saturn": 1,
-          "platform": 1
-        },
-        {
-          "saturn": 2,
-          "platform": 2
-        },
-        {
-          "saturn": 3,
-          "platform": 3
-        },
-        {
-          "saturn": 4,
-          "platform": 4
-        },
-        {
-          "saturn": 5,
-          "platform": 5
-        },
-        {
-          "saturn": 6,
-          "platform": 6
-        },
-        {
-          "saturn": 7,
-          "platform": 7
+          "ps1": 1,
+          "count": 8,
+          "proved": true
         }
       ]
     },
@@ -2296,38 +2244,12 @@
       ]
     },
     "81": {
-      "entries": [
+      "ranges": [
         {
           "saturn": 0,
-          "platform": 0
-        },
-        {
-          "saturn": 1,
-          "platform": 1
-        },
-        {
-          "saturn": 2,
-          "platform": 2
-        },
-        {
-          "saturn": 3,
-          "platform": 3
-        },
-        {
-          "saturn": 4,
-          "platform": 4
-        },
-        {
-          "saturn": 5,
-          "platform": 5
-        },
-        {
-          "saturn": 6,
-          "platform": 6
-        },
-        {
-          "saturn": 7,
-          "platform": 7
+          "ps1": 1,
+          "count": 8,
+          "proved": true
         }
       ]
     },
@@ -2818,38 +2740,12 @@
       ]
     },
     "123": {
-      "entries": [
+      "ranges": [
         {
           "saturn": 0,
-          "platform": 0
-        },
-        {
-          "saturn": 1,
-          "platform": 1
-        },
-        {
-          "saturn": 2,
-          "platform": 2
-        },
-        {
-          "saturn": 3,
-          "platform": 3
-        },
-        {
-          "saturn": 4,
-          "platform": 4
-        },
-        {
-          "saturn": 5,
-          "platform": 5
-        },
-        {
-          "saturn": 6,
-          "platform": 6
-        },
-        {
-          "saturn": 7,
-          "platform": 7
+          "ps1": 1,
+          "count": 8,
+          "proved": true
         }
       ]
     },
@@ -2884,74 +2780,22 @@
       ]
     },
     "127": {
-      "entries": [
+      "ranges": [
         {
           "saturn": 0,
-          "platform": 0
-        },
-        {
-          "saturn": 1,
-          "platform": 1
-        },
-        {
-          "saturn": 2,
-          "platform": 2
-        },
-        {
-          "saturn": 3,
-          "platform": 3
-        },
-        {
-          "saturn": 4,
-          "platform": 4
-        },
-        {
-          "saturn": 5,
-          "platform": 5
-        },
-        {
-          "saturn": 6,
-          "platform": 6
-        },
-        {
-          "saturn": 7,
-          "platform": 7
+          "ps1": 1,
+          "count": 8,
+          "proved": true
         }
       ]
     },
     "128": {
-      "entries": [
+      "ranges": [
         {
           "saturn": 0,
-          "platform": 0
-        },
-        {
-          "saturn": 1,
-          "platform": 1
-        },
-        {
-          "saturn": 2,
-          "platform": 2
-        },
-        {
-          "saturn": 3,
-          "platform": 3
-        },
-        {
-          "saturn": 4,
-          "platform": 4
-        },
-        {
-          "saturn": 5,
-          "platform": 5
-        },
-        {
-          "saturn": 6,
-          "platform": 6
-        },
-        {
-          "saturn": 7,
-          "platform": 7
+          "ps1": 1,
+          "count": 8,
+          "proved": true
         }
       ]
     },

@@ -1,9 +1,0 @@
-# Party name pool (service chunk): canon spellings from names.csv.
-0	Сигма<$FFFF>
-1	Лямбда<$FFFF>
-2	Кларетт<$FFFF>
-3	Альфред<$FFFF>
-4	Бренда<$FFFF>
-5	Ланфорд<$FFFF>
-6	・<$FFFF>
-7	・<$FFFF>

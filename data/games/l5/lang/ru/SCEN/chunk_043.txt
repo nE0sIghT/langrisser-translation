@@ -1,0 +1,10 @@
+# file=SCEN.DAT chunk=43 chunk_start=0x783800
+# block_base=0x00A8 block_size=0x0064 records=8
+1	Сигма<$FFFF>
+2	Лямбда<$FFFF>
+3	Кларетт<$FFFF>
+4	Альфред<$FFFF>
+5	Бренда<$FFFF>
+6	Ланфорд<$FFFF>
+7	・<$FFFE>
+8	・<$FFFE><$FFFF>

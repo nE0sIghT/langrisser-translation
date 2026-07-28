@@ -3,19 +3,19 @@
   "_comment": "sha1 of every artifact this release builds, per language. Builds verify it as their last stage; re-record only when an output change is intended.",
   "artifacts": {
     "en": {
-      "stamp": "ea16db4b",
+      "stamp": "ccbeb126",
       "files": {
         "/L5/IMG.DAT": {
-          "sha1": "3b9d8d208f8da953a36d9eb4066686f93b8b43d7",
+          "sha1": "541b10b3f33c53fc0c235d4d8943f03bced9772a",
           "size": 3233792,
           "stamped": true
         },
         "/L5/SCEN.DAT": {
-          "sha1": "4ace4c9d3a9e27d6d33c518c8279ac63670e1a2e",
+          "sha1": "ec567d07eaa58822c041cefe57c48ed49ba924a5",
           "size": 23480320
         },
         "/L5/SCEN2.DAT": {
-          "sha1": "f30950e095379ab6917460f6995a526003f990c8",
+          "sha1": "3d2525ba34a80f81025d7043b6e6de3d8311ce53",
           "size": 23463936
         },
         "/L5/SYSTEM.BIN": {
@@ -27,30 +27,30 @@
           "size": 833536
         },
         "patch.ppf": {
-          "sha1": "6d45a3f99ee913dd6b52ea507e2e7b0ec6fc1b39",
-          "size": 31532410,
+          "sha1": "cd26793cbc630d9068e54de1ee57649e6f54b42d",
+          "size": 31533078,
           "stamped": true
         }
       }
     },
     "ru": {
-      "stamp": "ea16db4b",
+      "stamp": "ccbeb126",
       "files": {
         "/L5/IMG.DAT": {
-          "sha1": "a5ee9e717da9837069d3f2d4b898b12a2d2cc77f",
+          "sha1": "8317b2f976b88ec7026f72582e8ac65a7a191737",
           "size": 3233792,
           "stamped": true
         },
         "/L5/SCEN.DAT": {
-          "sha1": "8a74db2cbfc899a329bf759d40a8e7ca69956b43",
+          "sha1": "db0d6fd5b0c82973b6d32d16ee328d92e0f7106e",
           "size": 23480320
         },
         "/L5/SCEN2.DAT": {
-          "sha1": "f3fb6c789f889040989ffba01e8af87321f17835",
+          "sha1": "6d045dcc4d3e3999c4c8d376c092c38403fd0a9f",
           "size": 23463936
         },
         "/L5/SYSTEM.BIN": {
-          "sha1": "db98d0e5f89ec0666f619cf4dad356765e1e7c64",
+          "sha1": "e44dc429d04c417c9d9765bfe0fad1dad10e39aa",
           "size": 98320
         },
         "/SLPS_018.19": {
@@ -58,8 +58,8 @@
           "size": 833536
         },
         "patch.ppf": {
-          "sha1": "2d5f044147fda98f53c29a34b145e97e2620149d",
-          "size": 38839585,
+          "sha1": "5a67491d49634eb19fe3c580c73f2a55feffd5d8",
+          "size": 38839070,
           "stamped": true
         }
       }

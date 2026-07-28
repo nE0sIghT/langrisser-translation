@@ -114,6 +114,11 @@ def _validate_block(chunk: bytes, base: int, size: int, count: int) -> TextBlock
     total = terminated = 0
     for i in range(1, block.record_count + 1):
         a, b = block.record_span(i)
+        # The last record's span runs to the block end, so it carries whatever
+        # free space the block has left; a rebuilt block zero-fills it. The
+        # record still ends at its own terminator, so look past the padding.
+        while b - a >= 2 and struct.unpack_from("<H", chunk, b - 2)[0] == 0:
+            b -= 2
         if b - a >= 2:
             last = struct.unpack_from("<H", chunk, b - 2)[0]
             total += 1
