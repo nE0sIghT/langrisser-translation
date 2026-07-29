@@ -236,7 +236,18 @@ explicitly:
 
 Use this only for verified non-text runs or records owned by a separate platform
 adapter, such as the Saturn name-entry glyph grid before `saturn_name_entry.py`
-rewrites it.
+rewrites it. A line that merely mixes text with decoration is not one of them:
+translate it and write the decoration as raw `<$XXXX>` tokens, which name a
+glyph slot of that build directly.
+
+```json
+{"group:1:22": "<$0205><$0205><$0205>ВНИМАНИЕ<$0205><$0205><$0205>"}
+```
+
+The slot a raw token names is barred from font-slot assignment for that build,
+so the tag keeps drawing the glyph it was written for. Choosing how many
+decorative cells to keep is how a longer target word stays inside the original
+width.
 
 If a Saturn build is requested without the needed platform source files or
 without required platform mapping/overlays, the strict build fails. This is

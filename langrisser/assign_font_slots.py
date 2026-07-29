@@ -17,10 +17,11 @@ from pathlib import Path
 
 from langrisser.offsetgroups import is_system_key
 from langrisser.project import COMMON_FONT_MAP, add_language_args, language_from_args
-from langrisser.scen import (FORCE_PAGE_BREAK, consumes_argument, find_text_block,
-                        read_chunk_spans, words_from_bytes)
+from langrisser.scen import (FORCE_PAGE_BREAK, PRINTABLE_LIMIT, consumes_argument,
+                        find_text_block, read_chunk_spans, words_from_bytes)
 
 TAG_RE = re.compile(r"<\$[0-9A-Fa-f]{4}>")
+TOKEN_TAG_RE = re.compile(r"<\$([0-9A-Fa-f]{4})>")
 WORD_RE = re.compile(r"[\w'.,]+", re.UNICODE)
 ALPHA_WORD_RE = re.compile(r"[^\W_]+", re.UNICODE)
 HYPHENATED_WORD_RE = re.compile(
@@ -166,6 +167,43 @@ def continuity_pairs(texts: list[str], known: set[str],
     return out
 
 
+def script_record_texts(translation_root: Path,
+                        extra_script_dirs: list[Path] | None = None) -> list[str]:
+    """Target-language record bodies from the translated chunk files."""
+    files = sorted(translation_root.glob("*/chunk_*.txt"))
+    for extra in extra_script_dirs or []:
+        files.extend(sorted(extra.glob("chunk_*.txt")))
+    out: list[str] = []
+    for fp in files:
+        for raw in fp.read_text(encoding="utf-8").splitlines():
+            if "\t" in raw and not raw.startswith("#"):
+                out.append(raw.split("\t", 1)[1].replace(FORCE_PAGE_BREAK, "<$FFFD>"))
+    return out
+
+
+def raw_glyph_slots(texts: list[str]) -> set[int]:
+    """Glyph slots the target text names directly with a `<$XXXX>` token.
+
+    A raw tag bypasses the char map and tells the encoder to emit that exact
+    word, so what the player sees is whatever the font holds at that slot. The
+    assigner must leave it alone for the same reason it leaves alone a slot
+    some untranslated text still draws. The word after a control opcode is its
+    argument (a speaker id, a macro number), not a glyph, so it names no slot.
+    """
+    slots: set[int] = set()
+    for text in texts:
+        prev: int | None = None
+        end = 0
+        for match in TOKEN_TAG_RE.finditer(text):
+            word = int(match.group(1), 16)
+            argument = (match.start() == end and prev is not None
+                        and consumes_argument(prev))
+            if not argument and word < PRINTABLE_LIMIT:
+                slots.add(word)
+            prev, end = word, match.end()
+    return slots
+
+
 def needed_units(translation_root: Path, menu_maps: list[Path],
                  extra_singles: str = "", forced_pairs: list[str] | None = None,
                  existing_units: set[str] | None = None,
@@ -183,18 +221,11 @@ def needed_units(translation_root: Path, menu_maps: list[Path],
     Script dialogs have room: lowercase pairs only, prioritized by frequency,
     assigned while the sacrificial pool lasts.
     """
-    script_texts: list[str] = []
-    script_files = sorted(translation_root.glob("*/chunk_*.txt"))
-    for extra in extra_script_dirs or []:
-        script_files.extend(sorted(extra.glob("chunk_*.txt")))
-    for fp in script_files:
-        for raw in fp.read_text(encoding="utf-8").splitlines():
-            if "\t" in raw and not raw.startswith("#"):
-                body = raw.split("\t", 1)[1].replace(FORCE_PAGE_BREAK, "<$FFFD>")
-                # The codec never forms a pair across a control tag, so
-                # tags must break pair candidates too; joining the halves
-                # would demand phantom pairs like ",п" from line breaks.
-                script_texts.append(TAG_RE.sub(" ", body))
+    # The codec never forms a pair across a control tag, so tags must break
+    # pair candidates too; joining the halves would demand phantom pairs like
+    # ",п" from line breaks.
+    script_texts = [TAG_RE.sub(" ", body) for body in
+                    script_record_texts(translation_root, extra_script_dirs)]
     menu_texts: list[str] = []
     for mp in list(menu_maps) + list(extra_menu_maps or []):
         if mp.exists():
@@ -426,6 +457,13 @@ def main() -> None:
                        if args.out_assignments else assignments)
     translation_root = (Path(args.translation_root)
                         if args.translation_root else lang.dump_root)
+    maps = [Path(p) for p in (args.menu_map or [str(lang.system_strings)])]
+    extra_script_dirs = [Path(p) for p in args.extra_script_dir]
+    extra_menu_maps = [Path(p) for p in args.extra_menu_strings]
+    excluded |= raw_glyph_slots(
+        script_record_texts(translation_root, extra_script_dirs)
+        + [text for mp in maps + extra_menu_maps if mp.exists()
+           for text in map_target_texts(mp)])
 
     existing: dict[str, int] = {}
     rows = []
@@ -446,12 +484,9 @@ def main() -> None:
         for r in rows:
             existing[r["char"]] = int(r["index_dec"])
 
-    maps = [Path(p) for p in (args.menu_map or [str(lang.system_strings)])]
     singles, menu_pairs, spacing_pairs, continuity, script_pairs = needed_units(
         translation_root, maps, lang.single_chars + forced_singles,
-        lang.forced_pairs, set(existing),
-        [Path(p) for p in args.extra_script_dir],
-        [Path(p) for p in args.extra_menu_strings]
+        lang.forced_pairs, set(existing), extra_script_dirs, extra_menu_maps
     )
     must = [c for c in sorted(singles) if c not in existing]
     must += [p for p, _ in menu_pairs.most_common() if p not in existing]
