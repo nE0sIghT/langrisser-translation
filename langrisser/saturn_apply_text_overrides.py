@@ -10,6 +10,11 @@ with the `.tbl` holding no PS1 pad glyphs those stages would fail on `△`.
 
 This step rewrites the *build copies* to match what actually ships:
 
+- raw `<$XXXX>` glyph tokens in the common text are moved to the Saturn slot
+  holding that glyph — the pack is keyed by PS1, and this release reordered
+  the plane, so the PS1 number would draw an unrelated character. Release
+  override text is written against this build's own slots and is left alone,
+  which is why this runs before the overrides are inlined;
 - in the build translation root, each common SCEN record shadowed by a
   platform record (per `scen_mapping.json`) gets the platform text;
 - in the resolved SYSTEM strings JSON, each PS1 entry shadowed by a platform
@@ -32,7 +37,80 @@ from langrisser.offsetgroups import (expand_group_map, find_groups, group_key,
 from langrisser.project import add_language_args, language_from_args
 from langrisser.release import add_release_args, release_from_args
 from langrisser.saturn_apply import load_mapping as load_scen_mapping
+from langrisser.scen import glyph_tag_spans, raw_glyph_slots, remap_glyph_tags
 from langrisser.sceninsert import parse_dump_file
+
+GLYPH_BYTES = 18
+PLANE_SLOTS = 1835   # both fonts end at slot 1834; Saturn data follows
+
+
+def glyph(plane: bytes, slot: int) -> bytes:
+    return plane[slot * GLYPH_BYTES:(slot + 1) * GLYPH_BYTES]
+
+
+def native_token_remap(texts: list[str], ps1: bytes,
+                       saturn: bytes) -> dict[int, int]:
+    """PS1 glyph tokens the common text emits raw -> this build's own slot.
+
+    Only tokens whose two planes disagree need moving; the rest already draw
+    the same glyph here. A token whose glyph this plane does not hold at all
+    is fatal: silently drawing the kanji that took the slot is exactly the
+    failure this step exists to prevent.
+    """
+    remap: dict[int, int] = {}
+    for token in sorted(raw_glyph_slots(texts)):
+        want = glyph(ps1, token)
+        # Token 0 is the block padding word, not a glyph reference.
+        if token == 0 or not want or glyph(saturn, token) == want:
+            continue
+        slot = next((s for s in range(1, PLANE_SLOTS)
+                     if glyph(saturn, s) == want), None)
+        if slot is None:
+            raise SystemExit(
+                f"token <${token:04X}> draws a glyph this build's font does "
+                "not have; it cannot ship as a raw token here")
+        remap[token] = slot
+    return remap
+
+
+def retoken(translation_root: Path, strings_path: Path, ps1: bytes,
+            saturn: bytes) -> tuple[dict[int, int], int]:
+    """Move every raw glyph token of the shipping text onto this build's slots.
+
+    The whole pack is keyed by PS1 - its characters reach the encoder through
+    a PS1-derived table, and its raw tokens are PS1 slot numbers - so release
+    overrides need this exactly as much as the common text does.
+    """
+    dumps = sorted(translation_root.glob("**/chunk_*.txt"))
+    maps = [strings_path] + sorted(
+        translation_root.glob("releases/*/system_strings.json"))
+    text_of = {fp: fp.read_text(encoding="utf-8") for fp in dumps}
+    json_of = {fp: json.loads(fp.read_text(encoding="utf-8")) for fp in maps}
+    remap = native_token_remap(
+        [line for text in text_of.values() for line in text.splitlines()]
+        + [value for strings in json_of.values() for value in strings.values()],
+        ps1, saturn)
+    if not remap:
+        return remap, 0
+
+    def moved_in(text: str) -> int:
+        return sum(1 for _, _, slot in glyph_tag_spans(text) if slot in remap)
+
+    moved = 0
+    for fp, text in text_of.items():
+        out = remap_glyph_tags(text, remap)
+        if out != text:
+            moved += moved_in(text)
+            fp.write_text(out, encoding="utf-8")
+    for fp, strings in json_of.items():
+        changed = {key: remap_glyph_tags(value, remap)
+                   for key, value in strings.items()}
+        if changed != strings:
+            moved += sum(moved_in(value) for value in strings.values())
+            fp.write_text(
+                json.dumps(changed, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8")
+    return remap, moved
 
 
 def ps1_record_for(spec: dict, item: dict) -> int | None:
@@ -146,6 +224,9 @@ def main() -> None:
     ap.add_argument("--strings", required=True,
                     help="Resolved common SYSTEM strings JSON, rewritten in place.")
     ap.add_argument("--saturn-orig", required=True)
+    ap.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN",
+                    help="PS1 SYSTEM.BIN: the plane the pack's raw tokens "
+                         "were written against.")
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--scen-mapping", default=None,
                     help="SCEN mapping JSON (default: the release manifest's)")
@@ -159,6 +240,7 @@ def main() -> None:
     system_mapping = (Path(args.system_mapping) if args.system_mapping
                       else release.system_mapping)
 
+    saturn_orig = Path(args.saturn_orig).read_bytes()
     replaced = override_scen(
         Path(args.translation_root),
         lang.override_script_dir(release.code),
@@ -168,14 +250,22 @@ def main() -> None:
     overlay = (json.loads(overlay_path.read_text(encoding="utf-8"))
                if overlay_path.exists() else {})
     sys_replaced, removed = shadow_system(
-        Path(args.strings),
-        overlay,
-        load_system_mapping(system_mapping),
-        Path(args.saturn_orig).read_bytes(),
+        Path(args.strings), overlay, load_system_mapping(system_mapping),
+        saturn_orig,
+    )
+    # Last, so it covers the platform text just inlined above too.
+    remap, moved = retoken(
+        Path(args.translation_root), Path(args.strings),
+        Path(args.ps1_system).read_bytes(), saturn_orig,
     )
     print(f"platform text overrides: {replaced} SCEN records replaced, "
           f"{sys_replaced} SYSTEM strings replaced, "
           f"{removed} shadowed SYSTEM strings removed")
+    if remap:
+        print("  raw glyph tokens moved onto this build's slots: "
+              + " ".join(f"{old:#06x}->{new:#06x}" for old, new in
+                         sorted(remap.items()))
+              + f" ({moved} occurrences)")
 
 
 if __name__ == "__main__":

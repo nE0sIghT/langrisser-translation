@@ -423,7 +423,9 @@ def main() -> None:
     out, stats = apply_scen(
         data, scen_dir, codec, ps1_scen,
         mapping=mapping,
-        lang_root=lang.root,
+        # Release overrides come from the same copy as the common records, so
+        # every build-time normalization reaches them too.
+        lang_root=Path(args.translation_root) if args.translation_root else lang.root,
         release_code=release.code,
         strict=not args.allow_unmapped,
         no_grow=args.no_grow,

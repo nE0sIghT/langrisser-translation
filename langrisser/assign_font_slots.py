@@ -17,11 +17,10 @@ from pathlib import Path
 
 from langrisser.offsetgroups import is_system_key
 from langrisser.project import COMMON_FONT_MAP, add_language_args, language_from_args
-from langrisser.scen import (FORCE_PAGE_BREAK, PRINTABLE_LIMIT, consumes_argument,
-                        find_text_block, read_chunk_spans, words_from_bytes)
+from langrisser.scen import (FORCE_PAGE_BREAK, consumes_argument, find_text_block,
+                        raw_glyph_slots, read_chunk_spans, words_from_bytes)
 
 TAG_RE = re.compile(r"<\$[0-9A-Fa-f]{4}>")
-TOKEN_TAG_RE = re.compile(r"<\$([0-9A-Fa-f]{4})>")
 WORD_RE = re.compile(r"[\w'.,]+", re.UNICODE)
 ALPHA_WORD_RE = re.compile(r"[^\W_]+", re.UNICODE)
 HYPHENATED_WORD_RE = re.compile(
@@ -179,29 +178,6 @@ def script_record_texts(translation_root: Path,
             if "\t" in raw and not raw.startswith("#"):
                 out.append(raw.split("\t", 1)[1].replace(FORCE_PAGE_BREAK, "<$FFFD>"))
     return out
-
-
-def raw_glyph_slots(texts: list[str]) -> set[int]:
-    """Glyph slots the target text names directly with a `<$XXXX>` token.
-
-    A raw tag bypasses the char map and tells the encoder to emit that exact
-    word, so what the player sees is whatever the font holds at that slot. The
-    assigner must leave it alone for the same reason it leaves alone a slot
-    some untranslated text still draws. The word after a control opcode is its
-    argument (a speaker id, a macro number), not a glyph, so it names no slot.
-    """
-    slots: set[int] = set()
-    for text in texts:
-        prev: int | None = None
-        end = 0
-        for match in TOKEN_TAG_RE.finditer(text):
-            word = int(match.group(1), 16)
-            argument = (match.start() == end and prev is not None
-                        and consumes_argument(prev))
-            if not argument and word < PRINTABLE_LIMIT:
-                slots.add(word)
-            prev, end = word, match.end()
-    return slots
 
 
 def needed_units(translation_root: Path, menu_maps: list[Path],

@@ -119,6 +119,9 @@ def main() -> None:
     if build_translation_root.exists():
         shutil.rmtree(build_translation_root)
     shutil.copytree(translation_root, build_translation_root)
+    # Release overrides are read from the copy too, so the build-time
+    # normalizations reach them exactly as they reach the common text.
+    build_overrides = build_translation_root / "releases" / release.code
 
     assignments = Path(args.assignments) if args.assignments else lang.font_assignments
     system_font = saturn / f"SYSTEM.DAT.{lang.suffix}.font"
@@ -154,6 +157,7 @@ def main() -> None:
         "--translation-root", build_translation_root,
         "--strings", resolved_system_strings,
         "--saturn-orig", system_in,
+        "--ps1-system", args.ps1_system,
         "--scen-mapping", release.scen_mapping,
         "--system-mapping", release.system_mapping)
 
@@ -183,7 +187,7 @@ def main() -> None:
         "--kanji-map", release.kanji_map,
         "--system-bin", system_in,
         "--strings", resolved_system_strings,
-        "--platform-strings", lang.override_system_strings(release.code),
+        "--platform-strings", build_overrides / "system_strings.json",
         "--out", usage_scan)
 
     build_assignments = build_dir / f"font_slot_assignments.{lang.suffix}.saturn.csv"
@@ -200,8 +204,8 @@ def main() -> None:
         "--scen2", args.ps1_scen2,
         "--max-slot", str(release.max_font_slot),
         "--exclude-slots", glyph_plan,
-        "--extra-script-dir", lang.override_script_dir(release.code),
-        "--extra-menu-strings", lang.override_system_strings(release.code),
+        "--extra-script-dir", build_overrides / "SCEN",
+        "--extra-menu-strings", build_overrides / "system_strings.json",
         "--usage-scan", usage_scan)
 
     font_cmd = [
@@ -242,7 +246,7 @@ def main() -> None:
         "--lang-root", lang.root.parent,
         "--tbl", tbl,
         "--strings", reflowed_system_strings,
-        "--release-strings", lang.override_system_strings(release.code),
+        "--release-strings", build_overrides / "system_strings.json",
         "--system-source", system_source)
     run("-m", "langrisser.rewrap",
         "--lang", args.lang,
@@ -270,7 +274,7 @@ def main() -> None:
         "--system-in", system_font,
         "--system-out", system_out,
         "--strings", reflowed_system_strings,
-        "--release-strings", lang.override_system_strings(release.code),
+        "--release-strings", build_overrides / "system_strings.json",
         "--tbl", tbl,
         "--layout", lang.system_layout,
         "--system-source", system_source,

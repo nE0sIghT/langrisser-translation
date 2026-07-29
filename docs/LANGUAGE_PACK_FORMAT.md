@@ -237,17 +237,35 @@ explicitly:
 Use this only for verified non-text runs or records owned by a separate platform
 adapter, such as the Saturn name-entry glyph grid before `saturn_name_entry.py`
 rewrites it. A line that merely mixes text with decoration is not one of them:
-translate it and write the decoration as raw `<$XXXX>` tokens, which name a
-glyph slot of that build directly.
+translate it and keep the decoration as characters.
 
 ```json
-{"group:1:22": "<$0205><$0205><$0205>ВНИМАНИЕ<$0205><$0205><$0205>"}
+{"group:1:22": "・・・ВНИМАНИЕ・・・"}
 ```
 
-The slot a raw token names is barred from font-slot assignment for that build,
-so the tag keeps drawing the glyph it was written for. Choosing how many
-decorative cells to keep is how a longer target word stays inside the original
-width.
+Choosing how many decorative cells to keep is how a longer target word stays
+inside the original width — here six marks become three a side so ВНИМАНИЕ
+lands in the same 14 cells the Japanese used.
+
+## Raw Glyph Tokens
+
+Text may also name a glyph by number, `<$XXXX>`. The number is a **PS1** slot,
+like every character in the pack: the pack is keyed by PS1, and each release
+moves those numbers onto its own plane during the build (`0x0663` -> `0x0665`
+on the Saturn print, whose bank is reordered). The rule holds for release
+overrides too — they are release-specific *text*, not a release-specific
+encoding.
+
+Consequences worth knowing before writing one:
+
+- the slot a token resolves to on a build is barred from font-slot assignment
+  there, so nothing overwrites the glyph the token asked for;
+- a glyph that exists on no other release cannot be named this way at all. Use
+  a character the shared font map has, or let the project font render one.
+
+Reserve raw tokens for glyphs with no character: the icon after a line of
+dialogue, a decorative mark. Everything with a character belongs in the text as
+that character.
 
 If a Saturn build is requested without the needed platform source files or
 without required platform mapping/overlays, the strict build fails. This is

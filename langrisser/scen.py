@@ -40,6 +40,44 @@ def consumes_argument(word: int) -> bool:
     return word == 0xF600 or 0xFB00 <= word <= 0xFBFF
 
 
+def glyph_tag_spans(text: str):
+    """Yield `(start, end, slot)` for each `<$XXXX>` that names a glyph slot.
+
+    A raw tag bypasses the char map and tells the encoder to emit that exact
+    word, so the slot it names has to hold the intended glyph. Two kinds of
+    tag name no slot: control words, and the word right after an opcode that
+    consumes one (a speaker id, a macro number).
+    """
+    prev: int | None = None
+    end = 0
+    for match in TAG_RE.finditer(text):
+        word = int(match.group(1), 16)
+        argument = (match.start() == end and prev is not None
+                    and consumes_argument(prev))
+        if not argument and word < PRINTABLE_LIMIT:
+            yield match.start(), match.end(), word
+        prev, end = word, match.end()
+
+
+def raw_glyph_slots(texts: list[str]) -> set[int]:
+    """Every glyph slot the given target texts name with a raw token."""
+    return {slot for text in texts for _, _, slot in glyph_tag_spans(text)}
+
+
+def remap_glyph_tags(text: str, remap: dict[int, int]) -> str:
+    """Rewrite raw glyph tokens through `remap`, leaving arguments alone."""
+    out: list[str] = []
+    pos = 0
+    for start, end, slot in glyph_tag_spans(text):
+        if slot not in remap:
+            continue
+        out.append(text[pos:start])
+        out.append(f"<${remap[slot]:04X}>")
+        pos = end
+    out.append(text[pos:])
+    return "".join(out)
+
+
 def read_chunk_spans(data: bytes) -> list[tuple[int, int]]:
     pts: list[int] = []
     for off in range(0, len(data), 4):

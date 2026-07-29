@@ -707,6 +707,15 @@ platform text (Saturn pad buttons `A`/`B`/`C`/`Y`/`START` instead of PS1
 platform overlay — so every later stage (slot assignment, rewrap, validators)
 sees exactly the text that ships.
 
+A character reaches the plane through the `.tbl`, so the plan can move it. A
+raw `<$XXXX>` token does not: it tells the encoder to emit that word whatever
+the table says. Those the same normalizer rewrites in the text itself, moving
+each PS1 token to the Saturn slot holding its glyph (`0x0663`, the icon that
+closes a whimpering line, to `0x0665`) and failing loudly if this plane has no
+such glyph. It reads *and* writes the build copy of the release overrides as
+well as the common text, because the whole pack — overrides included — is
+written against PS1 slot numbers.
+
 Both the SYSTEM UI text and the SCEN dialogue index into this one plane: SCEN
 token `0x0094` renders シ from the `SYSTEM.DAT` font, matching `シグマ` in the
 script. `WD_FONT.BIN` (8 KiB) is not this font — it is repeating dither/window
