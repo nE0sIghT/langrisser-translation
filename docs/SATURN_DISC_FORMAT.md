@@ -34,7 +34,6 @@ Read-only tooling added for this investigation:
 | Tool | Purpose |
 | --- | --- |
 | `langrisser/saturn_disc.py` | Parse/extract/remaster the Saturn mixed-mode BIN/CUE and summarize track-2 XA sectors |
-| `langrisser/saturn_system_dump.py` | Dump Saturn `SYSTEM.DAT` text groups using the confirmed on-disc word order |
 | `langrisser/saturn_scen_scan.py` | Scan Saturn `SCEN.DAT` catalog, chunk headers, record indices and token streams |
 | `langrisser/saturn_scen_text.py` | Dump the full Saturn `SCEN.DAT` scenario text pool with stable `(chunk, entry)` ids |
 | `langrisser/saturn_font.py` | Render Saturn `SYSTEM.DAT` glyph slots and diff them against the PS1 font |
@@ -356,8 +355,8 @@ Reproducible command:
 
 ```bash
 python3 -m langrisser.saturn_disc extract SYSTEM.DAT work/l5/build/saturn/SYSTEM.DAT
-python3 -m langrisser.saturn_system_dump \
-  --system work/l5/build/saturn/SYSTEM.DAT \
+python3 -m langrisser.system_dump --release l5-saturn-jp \
+  --system-bin work/l5/build/saturn/SYSTEM.DAT \
   --out work/l5/build/saturn/system_strings.json
 ```
 
