@@ -10,11 +10,10 @@ with the `.tbl` holding no PS1 pad glyphs those stages would fail on `△`.
 
 This step rewrites the *build copies* to match what actually ships:
 
-- raw `<$XXXX>` glyph tokens in the common text are moved to the Saturn slot
-  holding that glyph — the pack is keyed by PS1, and this release reordered
-  the plane, so the PS1 number would draw an unrelated character. Release
-  override text is written against this build's own slots and is left alone,
-  which is why this runs before the overrides are inlined;
+- raw `<$XXXX>` glyph tokens are moved to the slot holding that glyph here —
+  the pack is keyed by PS1, overrides included, and this release reordered the
+  plane, so the PS1 number would draw an unrelated character. The answer comes
+  from the recorded maps, so this needs no other release's disc;
 - in the build translation root, each common SCEN record shadowed by a
   platform record (per `scen_mapping.json`) gets the platform text;
 - in the resolved SYSTEM strings JSON, each PS1 entry shadowed by a platform
@@ -31,8 +30,10 @@ import json
 import re
 from pathlib import Path
 
+from langrisser.game import add_game_args, game_from_args
 from langrisser.offsetgroups import SATURN as SATURN_CFG
-from langrisser.offsetgroups import (expand_group_map, find_groups, group_key,
+from langrisser.offsetgroups import (build_codemap, expand_group_map, find_groups,
+                                     group_key, load_font_map_csv,
                                      load_system_mapping, parse_group_key)
 from langrisser.project import add_language_args, language_from_args
 from langrisser.release import add_release_args, release_from_args
@@ -40,41 +41,52 @@ from langrisser.saturn_apply import load_mapping as load_scen_mapping
 from langrisser.scen import glyph_tag_spans, raw_glyph_slots, remap_glyph_tags
 from langrisser.sceninsert import parse_dump_file
 
-GLYPH_BYTES = 18
-PLANE_SLOTS = 1835   # both fonts end at slot 1834; Saturn data follows
 
+def native_token_remap(texts: list[str], game, release) -> dict[int, int]:
+    """Pack glyph tokens the shipping text emits raw -> this build's own slot.
 
-def glyph(plane: bytes, slot: int) -> bytes:
-    return plane[slot * GLYPH_BYTES:(slot + 1) * GLYPH_BYTES]
-
-
-def native_token_remap(texts: list[str], ps1: bytes,
-                       saturn: bytes) -> dict[int, int]:
-    """PS1 glyph tokens the common text emits raw -> this build's own slot.
-
-    Only tokens whose two planes disagree need moving; the rest already draw
-    the same glyph here. A token whose glyph this plane does not hold at all
-    is fatal: silently drawing the kanji that took the slot is exactly the
-    failure this step exists to prevent.
+    Answered from the recorded maps, never from another release's disc. A
+    character's slot here is wherever this build's map puts it; a glyph with no
+    character comes from the release's recorded `unnamed_glyph_slots`. Below
+    the game's kanji bank every release holds the same glyphs in the same
+    order, so those tokens never move. An unrecorded token is fatal: shipping
+    it would silently draw whatever took its slot.
     """
+    font_map = load_font_map_csv(game.font_map)
+    here = build_codemap(font_map, load_font_map_csv(release.kanji_map),
+                         game.kanji_bank_start)
+    slot_of: dict[str, int] = {}
+    for slot in sorted(here):
+        slot_of.setdefault(here[slot], slot)
+    recorded = release.unnamed_glyph_slots
+    bank_start = game.kanji_bank_start or 0
+
     remap: dict[int, int] = {}
     for token in sorted(raw_glyph_slots(texts)):
-        want = glyph(ps1, token)
         # Token 0 is the block padding word, not a glyph reference.
-        if token == 0 or not want or glyph(saturn, token) == want:
+        if token == 0 or token < bank_start:
             continue
-        slot = next((s for s in range(1, PLANE_SLOTS)
-                     if glyph(saturn, s) == want), None)
-        if slot is None:
-            raise SystemExit(
-                f"token <${token:04X}> draws a glyph this build's font does "
-                "not have; it cannot ship as a raw token here")
-        remap[token] = slot
+        char = font_map.get(token)
+        if char is not None:
+            slot = slot_of.get(char)
+            if slot is None:
+                raise SystemExit(
+                    f"token <${token:04X}> draws {char!r}, which this build's "
+                    "font map has nowhere; it cannot ship as a raw token here")
+        else:
+            slot = recorded.get(token)
+            if slot is None:
+                raise SystemExit(
+                    f"token <${token:04X}> names a glyph no map identifies; "
+                    f"record its slot for {release.code} in "
+                    "`unnamed_glyph_slots` (run `saturn_reconcile glyphs`)")
+        if slot != token:
+            remap[token] = slot
     return remap
 
 
-def retoken(translation_root: Path, strings_path: Path, ps1: bytes,
-            saturn: bytes) -> tuple[dict[int, int], int]:
+def retoken(translation_root: Path, strings_path: Path,
+            game, release) -> tuple[dict[int, int], int]:
     """Move every raw glyph token of the shipping text onto this build's slots.
 
     The whole pack is keyed by PS1 - its characters reach the encoder through
@@ -89,7 +101,7 @@ def retoken(translation_root: Path, strings_path: Path, ps1: bytes,
     remap = native_token_remap(
         [line for text in text_of.values() for line in text.splitlines()]
         + [value for strings in json_of.values() for value in strings.values()],
-        ps1, saturn)
+        game, release)
     if not remap:
         return remap, 0
 
@@ -219,14 +231,12 @@ def shadow_system(strings_path: Path, overlay: dict, mapping: dict,
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
+    add_game_args(ap)
     ap.add_argument("--translation-root", required=True,
                     help="Build translation copy, rewritten in place.")
     ap.add_argument("--strings", required=True,
                     help="Resolved common SYSTEM strings JSON, rewritten in place.")
     ap.add_argument("--saturn-orig", required=True)
-    ap.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN",
-                    help="PS1 SYSTEM.BIN: the plane the pack's raw tokens "
-                         "were written against.")
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--scen-mapping", default=None,
                     help="SCEN mapping JSON (default: the release manifest's)")
@@ -256,7 +266,7 @@ def main() -> None:
     # Last, so it covers the platform text just inlined above too.
     remap, moved = retoken(
         Path(args.translation_root), Path(args.strings),
-        Path(args.ps1_system).read_bytes(), saturn_orig,
+        game_from_args(args), release,
     )
     print(f"platform text overrides: {replaced} SCEN records replaced, "
           f"{sys_replaced} SYSTEM strings replaced, "

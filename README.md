@@ -450,7 +450,15 @@ python3 -m langrisser.derive_font_map --game l5 --release l5-saturn-jp \
     --bank-only --system work/l5/build/saturn/SYSTEM.DAT   # the glyph bank
 python3 -m langrisser.saturn_reconcile scen                # script records
 python3 -m langrisser.saturn_reconcile system              # SYSTEM entries
+python3 -m langrisser.saturn_reconcile glyphs              # slots no map names
 ```
+
+The glyph bank is where a build learns which slot holds each *character*, and
+that answers almost everything: the release's own map plus the game's is enough
+to point the encoder at the right slot without ever opening the PS1 disc. The
+exception is a glyph with no character — an icon the text names by raw
+`<$XXXX>` token — which no map can place; `glyphs` confirms the slot recorded
+for it in the release manifest.
 
 Where the Saturn originals diverge from PS1 (edited lines, pad buttons, the
 save menu), the audits list what still needs Saturn-specific translation:

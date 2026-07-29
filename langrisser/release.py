@@ -233,6 +233,18 @@ class ReleasePack:
         return _path(self.root, self._data.get("kanji_map"))
 
     @property
+    def unnamed_glyph_slots(self) -> dict[int, int]:
+        """`pack slot -> this build's slot` for glyphs the font map leaves unnamed.
+
+        A character needs no entry here: the game's font map says which slot
+        holds it on the release the pack is keyed from, and this release's own
+        map says which slot holds it here. An unnamed glyph - a bare icon - has
+        no such handle, so the correspondence is recorded instead of derived.
+        """
+        return {int(key, 16): int(value, 16)
+                for key, value in (self._data.get("unnamed_glyph_slots") or {}).items()}
+
+    @property
     def verify(self) -> list[dict[str, Any]]:
         """Known-good dump fingerprints, one entry per verifiable part."""
         return [dict(item) for item in (self._data.get("verify") or [])]

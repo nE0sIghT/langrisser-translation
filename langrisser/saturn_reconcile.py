@@ -21,8 +21,13 @@ entry carries. Both write:
 Entries with neither are left out and reported: they are the ones that still
 need a decision.
 
+`glyphs` is the third: it confirms the release's recorded slots for glyphs the
+font maps leave unnamed, which the pack names by raw `<$XXXX>` token and no map
+can place.
+
     python3 -m langrisser.saturn_reconcile scen
     python3 -m langrisser.saturn_reconcile system
+    python3 -m langrisser.saturn_reconcile glyphs
 """
 
 from __future__ import annotations
@@ -31,8 +36,11 @@ import argparse
 import json
 from pathlib import Path
 
+from langrisser.build_font import GLYPH_BYTES
+from langrisser.game import add_game_args, load_game
 from langrisser.offsetgroups import (PS1, SATURN, expand_group_map, find_groups,
-                                     load_system_mapping, run_length)
+                                     load_font_map_csv, load_system_mapping,
+                                     run_length)
 from langrisser.release import add_release_args, release_from_args
 from langrisser.saturn_apply import (expand_record_map, load_mapping,
                                      monotone_alignment, normalizer_for,
@@ -228,10 +236,62 @@ def reconcile_system(args) -> None:
     write_mapping(mapping, "groups", out, mapping_path, args.dry_run)
 
 
+def reconcile_glyphs(args: argparse.Namespace) -> None:
+    """Check the release's `unnamed_glyph_slots` against the two font planes.
+
+    Where a *character* sits here is already on record twice over - the game's
+    font map and this release's `kanji_map.csv` - so a build resolves it from
+    `data/` alone. A glyph with no character has no such handle, and the pack
+    names a few of them by raw token, so the correspondence is written into the
+    release manifest instead. This is where it is derived and checked, because
+    only here may both planes be opened.
+    """
+    release = release_from_args(args)
+    game = load_game(args.game, args.game_root)
+    here = Path(args.system).read_bytes()
+    there = Path(args.ps1_system).read_bytes()
+    named = set(load_font_map_csv(game.font_map))
+    bank_start = game.kanji_bank_start or 0
+
+    def glyph(plane: bytes, slot: int) -> bytes:
+        return plane[slot * GLYPH_BYTES:(slot + 1) * GLYPH_BYTES]
+
+    plane_slots = min(len(here), len(there)) // GLYPH_BYTES
+    derived: dict[int, int] = {}
+    for token in sorted(release.unnamed_glyph_slots):
+        want = glyph(there, token)
+        if token in named:
+            print(f"  <${token:04X}>: the font map names this glyph; "
+                  "the maps already place it and the entry is redundant")
+            continue
+        if token < bank_start:
+            print(f"  <${token:04X}>: below the game's kanji bank, where every "
+                  "release holds the same glyphs; the entry is redundant")
+            continue
+        slot = next((s for s in range(1, plane_slots) if glyph(here, s) == want), None)
+        if slot is None:
+            print(f"  <${token:04X}>: this build's font holds that glyph nowhere")
+        derived[token] = slot
+
+    recorded = release.unnamed_glyph_slots
+    problems = 0
+    for token, slot in sorted(derived.items()):
+        if recorded.get(token) != slot:
+            found = "nowhere" if slot is None else f"0x{slot:04X}"
+            print(f"  <${token:04X}>: recorded 0x{recorded[token]:04X}, "
+                  f"planes say {found}")
+            problems += 1
+    if problems:
+        raise SystemExit(f"{problems} recorded glyph slots disagree with the planes")
+    print(f"glyph slots: {len(recorded)} recorded, all confirmed against "
+          f"{args.ps1_system}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     add_release_args(ap, "l5-saturn-jp")
+    add_game_args(ap)
     ap.add_argument("--mapping", default=None,
                     help="Mapping to update (default: the release manifest's).")
     ap.add_argument("--rederive", action="store_true",
@@ -255,6 +315,14 @@ def main() -> None:
     system.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN",
                         help="SYSTEM of the release the pack is keyed to.")
     system.set_defaults(func=reconcile_system)
+
+    glyphs = sub.add_parser("glyphs",
+                            help="Check the recorded slots of glyphs no map names.")
+    glyphs.add_argument("--system", default="work/l5/build/saturn/SYSTEM.DAT",
+                        help="This release's SYSTEM.DAT (its font plane).")
+    glyphs.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN",
+                        help="SYSTEM of the release the pack is keyed to.")
+    glyphs.set_defaults(func=reconcile_glyphs)
 
     args = ap.parse_args()
     args.func(args)

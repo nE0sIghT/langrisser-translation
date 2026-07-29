@@ -65,10 +65,6 @@ def main() -> None:
                     help="Override the language pack's translated-text root.")
     ap.add_argument("--ps1-scen", default="work/l5/extracted/SCEN.DAT",
                     help="PS1 SCEN.DAT used as the common script source.")
-    ap.add_argument("--ps1-scen2", default="work/l5/extracted/SCEN2.DAT",
-                    help="PS1 SCEN2.DAT used for common validation/font-slot safety.")
-    ap.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN",
-                    help="PS1 SYSTEM.BIN used as the common SYSTEM source.")
     ap.add_argument("--cue", default=None,
                     help="source Saturn CUE for --remaster-disc "
                          "(default: the release manifest's image)")
@@ -104,10 +100,10 @@ def main() -> None:
                 f"missing {path}; extract it first: "
                 f"python3 -m langrisser.saturn_disc extract {path.name} {path}"
             )
-    # What still reads the PS1 files: the glyph plan and the shared script
-    # validators. Everything the correspondence decides now comes from the
-    # release mappings, which reconciliation wrote.
-    for path in (Path(args.ps1_scen), Path(args.ps1_scen2), Path(args.ps1_system)):
+    # What still reads a PS1 file: rewrap, for the speaker-plate structure of
+    # the common script. Every glyph and record correspondence now comes from
+    # `data/`, which reconciliation wrote.
+    for path in (Path(args.ps1_scen),):
         if not path.exists():
             raise SystemExit(
                 f"missing common PS1 source {path}; extract PS1 base files first"
@@ -136,7 +132,7 @@ def main() -> None:
         "--release-root", args.release_root,
         "--system-bin", system_in,
         "--out", system_source)
-    resolved_system_strings = build_dir / f"system_strings.{lang.suffix}.json"
+    resolved_system_strings = build_dir / f"system_strings.{lang.suffix}.saturn.json"
     resolve_args = [
         "-m", "langrisser.resolve_system_strings",
         "--lang", args.lang,
@@ -157,7 +153,7 @@ def main() -> None:
         "--translation-root", build_translation_root,
         "--strings", resolved_system_strings,
         "--saturn-orig", system_in,
-        "--ps1-system", args.ps1_system,
+        "--game", args.game, "--game-root", args.game_root,
         "--scen-mapping", release.scen_mapping,
         "--system-mapping", release.system_mapping)
 
@@ -171,8 +167,7 @@ def main() -> None:
         "--release", release.code,
         "plan",
         "--plan", glyph_plan,
-        "--saturn-orig", system_in,
-        "--ps1-system", args.ps1_system,
+        "--game", args.game, "--game-root", args.game_root,
         "--translation-root", build_translation_root,
         "--strings", resolved_system_strings)
 
@@ -200,8 +195,6 @@ def main() -> None:
         "--translation-root", build_translation_root,
         "--menu-map", resolved_system_strings,
         "--system-source", system_source,
-        "--scen", args.ps1_scen,
-        "--scen2", args.ps1_scen2,
         "--max-slot", str(release.max_font_slot),
         "--exclude-slots", glyph_plan,
         "--extra-script-dir", build_overrides / "SCEN",

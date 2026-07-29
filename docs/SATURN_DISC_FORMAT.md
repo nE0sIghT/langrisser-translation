@@ -734,11 +734,24 @@ sees exactly the text that ships.
 A character reaches the plane through the `.tbl`, so the plan can move it. A
 raw `<$XXXX>` token does not: it tells the encoder to emit that word whatever
 the table says. Those the same normalizer rewrites in the text itself, moving
-each PS1 token to the Saturn slot holding its glyph (`0x0663`, the icon that
-closes a whimpering line, to `0x0665`) and failing loudly if this plane has no
-such glyph. It reads *and* writes the build copy of the release overrides as
-well as the common text, because the whole pack — overrides included — is
-written against PS1 slot numbers.
+each PS1 token to the slot holding its glyph here (`0x0663`, the icon that
+closes a whimpering line, to `0x0665`). It reads *and* writes the build copy of
+the release overrides as well as the common text, because the whole pack —
+overrides included — is written against PS1 slot numbers.
+
+Neither step opens the PS1 disc. Where a character sits on this build is
+already written down twice — the game's `groups_report.csv` for the shared
+region, `kanji_map.csv` for the bank this release reordered — and the plan is
+just the difference between the two. Only a glyph with **no character** escapes
+that: nothing names it, so the release manifest records the slot directly.
+
+```json
+"unnamed_glyph_slots": {"0x0663": "0x0665"}
+```
+
+A raw token with no entry and no character fails the build by name, and
+`saturn_reconcile glyphs` — which may open both discs — confirms every recorded
+slot against the two planes.
 
 Both the SYSTEM UI text and the SCEN dialogue index into this one plane: SCEN
 token `0x0094` renders シ from the `SYSTEM.DAT` font, matching `シグマ` in the

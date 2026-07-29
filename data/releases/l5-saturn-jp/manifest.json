@@ -54,6 +54,10 @@
     "0x16D3C"
   ],
   "_system_groups_comment": "File offset of each SYSTEM text group's offset table, in scan order. Pack keys name a group by its position in this list, so the list is what turns a pack key into an address on this build.",
-  "system_loose": [],
+  "unnamed_glyph_slots": {
+  "0x0663": "0x0665"
+ },
+ "_unnamed_glyph_slots_comment": "Where this build keeps a glyph the font map leaves unnamed, keyed by the slot the pack writes (PS1's). Named glyphs need no entry - the maps already say which slot holds each character here - and slots below the game's kanji_bank_start hold the same glyph on every release. Only text that names a glyph by raw <$XXXX> token reaches this list. Derived and checked by `saturn_reconcile glyphs`, which is the step allowed to open both discs; the build only reads it.",
+ "system_loose": [],
   "_system_loose_comment": "Text runs outside the group tables, in scan order. This build has none: every SYSTEM string it shows belongs to a group."
 }

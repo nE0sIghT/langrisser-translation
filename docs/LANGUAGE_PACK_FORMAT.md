@@ -261,7 +261,11 @@ Consequences worth knowing before writing one:
 - the slot a token resolves to on a build is barred from font-slot assignment
   there, so nothing overwrites the glyph the token asked for;
 - a glyph that exists on no other release cannot be named this way at all. Use
-  a character the shared font map has, or let the project font render one.
+  a character the shared font map has, or let the project font render one;
+- a token whose glyph has **no character** in the font map needs a line in the
+  release manifest's `unnamed_glyph_slots` before it can ship there, since no
+  map can place it. Reconciliation derives and checks those; the build only
+  reads them, and fails by name when one is missing.
 
 Reserve raw tokens for glyphs with no character: the icon after a line of
 dialogue, a decorative mark. Everything with a character belongs in the text as

@@ -18,10 +18,18 @@ instead of rendering a wrong glyph).
 
 Two subcommands around the font build:
 
+Where each character sits here is read from the recorded maps — the game's font
+map plus this release's `kanji_map.csv` — so the plan needs no PS1 disc. What
+those maps cannot name, a glyph with no character, is recorded per release as
+`unnamed_glyph_slots`; `saturn_reconcile glyphs` is the step that compares the
+two planes and checks both.
+
+Two subcommands around the font build:
+
 - `plan` (before slot assignment): classify every needed native-token
-  character whose Saturn slot bitmap differs from PS1:
-  `remap` — the exact bitmap exists elsewhere in the original Saturn plane
-  (the slot is then excluded from the sacrificial pool via
+  character this release keeps at a different slot:
+  `remap` — this release's map names the slot holding it (the slot is then
+  excluded from the sacrificial pool via
   `langrisser.assign_font_slots --exclude-slots`); `assign` — the Saturn font has
   no such glyph (e.g. `×`: the originals spell 2割/3付4), so the character is
   force-assigned and rendered by the project font like any other tile;
@@ -39,13 +47,14 @@ import json
 import re
 from pathlib import Path
 
-from langrisser.build_font import GLYPH_BYTES, NATIVE_VISUAL_OVERRIDES
+from langrisser.build_font import NATIVE_VISUAL_OVERRIDES
+from langrisser.game import add_game_args, game_from_args
+from langrisser.offsetgroups import build_codemap, load_font_map_csv
 from langrisser.project import COMMON_FONT_MAP, add_language_args, language_from_args
-from langrisser.release import add_release_args
+from langrisser.release import add_release_args, release_from_args
 from langrisser.sceninsert import parse_dump_file
 
 TAG_RE = re.compile(r"<\$[0-9A-Fa-f]{4}>")
-PLANE_SLOTS = 1835   # both fonts end at slot 1834; Saturn data follows
 
 
 def chars_of(texts: list[str], grid: Path | None) -> set[str]:
@@ -90,17 +99,30 @@ def ps1_native_tokens(groups_report: Path) -> dict[str, int]:
     return best
 
 
-def glyph(plane: bytes, tok: int) -> bytes:
-    return plane[tok * GLYPH_BYTES:(tok + 1) * GLYPH_BYTES]
+def release_slots(game, release) -> dict[str, int]:
+    """`character -> the slot holding it on this build`, from the recorded maps.
+
+    Where a glyph sits is a property of the release, and both halves are
+    already written down: the game's font map for the shared region, the
+    release's `kanji_map.csv` for the bank it reordered. Reading it here is
+    what keeps a build off another release's disc - only reconciliation
+    compares planes (`saturn_reconcile glyphs`).
+    """
+    here = build_codemap(load_font_map_csv(game.font_map),
+                         load_font_map_csv(release.kanji_map),
+                         game.kanji_bank_start)
+    slots: dict[str, int] = {}
+    for slot in sorted(here):
+        slots.setdefault(here[slot], slot)
+    return slots
 
 
-def cmd_plan(args: argparse.Namespace, lang, override_dir: Path) -> None:
+def cmd_plan(args: argparse.Namespace, lang, game, release,
+             override_dir: Path) -> None:
     # The build copies are already normalized by saturn_apply_text_overrides
     # (platform records inlined, shadowed SYSTEM ids removed), so the
     # effective character set is simply everything those copies plus the
     # platform records and overlay contain.
-    sat = Path(args.saturn_orig).read_bytes()
-    ps1 = Path(args.ps1_system).read_bytes()
     texts: list[str] = []
     for fp in sorted(Path(args.translation_root).glob("*/chunk_*.txt")):
         texts.extend(parse_dump_file(fp).values())
@@ -113,23 +135,18 @@ def cmd_plan(args: argparse.Namespace, lang, override_dir: Path) -> None:
     effective = chars_of(texts, lang.name_entry_grid)
 
     natives = ps1_native_tokens(Path(args.groups_report))
+    here = release_slots(game, release)
     remap: list[dict] = []
     assign: list[str] = []
     drop: list[str] = []
-    taken: set[int] = set()
     for ch, tok in sorted(natives.items()):
-        want = glyph(ps1, tok)
-        if glyph(sat, tok) == want:
-            continue
+        slot = here.get(ch)
+        if slot == tok:
+            continue          # same slot on both: the pack's token already fits
         if ch not in effective:
             drop.append(ch)
             continue
-        slot = next((s for s in range(PLANE_SLOTS)
-                     if s not in taken and s != 0
-                     and s not in NATIVE_VISUAL_OVERRIDES
-                     and glyph(sat, s) == want), None)
         if slot is not None:
-            taken.add(slot)
             remap.append({"char": ch, "ps1_token": tok, "saturn_slot": slot})
         else:
             assign.append(ch)
@@ -189,12 +206,10 @@ def cmd_apply(args: argparse.Namespace) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
+    add_game_args(ap)
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("command", choices=["plan", "apply"])
     ap.add_argument("--plan", required=True, help="Plan JSON path.")
-    ap.add_argument("--ps1-system", default="work/l5/extracted/SYSTEM.BIN")
-    ap.add_argument("--saturn-orig", default=None,
-                    help="plan: original (untranslated) Saturn SYSTEM.DAT.")
     ap.add_argument("--groups-report", default=str(COMMON_FONT_MAP))
     ap.add_argument("--translation-root", default=None)
     ap.add_argument("--strings", default=None,
@@ -206,9 +221,10 @@ def main() -> None:
     lang = language_from_args(args)
     override_dir = lang.overrides(args.release)
     if args.command == "plan":
-        if not (args.saturn_orig and args.translation_root and args.strings):
-            raise SystemExit("plan requires --saturn-orig, --translation-root and --strings")
-        cmd_plan(args, lang, override_dir)
+        if not (args.translation_root and args.strings):
+            raise SystemExit("plan requires --translation-root and --strings")
+        cmd_plan(args, lang, game_from_args(args), release_from_args(args),
+                 override_dir)
     else:
         if not (args.tbl and args.assignments):
             raise SystemExit("apply requires --tbl and --assignments")
