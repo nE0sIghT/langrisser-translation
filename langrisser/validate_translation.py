@@ -5,6 +5,12 @@ Per record: the sequence of control tags (>= 0xE000, except the soft line
 break FFFC) and the argument words of F600/FBxx must match the JP source
 exactly. Also checks that every translated line encodes, reports leftover JP text
 and validates the fixed-size SCEN/SCEN2 repack budget used by the builder.
+
+The record checks are about the text and hold for any build of the game. The
+budget is not: it measures the PS1 containers. A build that ships another one
+passes `--budget-mode none` and gets the fit answered by the packer that owns
+its format — otherwise a line that fits there but overflows a PS1 block would
+fail a build PS1 has nothing to do with.
 """
 import argparse
 import re
@@ -83,8 +89,11 @@ def main() -> None:
     ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
     ap.add_argument("--scen2", default="work/l5/extracted/SCEN2.DAT")
     ap.add_argument("--stem", default="SCEN")
-    ap.add_argument("--budget-mode", choices=("fixed-repack", "local", "block"),
-                    default="fixed-repack")
+    ap.add_argument("--budget-mode",
+                    choices=("fixed-repack", "local", "block", "none"),
+                    default="fixed-repack",
+                    help="'none' checks the records only, for a build whose "
+                         "container is not the PS1 one.")
     args = ap.parse_args()
 
     lang = language_from_args(args)
@@ -96,8 +105,9 @@ def main() -> None:
     tbl = Path(args.tbl) if args.tbl else lang.tbl
 
     codec = Codec(load_charmap_tbl(tbl))
-    data = Path(args.scen).read_bytes()
-    spans = read_chunk_spans(data)
+    measure = args.budget_mode != "none"
+    data = Path(args.scen).read_bytes() if measure else b""
+    spans = read_chunk_spans(data) if measure else []
 
     chunk_ids = args.chunks
     if not chunk_ids:
@@ -143,6 +153,10 @@ def main() -> None:
                 TAG_RE.sub("", target[idx]).replace("・", ""),
             ):
                 jp_left += 1
+        if not measure:
+            print(f"chunk {cidx:03d}: body={body}"
+                  + (f" jp_left={jp_left}" if jp_left else ""))
+            continue
         s, e = spans[cidx]
         chunk = data[s:e]
         block = find_text_block(chunk)

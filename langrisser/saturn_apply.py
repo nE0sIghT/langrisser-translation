@@ -33,6 +33,10 @@ from langrisser.saturn_scen import (local_index_entries, local_index_layout, par
 
 WILDCARD = object()   # an unresolved rare Saturn kanji: matches nothing exactly
 
+# A block's text table is addressed by u16 entry offsets, so it can grow only
+# this far however much room the block itself has.
+TABLE_LIMIT = 0xFFFF
+
 
 class Normalizer:
     """Normalize both consoles' token streams to comparable text.
@@ -251,7 +255,8 @@ def apply_scen(data: bytes, lang_scen_dir: Path, codec: Codec,
     stats = {"blocks": len(blocks), "applied": 0,
              "entries_written": 0, "missing_dump": 0,
              "mapped": 0, "empty_skipped": 0, "skipped_over_budget": 0,
-             "release_records": 0, "preserved_pending": 0}
+             "release_records": 0, "preserved_pending": 0,
+             "blocks_grown": 0, "largest_table": 0, "largest_block": -1}
     mapping = mapping or {"empty_chunks": [], "chunks": {}}
     empty_chunks = {int(x) for x in mapping.get("empty_chunks", [])}
     chunk_specs = {int(k): v for k, v in (mapping.get("chunks") or {}).items()}
@@ -367,6 +372,17 @@ def apply_scen(data: bytes, lang_scen_dir: Path, codec: Codec,
         block_entries[chunk_index] = new_entries
         stats["applied"] += 1
         stats["entries_written"] += len(new_entries)
+        # This container's own budget. A block whose text no longer fits its
+        # table is enlarged in place, so the only hard limit is the u16 entry
+        # offset: past 0xFFFF the table cannot be addressed at all. Track the
+        # tightest block so the margin is reported, not discovered.
+        packed = 4 + len(new_entries) * 2 + sum(len(w) for w in new_entries) * 2
+        layout = local_index_layout(data, start, used)
+        if layout is not None and packed > layout[1]:
+            stats["blocks_grown"] += 1
+        if packed > stats["largest_table"]:
+            stats["largest_table"] = packed
+            stats["largest_block"] = chunk_index
 
     if fatal:
         lines = "\n".join(f"  - {msg}" for msg in fatal[:40])
@@ -445,6 +461,12 @@ def main() -> None:
         f"missing-dump={stats['missing_dump']} "
         f"skipped-over-budget={stats['skipped_over_budget']}; "
         f"file grew {stats['grown_bytes']} bytes -> {out_path}"
+    )
+    print(
+        f"  text tables: {stats['blocks_grown']} enlarged, largest "
+        f"{stats['largest_table']}/{TABLE_LIMIT} bytes in block "
+        f"{stats['largest_block']} "
+        f"({TABLE_LIMIT - stats['largest_table']} to spare)"
     )
 
 

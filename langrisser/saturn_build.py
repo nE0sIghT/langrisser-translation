@@ -254,13 +254,15 @@ def main() -> None:
         "--translation-root", build_translation_root,
         "--tbl", tbl,
         "--scen", args.ps1_scen)
+    # Records only: the block budgets in there are the PS1 containers'. This
+    # build's own fit is a different question, and saturn_apply answers it
+    # below from the container it owns.
     run("-m", "langrisser.validate_translation",
         "--lang", args.lang,
         "--lang-root", lang.root.parent,
         "--translation-root", build_translation_root,
         "--tbl", tbl,
-        "--scen", args.ps1_scen,
-        "--scen2", args.ps1_scen2)
+        "--budget-mode", "none")
 
     system_out = saturn / f"SYSTEM.{lang.suffix}.DAT"
     system_cmd: list[object] = [

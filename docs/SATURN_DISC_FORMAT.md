@@ -164,6 +164,30 @@ Track 1 is a normal ISO9660 filesystem. Root directory:
 | file | `40069` | `413696` | `TK_SC.BIN` |
 | file | `36291` | `8192` | `WD_FONT.BIN` |
 
+### Which of those files hold text
+
+All translatable script and UI text lives in `SCEN.DAT` and `SYSTEM.DAT`. The
+files that sound like they should carry more — the tavern, the shop, the battle
+tables, the cursor data, the resident overlays — do not. Scanning them for
+`FFFF`-terminated runs that decode through this build's merged font map
+(`langrisser.saturn_usage_scan`, `file_runs`) gives:
+
+| File | Text runs |
+| --- | --- |
+| `BAR.BIN`, `SHOP.DAT`, `CUR.DAT` | none |
+| `PROG1.BIN`, `PROG2.BIN`, `A0LANG5.BIN` | none |
+| `BTLDAT.BIN` | 3 runs, 51 tokens — not text |
+| `TK_SC.BIN` | 3 runs, 449 tokens — not text |
+
+The last two are false positives: dumped, they read as
+`{FFC6}{FFF1}ぜ{FFD0}ォ{FFDD}` — binary structures dominated by `0xFF80..0xFFFF`
+words, not sentences. The heuristic is deliberately loose because it feeds the
+sacrificial-slot census, where over-reporting only protects slots that did not
+need protecting.
+
+So the remaining untranslated text on this disc is in graphics, not in data
+files: `CAST.DAT`, `STAFF.DAT` and the `IMG`-class assets.
+
 ## Track 2 XA / ADPCM Area
 
 Track 2 is not an ISO9660 volume. It is a contiguous XA/ADPCM sector area.
@@ -1107,6 +1131,15 @@ Constraints for insertion:
   regenerated offset array).
 - The whole region must stay under `0xFFFF` bytes (offsets are `u16`).
 - If the content fits the original `total_size`, nothing else in the block moves.
+
+`0xFFFF` is therefore this container's only hard budget, and `saturn_apply`
+reports the margin every build (`text tables: 73 enlarged, largest
+25930/65535 bytes in block 129`). Nothing before it can answer the question:
+`langrisser.validate_translation` measures the *PS1* blocks, so a Saturn build
+runs it with `--budget-mode none` — the record checks (control tags, encoding,
+residual Japanese) hold for any build of the game, the budget does not, and
+applying PS1 sizes here would fail a Saturn build over a constraint it has
+never had.
 
 Growth (translated text longer than Japanese — the common case for Russian):
 the table is **enlarged in place and everything after it shifts back** by the
