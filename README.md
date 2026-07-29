@@ -411,6 +411,15 @@ for f in SYSTEM.DAT SCEN.DAT CLEAR.DAT TITLE1.DAT TITLE2.DAT OPEN.DAT; do
 done
 ```
 
+Its own Japanese source reads out the same way the PS1 side does, one tool per
+container:
+
+```bash
+python3 -m langrisser.system_dump   --release l5-saturn-jp \
+    --system-bin work/l5/build/saturn/SYSTEM.DAT --out work/l5/systemdump/saturn.json
+python3 -m langrisser.saturn_scen_text --scen work/l5/build/saturn/SCEN.DAT
+```
+
 Build:
 
 ```bash
@@ -418,11 +427,14 @@ python3 -m langrisser.saturn_build --lang ru
 python3 -m langrisser.saturn_build --lang ru --remaster-disc
 ```
 
-This also needs the PS1 base extracts (`work/l5/extracted/SCEN.DAT`, `SCEN2.DAT`,
-`SYSTEM.BIN`). Langrisser V was translated on PS1 first and the pack is keyed
-by PS1 ids, so building Saturn re-derives those ids from the PS1 files and
-re-proves, per record, that the Japanese matches before reusing the existing
-translation. The builder runs, in order: platform text
+Two PS1-derived inputs remain, and neither is a correspondence: the Japanese
+script dump under `work/l5/scriptdump/`, which the record validator compares
+control tags against, and `work/l5/extracted/SCEN.DAT`, which `rewrap` reads for
+the speaker-plate structure. Both describe the common script the pack is keyed
+to rather than anything about the PS1 build. Which record and which string this
+release carries, and where each glyph sits on it, all come from
+`data/releases/l5-saturn-jp/` — recorded once by reconciliation, never
+re-derived at build time. The builder runs, in order: platform text
 overrides → native-glyph plan → Saturn-side slot usage scan (which glyphs this
 build still draws, so the font never takes their slots) → font → reflow
 and validation → SYSTEM pack (+ write-contract check) → name entry → Now

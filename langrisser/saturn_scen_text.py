@@ -7,10 +7,11 @@ payload blocks, reads every indexed text entry and emits a stable
 ``(chunk_index, entry_index)`` record set, mirroring the PS1
 ``work/l5/scriptdump/all_records.csv`` shape so the two platforms can be aligned.
 
-Decoding uses the PS1 Japanese token table. Kana and control words match the
-Saturn stream exactly; a subset of kanji decodes incorrectly because the Saturn
-kanji banks are reordered relative to PS1. The raw token ids are always emitted
-so downstream alignment does not depend on kanji parity.
+Decoding uses this release's own slot->character map: the game's font map for
+the region every release shares, plus the release's `kanji_map.csv` for the bank
+it reordered. A curated `HHHH=text` table still overrides it (`--tbl`), which is
+what to reach for while a new release's bank is still being mapped - the raw
+token ids are emitted either way, so alignment never depends on the decoding.
 """
 
 from __future__ import annotations
@@ -20,25 +21,34 @@ import csv
 import json
 from pathlib import Path
 
-from langrisser.offsetgroups import load_codemap
+from langrisser.game import add_game_args, game_from_args
+from langrisser.offsetgroups import build_codemap, load_codemap, load_font_map_csv
+from langrisser.release import add_release_args, release_from_args
 from langrisser.saturn_scen import TEXT_TERMINATORS, local_index_entries, parse_catalog
+from langrisser.scen import PRINTABLE_LIMIT, consumes_argument
 
 SOFT_BREAK = 0xFFFC
 
 
 def decode_tokens(words: list[int], codemap: dict[int, str]) -> str:
+    """Text plus `<$XXXX>` for every word that is not a glyph.
+
+    Not a glyph: control words, and the word right after an opcode that
+    consumes one - a speaker id or a macro number, which would otherwise
+    decode as whatever character happens to sit at that slot.
+    """
     out: list[str] = []
+    prev: int | None = None
     for word in words:
-        if word in TEXT_TERMINATORS:
+        if word in TEXT_TERMINATORS or word == SOFT_BREAK:
             out.append("<$%04X>" % word)
-        elif word == SOFT_BREAK:
-            out.append("<$FFFC>")
-        elif word >= 0xFB00:
+        elif word >= PRINTABLE_LIMIT or (prev is not None and consumes_argument(prev)):
             out.append("<$%04X>" % word)
         elif word == 0:
             out.append("")
         else:
             out.append(codemap.get(word, "{?%04X}" % word))
+        prev = word
     return "".join(out)
 
 
@@ -90,14 +100,22 @@ def write_csv(result: dict, path: Path) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
+    add_game_args(ap)
+    add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--scen", default="work/l5/build/saturn/SCEN.DAT")
-    ap.add_argument("--tbl", default="data/common/tables/lang5_jp.tbl")
+    ap.add_argument("--tbl", default=None,
+                    help="Override the token table (default: the release's maps).")
     ap.add_argument("--out", default="work/l5/build/saturn/scen_text.json")
     ap.add_argument("--out-csv", default="work/l5/build/saturn/scen_text.csv")
     args = ap.parse_args()
 
+    game = game_from_args(args)
+    release = release_from_args(args)
     data = Path(args.scen).read_bytes()
-    codemap = load_codemap(args.tbl)
+    codemap = (load_codemap(args.tbl) if args.tbl else
+               build_codemap(load_font_map_csv(game.font_map),
+                             load_font_map_csv(release.kanji_map),
+                             game.kanji_bank_start))
     result = dump(data, codemap)
 
     out = Path(args.out)
