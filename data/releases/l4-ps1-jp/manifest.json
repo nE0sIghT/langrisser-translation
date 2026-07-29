@@ -10,7 +10,7 @@
   "serial": "SLPS-01818",
   "media": {
     "kind": "iso-mode2",
-    "image": "iso/ps1/4/SLPS-01818.bin",
+    "image": "iso/l4-ps1-jp/SLPS-01818.bin",
     "roots": {
       "l4": "/L4"
     },

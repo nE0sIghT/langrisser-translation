@@ -12,7 +12,7 @@ Working target image:
 
 | Path | Size | CRC32 | SHA-1 prefix |
 | --- | ---: | --- | --- |
-| `iso/saturn/LANGRISSER_5.bin` | `507074736` | `5E63C92F` | `8ef76305fe27` |
+| `iso/l5-saturn-jp/LANGRISSER_5.bin` | `507074736` | `5E63C92F` | `8ef76305fe27` |
 
 The image is a Sega Saturn mixed-mode disc. Sector 0 user data starts with:
 
@@ -95,7 +95,7 @@ tracked.
 
 ## Track Layout
 
-From `iso/saturn/LANGRISSER_5.cue`:
+From `iso/l5-saturn-jp/LANGRISSER_5.cue`:
 
 | Track | Mode | INDEX 01 | LBA | Raw byte offset | Notes |
 | --- | --- | --- | ---: | ---: | --- |

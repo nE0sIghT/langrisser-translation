@@ -11,7 +11,7 @@
   "_comment": "Disc B of the two-disc SLPS-01818/9 set; disc A is Langrisser IV, so both games share one image name but ship as separate releases.",
   "media": {
     "kind": "iso-mode2",
-    "image": "iso/SLPS-01818-9-B.bin",
+    "image": "iso/l5-ps1-jp/SLPS-01818-9-B.bin",
     "roots": {
       "l5": "/L5"
     },

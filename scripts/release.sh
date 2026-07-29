@@ -18,7 +18,7 @@ cd "$(dirname "$0")/.."
 if [[ -z "${PYTHON:-}" ]]; then
 	if [[ -x .venv/bin/python ]]; then PYTHON=.venv/bin/python; else PYTHON=python3; fi
 fi
-ORIG_BIN="${ORIG_BIN:-iso/SLPS-01818-9-B.bin}"
+ORIG_BIN="${ORIG_BIN:-iso/l5-ps1-jp/SLPS-01818-9-B.bin}"
 ORIG_SHA256="${ORIG_SHA256:-af3f5e1d6912f31f712d43cf71d954481fa9814021e62b41fdd8fce0c9429247}"
 EXTRACT_DIR="${EXTRACT_DIR:-work/l5/extracted}"
 DIST_ROOT="${DIST_ROOT:-dist}"

@@ -81,19 +81,33 @@ Bundled third-party fonts:
 
 - Python 3.10+
 - Pillow: `python3 -m pip install --user pillow`
-- Original BIN/CUE image in `iso/`
+- Original BIN/CUE image in `iso/<release>/` (see below)
 
 ## Original Image
 
-The build scripts expect these verified local images (PS1 for the PPF patch and
-as the common reference, Saturn for the Saturn build):
+Images live one directory per release, named by the release slug, so
+`data/releases/<slug>/` and `iso/<slug>/` line up and a second print of the same
+game on the same console has somewhere of its own to go. Each release manifest
+records its own image under `media.image`, and every tool resolves it from
+there:
+
+```text
+iso/
+  l5-ps1-jp/     SLPS-01818-9-B.bin  + .cue   # PPF patch, and the common reference
+  l5-saturn-jp/  LANGRISSER_5.bin    + .cue   # Saturn build
+  l4-ps1-jp/     SLPS-01818.bin      + .cue   # Langrisser IV
+```
+
+The `l5-ps1-jp` cue names its track file in upper case, so that directory also
+holds an `SLPS-01818-9-B.BIN` symlink; the cue is authentic dump data and is not
+edited to match.
 
 | File | Size | CRC32 | MD5 | SHA-1 | SHA-256 |
 | --- | ---: | --- | --- | --- | --- |
-| `iso/SLPS-01818-9-B.bin` | `696248448` | `5d13a8df` | `7a9e431453fde9301188841f215bff98` | `e096604f2d4d69b48eb3c1b20ca5ea26e1ea8766` | `af3f5e1d6912f31f712d43cf71d954481fa9814021e62b41fdd8fce0c9429247` |
-| `iso/SLPS-01818-9-B.cue` | `224` | `2683304f` | `455eca5422d06973bb32f7fed4ce2416` | `f2f2f1abf836e26acfd37030d7d9a378cca2a0de` | `754cfdc98d0aa354dd1d8cd0c5e4d377883a2acccf9636fd5e9826f1b1e52a66` |
-| `iso/saturn/LANGRISSER_5.bin` | `507074736` | | | | `e517a65201ba9f087a14e2231ee3135acba173bc5041d1495fa333731e93dbc0` |
-| `iso/saturn/LANGRISSER_5.cue` | `399` | | | | `58d09590a5399282f707536d6c154ecc19f60fd0cf8fa52d3d7beb375da65b52` |
+| `iso/l5-ps1-jp/SLPS-01818-9-B.bin` | `696248448` | `5d13a8df` | `7a9e431453fde9301188841f215bff98` | `e096604f2d4d69b48eb3c1b20ca5ea26e1ea8766` | `af3f5e1d6912f31f712d43cf71d954481fa9814021e62b41fdd8fce0c9429247` |
+| `iso/l5-ps1-jp/SLPS-01818-9-B.cue` | `224` | `2683304f` | `455eca5422d06973bb32f7fed4ce2416` | `f2f2f1abf836e26acfd37030d7d9a378cca2a0de` | `754cfdc98d0aa354dd1d8cd0c5e4d377883a2acccf9636fd5e9826f1b1e52a66` |
+| `iso/l5-saturn-jp/LANGRISSER_5.bin` | `507074736` | | | | `e517a65201ba9f087a14e2231ee3135acba173bc5041d1495fa333731e93dbc0` |
+| `iso/l5-saturn-jp/LANGRISSER_5.cue` | `399` | | | | `58d09590a5399282f707536d6c154ecc19f60fd0cf8fa52d3d7beb375da65b52` |
 
 The Saturn image is a mixed-mode disc, so its whole-file hash depends on the
 rip's pregap convention. What must be verified is **data track 1** (every file
@@ -105,7 +119,7 @@ v1.004 exactly:
 | 1 (Mode 1) | `61901` | `ef034bde` | `37685a3ac74ac252abb2d01ea6987c73` | `b90529e379efde5787693ffda6fff53fddd7c2ee` |
 
 ```bash
-python3 -m langrisser.saturn_disc --cue iso/saturn/LANGRISSER_5.cue verify
+python3 -m langrisser.saturn_disc verify
 ```
 
 ## Repository Layout
@@ -186,11 +200,11 @@ Extract original game files:
 
 ```bash
 mkdir -p work/l5/extracted
-python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/SCEN.DAT  work/l5/extracted/SCEN.DAT
-python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/SCEN2.DAT work/l5/extracted/SCEN2.DAT
-python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/SYSTEM.BIN work/l5/extracted/SYSTEM.BIN
-python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /L5/IMG.DAT    work/l5/extracted/IMG.DAT
-python3 -m langrisser.iso_mode2 iso/SLPS-01818-9-B.bin extract /SLPS_018.19  work/l5/extracted/SLPS_018.19
+python3 -m langrisser.iso_mode2 iso/l5-ps1-jp/SLPS-01818-9-B.bin extract /L5/SCEN.DAT  work/l5/extracted/SCEN.DAT
+python3 -m langrisser.iso_mode2 iso/l5-ps1-jp/SLPS-01818-9-B.bin extract /L5/SCEN2.DAT work/l5/extracted/SCEN2.DAT
+python3 -m langrisser.iso_mode2 iso/l5-ps1-jp/SLPS-01818-9-B.bin extract /L5/SYSTEM.BIN work/l5/extracted/SYSTEM.BIN
+python3 -m langrisser.iso_mode2 iso/l5-ps1-jp/SLPS-01818-9-B.bin extract /L5/IMG.DAT    work/l5/extracted/IMG.DAT
+python3 -m langrisser.iso_mode2 iso/l5-ps1-jp/SLPS-01818-9-B.bin extract /SLPS_018.19  work/l5/extracted/SLPS_018.19
 ```
 
 Dump source text and verify the no-edit round trip:
@@ -219,8 +233,8 @@ live under `/L4`, and it has no `SCEN2.DAT`):
 
 ```bash
 mkdir -p work/l4
-python3 -m langrisser.iso_mode2 iso/ps1/4/SLPS-01818.bin extract /L4/SCEN.DAT   work/l4/SCEN.DAT
-python3 -m langrisser.iso_mode2 iso/ps1/4/SLPS-01818.bin extract /L4/SYSTEM.BIN work/l4/SYSTEM.BIN
+python3 -m langrisser.iso_mode2 iso/l4-ps1-jp/SLPS-01818.bin extract /L4/SCEN.DAT   work/l4/SCEN.DAT
+python3 -m langrisser.iso_mode2 iso/l4-ps1-jp/SLPS-01818.bin extract /L4/SYSTEM.BIN work/l4/SYSTEM.BIN
 python3 -m langrisser.scendump     --game l4 --scen work/l4/SCEN.DAT --out-dir work/l4/scriptdump
 python3 -m langrisser.system_dump  --game l4 --system-bin work/l4/SYSTEM.BIN --out work/l4/system_strings.json
 ```
@@ -405,7 +419,7 @@ share.
 Verify the disc and extract the Saturn side once:
 
 ```bash
-python3 -m langrisser.saturn_disc --cue iso/saturn/LANGRISSER_5.cue verify
+python3 -m langrisser.saturn_disc verify
 for f in SYSTEM.DAT SCEN.DAT CLEAR.DAT TITLE1.DAT TITLE2.DAT OPEN.DAT; do
   python3 -m langrisser.saturn_disc extract $f work/l5/build/saturn/$f
 done

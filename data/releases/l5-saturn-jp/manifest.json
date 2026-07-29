@@ -10,7 +10,7 @@
   "serial": "T-2509G",
   "media": {
     "kind": "cue-multitrack",
-    "image": "iso/saturn/LANGRISSER_5.cue",
+    "image": "iso/l5-saturn-jp/LANGRISSER_5.cue",
     "roots": {
       "l5": "/"
     }

@@ -710,9 +710,10 @@ def cmd_verify(args: argparse.Namespace) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--cue", default="iso/saturn/LANGRISSER_5.cue")
+    ap.add_argument("--cue", default=None,
+                    help="Source CUE (default: the release manifest's image).")
     ap.add_argument("--release", default="l5-saturn-jp",
-                    help="Release whose dump fingerprint `verify` checks.")
+                    help="Release whose image and dump fingerprint this reads.")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("info")
@@ -747,6 +748,11 @@ def main() -> None:
     p.set_defaults(func=cmd_remaster)
 
     args = ap.parse_args()
+    if not args.cue:
+        image = load_release(args.release).image
+        if image is None:
+            raise SystemExit(f"{args.release} records no media image; pass --cue")
+        args.cue = str(image)
     args.func(args)
 
 
