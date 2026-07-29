@@ -410,6 +410,15 @@ def main() -> None:
         # project-font tiles like any other assigned single.
         forced_singles = "".join(plan.get("assign", []))
 
+    scan = (json.loads(Path(args.usage_scan).read_text(encoding="utf-8"))
+            if args.usage_scan else None)
+    if scan is not None:
+        # A slot this build still draws is off limits to the pool *and* to an
+        # inherited assignment: the tracked CSV is shared by every release, so
+        # a slot free on the one it was written from can hold a live glyph
+        # here. Banning it moves the char to a slot this build really spares.
+        excluded |= set(scan["jp_visible"])
+
     lang = language_from_args(args)
     groups_report = Path(args.groups_report) if args.groups_report else COMMON_FONT_MAP
     assignments = Path(args.assignments) if args.assignments else lang.font_assignments
@@ -506,9 +515,7 @@ def main() -> None:
         groups_report, Path(args.scen), Path(args.scen2),
         [Path(p) for p in ("work/l5/extracted/SYSTEM.BIN", "work/l5/extracted/ALLUSB.BIN",
                            "work/l5/extracted/ALLUSW.BIN")],
-        translated_keys, translated_chunks, args.max_slot, excluded,
-        json.loads(Path(args.usage_scan).read_text(encoding="utf-8"))
-        if args.usage_scan else None,
+        translated_keys, translated_chunks, args.max_slot, excluded, scan,
     ) if i not in taken]
     if len(pool) < len(must):
         # A platform slot cap (e.g. Saturn's 1819) can displace inherited

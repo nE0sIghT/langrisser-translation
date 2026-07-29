@@ -649,9 +649,30 @@ The in-game text font is owned by `SYSTEM.DAT`, in the same format as PS1
 The plane's tail is also *shifted* relative to PS1: the last Saturn glyphs
 `1810..1817` equal PS1 `1814..1820` (minus one insertion around Saturn `1814`),
 so near the end the PS1-derived slot→kanji map is off by a few slots. The
-sacrificial-slot usage analysis is PS1-based and therefore approximate on
-Saturn; a sacrificed slot can cost a *different* kanji than the CSV's
-`replaced_char` suggests.
+release's `kanji_map.csv` records what each slot really holds here, and the
+`replaced_char` column of a generated assignment CSV keeps naming the *shared*
+map's glyph — it says which slot was taken, not which glyph this build lost.
+
+### Which slots this build may sacrifice (`saturn_usage_scan.py`)
+
+A slot is free only if nothing this build still draws with it, and that is a
+per-release question: two builds order the same bank differently, so a slot the
+shared map calls a spare kanji can be a live glyph here. The scan therefore
+reads Saturn's own data and hands the assigner the facts:
+
+- SCEN entries the mapping preserves keep their original tokens;
+- SYSTEM group entries no target string covers are copied word for word by the
+  packer — a pack id with no resolved translation, a release-only overlay id
+  the pack does not carry, or an explicit `preserve`;
+- FFFF-terminated runs in the files outside the translation pipeline
+  (BAR/SHOP/CUR/BTLDAT/TK_SC, the resident overlays, the `SYSTEM.DAT` tail).
+
+Those slots are barred from the sacrificial pool *and* from inherited
+assignments: the tracked CSV is shared by every release of the game, so a slot
+free on the one it was written from must be able to move here. Without the
+SYSTEM half of that census the Saturn build drew Cyrillic pairs over the `@`
+placeholder in the two unit-name pools, over an unnamed icon in group 0, and
+over the `▪▪▪注意▪▪▪` frame of the memory-card warning.
 
 ### Native symbols — the glyph plan (`saturn_fix_native_glyphs.py`)
 

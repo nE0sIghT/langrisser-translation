@@ -8,8 +8,11 @@ assigner needs:
 
 - `usage`: token frequency across the Saturn SCEN originals (rarity ranking
   for sacrifice order);
-- `jp_visible`: tokens of entries the mapping explicitly preserves (they keep
-  rendering their original glyphs, so their slots are untouchable);
+- `jp_visible`: tokens of every entry this build ships in its original glyphs -
+  the SCEN entries the mapping preserves, and the SYSTEM group entries no
+  target string covers (the packer copies those word for word). Their slots are
+  untouchable: this release reordered its kanji bank, so a slot the shared font
+  map calls a spare kanji can be a glyph this build still draws;
 - `ui_used`: tokens found in FFFF-terminated text runs inside the Saturn data
   files outside the translation pipeline (BAR/SHOP/CUR/BTLDAT/TK_SC, the
   resident code overlays, the SYSTEM.DAT tail) — decoded through the merged
@@ -25,6 +28,16 @@ import struct
 from collections import Counter
 from pathlib import Path
 
+from langrisser.game import add_game_args, game_from_args
+from langrisser.offsetgroups import (
+    build_codemap,
+    expand_group_map,
+    find_groups,
+    load_system_mapping,
+    pack_id_for,
+    run_length,
+)
+from langrisser.patch_name_entry import grid_spans
 from langrisser.project import COMMON_FONT_MAP
 from langrisser.release import add_release_args, release_from_args
 from langrisser.saturn_apply import load_font_map_csv, load_mapping
@@ -57,6 +70,51 @@ def scen_usage(scen: bytes, mapping: dict) -> tuple[Counter, set[int]]:
     return usage, jp_visible
 
 
+def system_untranslated(data: bytes, game, release, resolved: set[str],
+                        platform_ids: set[str]) -> set[int]:
+    """Tokens of SYSTEM group entries this build ships in their original glyphs.
+
+    The packer re-encodes an entry only when some target string covers it, and
+    copies every other entry word for word - so those keep drawing whatever the
+    font holds at their slots. Which entry a target string covers is what the
+    release's SYSTEM mapping says: a pack id, a release-only overlay id, or an
+    explicit `preserve`.
+    """
+    cfg = release.group_config
+    codemap = build_codemap(load_font_map_csv(game.font_map),
+                            load_font_map_csv(release.kanji_map),
+                            game.kanji_bank_start)
+    # The name-entry grid is not text the packer owns either, but the slots it
+    # ends up drawing are this build's own assigned tiles, written after the
+    # font: saturn_name_entry rewrites the run. Exclude it exactly as the
+    # dumper does, so both walks agree on what a pack string is.
+    grid = grid_spans(data, codemap, cfg.order)
+    specs = {int(k): v for k, v in
+             (load_system_mapping(release.system_mapping).get("groups") or {}).items()}
+
+    visible: set[int] = set()
+    for gi, (_, table, base) in enumerate(find_groups(data, cfg)):
+        n = len(table)
+        targets = expand_group_map(specs[gi], n) if gi in specs else {}
+        for k in range(n):
+            off = base + table[k] * 2
+            words = (table[k + 1] - table[k] - 1 if k + 1 < n
+                     else run_length(data, off, cfg))
+            if any(start <= off < stop for start, stop in grid):
+                continue
+            target = targets.get(k)
+            if isinstance(target, dict) and "platform" in target:
+                translated = str(target["platform"]) in platform_ids
+            elif isinstance(target, dict) and target.get("preserve"):
+                translated = False
+            else:
+                translated = pack_id_for(target, gi, k) in resolved
+            if not translated:
+                visible.update(w for w in cfg.order.words(data, off, words)
+                               if w < 0xE000)
+    return visible
+
+
 def file_runs(data: bytes, charmap: dict[int, str]) -> Counter:
     """FFFF-terminated BE token runs that decode as Saturn text."""
     particles = {tok for tok, ch in charmap.items() if ch in "のをはにがでてとしだよね"}
@@ -87,11 +145,21 @@ def file_runs(data: bytes, charmap: dict[int, str]) -> Counter:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--scen", default="work/l5/build/saturn/SCEN.DAT")
+    add_game_args(ap)
     add_release_args(ap, "l5-saturn-jp")
     ap.add_argument("--mapping", default=None,
                     help="SCEN mapping JSON (default: the release manifest's)")
     ap.add_argument("--kanji-map", default=None,
                     help="Kanji slot map CSV (default: the release manifest's)")
+    ap.add_argument("--system-bin", default="work/l5/build/saturn/SYSTEM.DAT",
+                    help="This release's extracted SYSTEM file, walked group by "
+                         "group to find the entries no target string covers.")
+    ap.add_argument("--strings", required=True,
+                    help="Resolved pack SYSTEM overlay for this build "
+                         "(resolve_system_strings output).")
+    ap.add_argument("--platform-strings", default=None,
+                    help="The language pack's release-only SYSTEM overlay; "
+                         "absent means the release has none.")
     ap.add_argument("--files", nargs="*", default=[
         "work/l5/build/saturn/SYSTEM.DAT",
         "work/l5/build/saturn/BAR.BIN",
@@ -106,6 +174,7 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
+    game = game_from_args(args)
     release = release_from_args(args)
     mapping_path = Path(args.mapping) if args.mapping else release.scen_mapping
     kanji_map = Path(args.kanji_map) if args.kanji_map else release.kanji_map
@@ -114,6 +183,15 @@ def main() -> None:
     charmap.update(load_font_map_csv(kanji_map))
     usage, jp_visible = scen_usage(
         Path(args.scen).read_bytes(), load_mapping(mapping_path))
+
+    resolved = set(json.loads(Path(args.strings).read_text(encoding="utf-8")))
+    platform_ids: set[str] = set()
+    if args.platform_strings and Path(args.platform_strings).exists():
+        platform_ids = set(json.loads(
+            Path(args.platform_strings).read_text(encoding="utf-8")))
+    system_visible = system_untranslated(
+        Path(args.system_bin).read_bytes(), game, release, resolved, platform_ids)
+    jp_visible |= system_visible
     ui_used: Counter = Counter()
     for f in args.files:
         p = Path(f)
@@ -121,9 +199,10 @@ def main() -> None:
             raise SystemExit(f"usage scan input missing: {p}")
         data = p.read_bytes()
         if p.name == "SYSTEM.DAT":
-            # The glyph plane, pointer directory and text groups are all
-            # owned by the translation; only the tail (texture decoder,
-            # Now Loading, name-entry input) can hold untranslated runs.
+            # The glyph plane, pointer directory and text groups are read
+            # above, entry by entry through the release mapping; the run
+            # heuristic only has to cover the tail (texture decoder, Now
+            # Loading, name-entry input), which no table describes.
             data = data[0x178F4:]
         ui_used.update(file_runs(data, charmap))
     out = {
@@ -132,8 +211,9 @@ def main() -> None:
         "ui_used": {str(k): v for k, v in ui_used.items()},
     }
     Path(args.out).write_text(json.dumps(out) + "\n", encoding="utf-8")
-    print(f"saturn usage scan: {len(usage)} scen tokens, "
-          f"{len(jp_visible)} jp-visible, {len(ui_used)} ui-run tokens -> {args.out}")
+    print(f"saturn usage scan: {len(usage)} scen tokens, {len(jp_visible)} "
+          f"jp-visible ({len(system_visible)} from untranslated SYSTEM entries), "
+          f"{len(ui_used)} ui-run tokens -> {args.out}")
 
 
 if __name__ == "__main__":

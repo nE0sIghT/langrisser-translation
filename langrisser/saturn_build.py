@@ -176,10 +176,14 @@ def main() -> None:
     # Saturn build leaves untranslated is what a sacrifice would corrupt.
     usage_scan = saturn / f"usage_scan.{lang.suffix}.json"
     run("-m", "langrisser.saturn_usage_scan",
+        "--game", args.game, "--game-root", args.game_root,
         "--release", release.code,
         "--scen", scen_in,
         "--mapping", release.scen_mapping,
         "--kanji-map", release.kanji_map,
+        "--system-bin", system_in,
+        "--strings", resolved_system_strings,
+        "--platform-strings", lang.override_system_strings(release.code),
         "--out", usage_scan)
 
     build_assignments = build_dir / f"font_slot_assignments.{lang.suffix}.saturn.csv"

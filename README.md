@@ -423,7 +423,8 @@ This also needs the PS1 base extracts (`work/l5/extracted/SCEN.DAT`, `SCEN2.DAT`
 by PS1 ids, so building Saturn re-derives those ids from the PS1 files and
 re-proves, per record, that the Japanese matches before reusing the existing
 translation. The builder runs, in order: platform text
-overrides → native-glyph plan → Saturn-side slot usage scan → font → reflow
+overrides → native-glyph plan → Saturn-side slot usage scan (which glyphs this
+build still draws, so the font never takes their slots) → font → reflow
 and validation → SYSTEM pack (+ write-contract check) → name entry → Now
 Loading → SCEN insert → SCENARIO CLEAR, title credits and the prologue poem.
 
