@@ -49,10 +49,22 @@ def load_plane(path: Path) -> list[np.ndarray]:
     return out
 
 
-def render_line(tiles: list[np.ndarray], scale: int = 6, pad: int = 6) -> np.ndarray:
+UPSCALE = {"nearest": Image.NEAREST, "bicubic": Image.BICUBIC}
+
+
+def render_line(tiles: list[np.ndarray], scale: int = 6,
+                upscale: str = "nearest", pad: int = 6) -> np.ndarray:
+    """A row of tiles, enlarged for the recogniser.
+
+    How the enlargement smooths matters, but less than the context does:
+    measured against the known kana block, bicubic reads 51 of 84 and nearest
+    48, while blurring the enlarged strip makes it steadily worse (36 at radius
+    1.5, 12 at radius 5). Recognising the same tiles inside longer lines is
+    worth far more than either.
+    """
     strip = np.concatenate(tiles, axis=1)
     img = Image.fromarray(255 - strip * 255).resize(
-        (strip.shape[1] * scale, strip.shape[0] * scale), Image.NEAREST)
+        (strip.shape[1] * scale, strip.shape[0] * scale), UPSCALE[upscale])
     canvas = Image.new("L", (img.width + 2 * pad, img.height + 2 * pad), 255)
     canvas.paste(img, (pad, pad))
     return np.array(canvas.convert("RGB"))
@@ -149,6 +161,8 @@ def main() -> None:
                     help="stop feeding a slot once this many lines have named it")
     ap.add_argument("--max-line", type=int, default=14, help="glyphs per rendered line")
     ap.add_argument("--batch", type=int, default=32)
+    ap.add_argument("--scale", type=int, default=6, help="pixel scale of a rendered line")
+    ap.add_argument("--upscale", choices=sorted(UPSCALE), default="bicubic")
     ap.add_argument("--model", default="PP-OCRv5_server_rec")
     args = ap.parse_args()
 
@@ -170,7 +184,8 @@ def main() -> None:
             window = [s for s in slots[k:k + args.max_line] if s < len(tiles)]
             if len(window) < 2:
                 continue
-            lines.append((window, render_line([tiles[s] for s in window])))
+            lines.append((window, render_line([tiles[s] for s in window],
+                                              args.scale, args.upscale)))
             for s in window:
                 if s in wanted:
                     votes[s][""] += 0

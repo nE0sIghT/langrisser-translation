@@ -209,3 +209,67 @@ is what a naive extractor would report. The duplication is 4.6× overall.
 
 For scale, the Langrisser V pack carries 10,244 translated script records, so
 the two games together are somewhat larger than the project's current corpus.
+
+## Reading the plane
+
+The slot→character map is the one piece a translation cannot start without, and
+it is not finished. What is measured so far, all against the 84 kana slots whose
+characters are known from the plane itself and confirmed by the character-name
+table decoding as the cast of both games:
+
+| Method | Correct |
+| --- | --- |
+| Template match against PixelMplus, whole L5 charset as candidates | 34 / 84 |
+| Tesseract `jpn`, `--psm 10`, one tile at a time | 8 / 84 |
+| PaddleOCR `PP-OCRv5_server_rec`, one tile at a time | 23 / 84 |
+| PaddleOCR, tiles rendered as a line of 12 | 58 / 84 |
+
+Two things that read as obvious are wrong. Template matching against a modern
+12-pixel Japanese font does not work: this font draws in an 11 × 11 box at
+offset (0, 1), a modern one fills 12 × 12, and a one-pixel stroke shift is
+already a larger distance than a genuinely different character. And smoothing
+the enlarged tiles hurts rather than helps — bicubic enlargement reads 51 of 84
+where nearest reads 48, but blurring on top drops it to 36 at radius 1.5 and 12
+at radius 5.
+
+What does work is context. A tile on its own is unreadable in principle at this
+size: ア and 了, エ and 工, カ and 力, ヌ and 又 are the same drawing, and a
+per-tile recogniser answers with the wrong script about as often as the right
+one — every single-tile miss above is a homoglyph, not a failure to see the
+shape. Rendering the game's own strings back as lines and letting each position
+vote is what disambiguates them, exactly as it does for a human reader.
+
+`langrisser/recognize_glyph_plane.py` does that: it walks the script, renders
+each distinct string as a line of tiles, recognises the line, and counts a slot
+confirmed when at least three lines name it and at least four in five agree.
+
+### Where the first pass got to
+
+Seeded with the 84 kana and run over both scripts — 20,977 lines, of which
+16,613 came back the same length as the input and could be aligned:
+
+| | Slots |
+| --- | ---: |
+| Confirmed | 1,032 of 1,536 |
+| of those, kana and full-width | 234 |
+| of those, kanji | 851 |
+| Unconfirmed | 504 |
+
+**The kana are right and the kanji are not.** Decoding the item and character
+tables with this map returns them cleanly — `エルウィン`, `ナイフ`,
+`ウォーハンマー`, `グレートソード`, `ラングリッサー` — while the kanji-heavy
+parts come back as plausible-looking nonsense. The agreement threshold admits
+wrong kanji because a homoglyph is wrong the same way in every line it appears
+in, so repetition confirms it.
+
+This is the same place the Langrisser V map was in at this stage: its
+`source` column still records 87 slots fixed by hand as Japanese-variant
+confusions and 79 confirmed from context on top of the recogniser's output.
+
+### What the next pass needs
+
+- A candidate set per slot rather than one answer, so a wrong homoglyph can be
+  overridden without re-recognising.
+- Agreement across *different* words weighted above repetition of the same one.
+- A pass that reads the decoded text as Japanese and corrects what does not
+  form words — which is what caught the Langrisser V errors.
