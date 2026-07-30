@@ -100,15 +100,15 @@ there:
 ```text
 iso/
   l5-ps1-jp/     four Redump tracks  + .cue   # PPF patch, and the common reference
-  l5-saturn-jp/  LANGRISSER_5.bin    + .cue   # Saturn build
+  l5-saturn-jp/  six Redump tracks   + .cue   # Saturn build
   l4-ps1-jp/     three Redump tracks + .cue   # Langrisser IV
 ```
 
-Dumps keep the file names their dumper gave them, so the shape of a directory
-follows the rip: the PlayStation discs are dumped one file per track, the Saturn
-one as a single mixed-mode image. Only `media.image` has to name the data track,
-which is why swapping in a differently named rip is a manifest edit and not a
-rename.
+Dumps keep the file names their dumper gave them, and every disc here is now
+dumped one file per track. Only `media.image` has to name the entry point — the
+data track for a PlayStation disc, the cue for the Saturn one, whose builder
+reads the whole disc — which is why swapping in a differently named rip is a
+manifest edit and not a rename.
 
 Every disc here is a mixed-mode CD, so a whole-image hash means nothing across
 rips: it depends on where that rip decided to keep the audio pregaps. What is
@@ -123,6 +123,12 @@ three match their Redump entries exactly:
 
 The PlayStation audio tracks match Redump too, but nothing reads them: the
 patch stays inside track 1, so it applies to the track-1 file on its own.
+
+Langrisser V shipped on Saturn twice — on its own and as disc 4 of the
+*Langrisser Tribute* box — pressed from one data master, so only the audio
+tells the two apart. The dump here has the Tribute audio; the data track, which
+is the whole of what the build reads, is the same either way, and the disc calls
+itself `T-2509G` in both pressings.
 
 The Saturn fingerprint is recorded in that release's manifest, so its disc can
 check itself:

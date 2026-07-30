@@ -8,11 +8,16 @@ tracks, filenames, on-disc word order and executable code.
 
 ## Current Status
 
-Working target image:
+Working target image: the six-track dump in `iso/l5-saturn-jp/`, named by
+`media.image` in the release manifest. Only data track 1 is fingerprinted,
+because a whole-image hash says nothing across rips — it depends on where the
+rip keeps the audio pregaps:
 
-| Path | Size | CRC32 | SHA-1 prefix |
-| --- | ---: | --- | --- |
-| `iso/l5-saturn-jp/LANGRISSER_5.bin` | `507074736` | `5E63C92F` | `8ef76305fe27` |
+| Track | Sectors | CRC32 | MD5 | SHA-1 |
+| --- | ---: | --- | --- | --- |
+| 1 | `61901` | `ef034bde` | `37685a3ac74ac252abb2d01ea6987c73` | `b90529e379efde5787693ffda6fff53fddd7c2ee` |
+
+`python3 -m langrisser.saturn_disc verify` checks it against that record.
 
 The image is a Sega Saturn mixed-mode disc. Sector 0 user data starts with:
 
@@ -95,16 +100,25 @@ tracked.
 
 ## Track Layout
 
-From `iso/l5-saturn-jp/LANGRISSER_5.cue`:
+Disc addresses, as `python3 -m langrisser.saturn_disc info` reports them. The
+dump keeps one file per track, so each track's own INDEX values start from
+zero; adding the sectors of the files before it gives the disc address, which
+is what ISO9660 extents are written in:
 
-| Track | Mode | INDEX 01 | LBA | Raw byte offset | Notes |
-| --- | --- | --- | ---: | ---: | --- |
-| 1 | `MODE1/2352` | `00:00:00` | `0` | `0` | Saturn boot sector and ISO9660 filesystem |
-| 2 | `MODE2/2352` | `13:45:26` | `61901` | `145591152` | CD-XA/ADPCM payload sectors |
-| 3 | `AUDIO` | `39:18:12` | `176862` | `415979424` | CD audio |
-| 4 | `AUDIO` | `39:47:43` | `179068` | `421167936` | CD audio |
-| 5 | `AUDIO` | `41:12:67` | `185467` | `436218384` | CD audio |
-| 6 | `AUDIO` | `46:30:57` | `209307` | `492290064` | CD audio |
+| Track | Mode | Start LBA | Data LBA | Raw byte offset | Notes |
+| --- | --- | ---: | ---: | ---: | --- |
+| 1 | `MODE1/2352` | `0` | `0` | `0` | Saturn boot sector and ISO9660 filesystem |
+| 2 | `MODE2/2352` | `61901` | `62126` | `146120352` | CD-XA/ADPCM payload sectors |
+| 3 | `AUDIO` | `177087` | `177237` | `416861424` | CD audio |
+| 4 | `AUDIO` | `179293` | `179443` | `422049936` | CD audio |
+| 5 | `AUDIO` | `185692` | `185842` | `437100384` | CD audio |
+| 6 | `AUDIO` | `209532` | `209682` | `493172064` | CD audio |
+
+Start LBA is where the track begins and data LBA where its data does; between
+them sits the pregap. A dump that stores its pregaps, as this one does, is the
+disc address space outright. A dump that declares them with `PREGAP` instead is
+that many sectors shorter, and `saturn_disc` subtracts the difference when it
+turns an ISO extent into an offset into the image.
 
 Confirmed sector user-data offsets:
 

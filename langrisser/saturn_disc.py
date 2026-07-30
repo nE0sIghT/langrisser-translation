@@ -38,18 +38,71 @@ MODE1_ECC_END = 0x930
 class Track:
     number: int
     mode: str
-    index_lba: int
-    pregap_frames: int = 0
+    start_lba: int          # where the track begins, pregap included
+    index_lba: int          # where its data begins (INDEX 01)
+    pregap_frames: int = 0  # declared by PREGAP, so absent from the image
 
     @property
     def raw_offset(self) -> int:
         return self.index_lba * SECTOR_RAW_SIZE
 
 
+class TrackImage:
+    """Read-only view of a disc image, whichever shape the dump has.
+
+    A cue either keeps the whole disc in one file or one file per track. The
+    files are consecutive areas of the same disc, so joining them gives one
+    address space and the rest of this module never has to know which shape it
+    was handed.
+    """
+
+    def __init__(self, paths: tuple[Path, ...]):
+        self.paths = paths
+        self.sizes = tuple(path.stat().st_size for path in paths)
+        self.size = sum(self.sizes)
+        self._starts = tuple(sum(self.sizes[:i]) for i in range(len(paths)))
+        self._handles: list = []
+        self._pos = 0
+
+    def __enter__(self) -> "TrackImage":
+        self._handles = [path.open("rb") for path in self.paths]
+        return self
+
+    def __exit__(self, *_exc) -> None:
+        for handle in self._handles:
+            handle.close()
+        self._handles = []
+
+    def seek(self, offset: int, whence: int = 0) -> int:
+        self._pos = offset if whence == 0 else self._pos + offset
+        return self._pos
+
+    def tell(self) -> int:
+        return self._pos
+
+    def read(self, size: int) -> bytes:
+        out = bytearray()
+        while size > 0 and self._pos < self.size:
+            for i, start in enumerate(self._starts):
+                if start <= self._pos < start + self.sizes[i]:
+                    break
+            else:
+                break
+            handle = self._handles[i]
+            handle.seek(self._pos - start)
+            chunk = handle.read(min(size, start + self.sizes[i] - self._pos))
+            if not chunk:
+                break
+            out += chunk
+            self._pos += len(chunk)
+            size -= len(chunk)
+        return bytes(out)
+
+
 @dataclass(frozen=True)
 class CueSheet:
     cue_path: Path
-    bin_path: Path
+    files: tuple[Path, ...]
     tracks: tuple[Track, ...]
 
     def track(self, number: int) -> Track:
@@ -57,6 +110,24 @@ class CueSheet:
             if track.number == number:
                 return track
         raise KeyError(f"track {number:02d} not found")
+
+    def open(self) -> TrackImage:
+        return TrackImage(self.files)
+
+    @property
+    def size(self) -> int:
+        return sum(path.stat().st_size for path in self.files)
+
+    def unstored_pregap_through(self, number: int) -> int:
+        """Pregap sectors the image does not store, up to and including a track.
+
+        A cue states a pregap one of two ways: `PREGAP` means the sectors are
+        silence the player generates, so the image skips them; an `INDEX 00`
+        means they are in the image. Disc addresses count them either way, so
+        this is what separates a disc address from an image address.
+        """
+        return sum(track.pregap_frames for track in self.tracks
+                   if track.number <= number)
 
 
 @dataclass(frozen=True)
@@ -173,12 +244,17 @@ def rebuild_mode1_sector(lba: int, user: bytes | bytearray) -> bytes:
 
 
 def parse_cue(cue_path: Path) -> CueSheet:
+    """Read a cue as one disc, however many files the dump splits it into.
+
+    Track positions in a cue are relative to the file that holds the track, so
+    a per-track dump states them all from zero. Adding the sectors of the files
+    before it turns each one back into the disc address the ISO9660 extents and
+    every caller here are written in.
+    """
     cue_path = cue_path.resolve()
-    bin_path: Path | None = None
-    tracks: list[Track] = []
-    current_number: int | None = None
-    current_mode: str | None = None
-    current_pregap = 0
+    files: list[Path] = []
+    raw_tracks: list[dict] = []
+    current: dict | None = None
 
     for raw in cue_path.read_text(encoding="utf-8", errors="replace").splitlines():
         line = raw.strip()
@@ -186,35 +262,47 @@ def parse_cue(cue_path: Path) -> CueSheet:
             continue
         m = re.match(r'FILE\s+"([^"]+)"\s+BINARY', line, flags=re.IGNORECASE)
         if m:
-            bin_path = (cue_path.parent / m.group(1)).resolve()
+            files.append((cue_path.parent / m.group(1)).resolve())
             continue
         m = re.match(r"TRACK\s+(\d+)\s+(\S+)", line, flags=re.IGNORECASE)
         if m:
-            current_number = int(m.group(1))
-            current_mode = m.group(2).upper()
-            current_pregap = 0
+            current = {"number": int(m.group(1)), "mode": m.group(2).upper(),
+                       "file": len(files) - 1, "pregap": 0,
+                       "index00": None, "index01": None}
+            raw_tracks.append(current)
             continue
         m = re.match(r"PREGAP\s+(\d\d:\d\d:\d\d)", line, flags=re.IGNORECASE)
-        if m:
-            current_pregap = mmssff_to_lba(m.group(1))
+        if m and current is not None:
+            current["pregap"] = mmssff_to_lba(m.group(1))
             continue
-        m = re.match(r"INDEX\s+01\s+(\d\d:\d\d:\d\d)", line, flags=re.IGNORECASE)
-        if m and current_number is not None and current_mode is not None:
-            tracks.append(
-                Track(
-                    number=current_number,
-                    mode=current_mode,
-                    index_lba=mmssff_to_lba(m.group(1)),
-                    pregap_frames=current_pregap,
-                )
-            )
+        m = re.match(r"INDEX\s+(\d+)\s+(\d\d:\d\d:\d\d)", line, flags=re.IGNORECASE)
+        if m and current is not None and int(m.group(1)) in (0, 1):
+            current[f"index{int(m.group(1)):02d}"] = mmssff_to_lba(m.group(2))
             continue
 
-    if bin_path is None:
+    if not files:
         raise ValueError(f"no BINARY FILE entry in {cue_path}")
+    missing = [path for path in files if not path.exists()]
+    if missing:
+        raise FileNotFoundError(
+            f"{cue_path} names files that are not there: "
+            + ", ".join(path.name for path in missing))
+    sizes = [path.stat().st_size for path in files]
+    file_start = [sum(sizes[:i]) // SECTOR_RAW_SIZE for i in range(len(files))]
+
+    tracks = []
+    for item in raw_tracks:
+        if item["index01"] is None:
+            continue
+        base = file_start[item["file"]]
+        index_lba = base + item["index01"]
+        start = base + item["index00"] if item["index00"] is not None else index_lba
+        tracks.append(Track(number=item["number"], mode=item["mode"],
+                            start_lba=start, index_lba=index_lba,
+                            pregap_frames=item["pregap"]))
     if not tracks:
         raise ValueError(f"no tracks in {cue_path}")
-    return CueSheet(cue_path=cue_path, bin_path=bin_path, tracks=tuple(tracks))
+    return CueSheet(cue_path=cue_path, files=tuple(files), tracks=tuple(tracks))
 
 
 def read_raw_sector(fh, lba: int) -> bytes:
@@ -324,7 +412,7 @@ def read_pvd(fh, track1: Track) -> bytes:
 def walk_iso(cue: CueSheet) -> list[IsoEntry]:
     track1 = cue.track(1)
     entries: list[IsoEntry] = []
-    with cue.bin_path.open("rb") as fh:
+    with cue.open() as fh:
         pvd = read_pvd(fh, track1)
         root_rec = pvd[156:190]
         root_lba = struct.unpack_from("<I", root_rec, 2)[0]
@@ -355,7 +443,7 @@ def extract_iso_file(cue: CueSheet, path: str, out_path: Path) -> None:
     if entry is None or entry.is_dir:
         raise FileNotFoundError(path)
     track1 = cue.track(1)
-    with cue.bin_path.open("rb") as fh:
+    with cue.open() as fh:
         payload = read_mode1_user_bytes(fh, track1, entry.extent_lba, entry.size)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_bytes(payload)
@@ -457,26 +545,27 @@ def parse_replacement(value: str) -> tuple[str, Path]:
     return iso_path, Path(local)
 
 
-def shifted_cue_text(cue: CueSheet, out_bin: Path, sector_delta: int) -> str:
-    current_track = 0
-    out: list[str] = []
-    for raw in cue.cue_path.read_text(encoding="utf-8", errors="replace").splitlines():
-        line = raw.rstrip("\r\n")
-        m = re.match(r'(\s*)FILE\s+"([^"]+)"\s+BINARY(.*)', line, flags=re.IGNORECASE)
-        if m:
-            out.append(f'{m.group(1)}FILE "{out_bin.name}" BINARY{m.group(3)}')
-            continue
-        m = re.match(r"(\s*)TRACK\s+(\d+)\s+(\S+)(.*)", line, flags=re.IGNORECASE)
-        if m:
-            current_track = int(m.group(2))
-            out.append(line)
-            continue
-        m = re.match(r"(\s*)INDEX\s+(\d+)\s+(\d\d:\d\d:\d\d)(.*)", line, flags=re.IGNORECASE)
-        if m and current_track >= 2:
-            new_lba = mmssff_to_lba(m.group(3)) + sector_delta
-            out.append(f"{m.group(1)}INDEX {m.group(2)} {lba_to_mmssff(new_lba)}{m.group(4)}")
-            continue
-        out.append(line)
+def remastered_cue_text(cue: CueSheet, out_bin: Path,
+                        insert_lba: int, sector_delta: int) -> str:
+    """A cue for the single remastered BIN.
+
+    The source may be split one file per track, but the remaster joins the disc
+    into one image, so the output cue is written from the track model rather
+    than edited from the source text. Each position moves on its own: sectors
+    were inserted at `insert_lba`, so a track's stored pregap can sit before the
+    insertion and stay put while the track's data moves.
+    """
+    def moved(lba: int) -> int:
+        return lba + sector_delta if lba >= insert_lba else lba
+
+    out = [f'FILE "{out_bin.name}" BINARY']
+    for track in cue.tracks:
+        out.append(f"  TRACK {track.number:02d} {track.mode}")
+        if track.pregap_frames:
+            out.append(f"    PREGAP {lba_to_mmssff(track.pregap_frames)}")
+        elif track.start_lba != track.index_lba:
+            out.append(f"    INDEX 00 {lba_to_mmssff(moved(track.start_lba))}")
+        out.append(f"    INDEX 01 {lba_to_mmssff(moved(track.index_lba))}")
     return "\n".join(out) + "\n"
 
 
@@ -493,7 +582,10 @@ def remaster_disc(cue: CueSheet, replacements: list[tuple[str, Path]],
         normalized.append((iso_path, ent, local, size))
 
     grown = [(iso_path, ent, local, size) for iso_path, ent, local, size in normalized if size > ent.size]
-    append_lba = cue.track(2).index_lba
+    # Grown files go into fresh sectors opened where track 2 begins, so they
+    # stay MODE1 data at the end of track 1. Track 2 starts at its pregap when
+    # the dump stores one, and pushing that along keeps the whole track intact.
+    append_lba = cue.track(2).start_lba
     append_cursor = append_lba
     replacement_extents: dict[str, tuple[int, int]] = {}
     for iso_path, ent, _local, size in grown:
@@ -502,13 +594,16 @@ def remaster_disc(cue: CueSheet, replacements: list[tuple[str, Path]],
     sector_delta = append_cursor - append_lba
 
     out_bin.parent.mkdir(parents=True, exist_ok=True)
-    original = cue.bin_path.read_bytes()
     insert_at = append_lba * SECTOR_RAW_SIZE
-    out_bin.write_bytes(
-        original[:insert_at]
-        + b"\x00" * (sector_delta * SECTOR_RAW_SIZE)
-        + original[insert_at:]
-    )
+    with cue.open() as src, out_bin.open("wb") as dst:
+        remaining = insert_at
+        while remaining > 0:
+            chunk = src.read(min(remaining, 1 << 24))
+            dst.write(chunk)
+            remaining -= len(chunk)
+        dst.write(b"\x00" * (sector_delta * SECTOR_RAW_SIZE))
+        while (chunk := src.read(1 << 24)):
+            dst.write(chunk)
 
     updates: dict[str, tuple[int, int]] = {}
     for iso_path, ent, _local, size in normalized:
@@ -531,7 +626,8 @@ def remaster_disc(cue: CueSheet, replacements: list[tuple[str, Path]],
             write_file_payload(cue, fh, extent, local.read_bytes())
 
     out_cue.parent.mkdir(parents=True, exist_ok=True)
-    out_cue.write_text(shifted_cue_text(cue, out_bin, sector_delta), encoding="utf-8")
+    out_cue.write_text(remastered_cue_text(cue, out_bin, append_lba, sector_delta),
+                       encoding="utf-8")
     print(
         f"remastered Saturn image -> {out_bin} ({out_bin.stat().st_size} bytes), "
         f"cue -> {out_cue}, shifted tracks by {sector_delta} sectors"
@@ -549,13 +645,19 @@ def _xa_entries(cue: CueSheet) -> list[IsoEntry]:
 
 
 def xa_logical_to_physical_lba(cue: CueSheet, logical_lba: int) -> int:
-    return logical_lba - cue.track(2).pregap_frames
+    """Turn an ISO9660 extent into an offset into the image.
+
+    ISO extents are disc addresses, which count every pregap. A dump that
+    declares a pregap instead of storing it is that many sectors shorter, so
+    what separates the two is exactly the pregap the image left out.
+    """
+    return logical_lba - cue.unstored_pregap_through(2)
 
 
 def xa_sector_spans(cue: CueSheet) -> list[tuple[IsoEntry, int, int]]:
     entries = sorted(_xa_entries(cue), key=lambda ent: ent.extent_lba)
     out: list[tuple[IsoEntry, int, int]] = []
-    with cue.bin_path.open("rb") as fh:
+    with cue.open() as fh:
         for i, ent in enumerate(entries):
             physical = xa_logical_to_physical_lba(cue, ent.extent_lba)
             if i + 1 < len(entries):
@@ -576,7 +678,7 @@ def xa_info(cue: CueSheet) -> dict:
     spans = xa_sector_spans(cue)
     subheaders: dict[str, int] = {}
     eof_count = 0
-    with cue.bin_path.open("rb") as fh:
+    with cue.open() as fh:
         for _ent, physical, sectors in spans:
             for sector in range(sectors):
                 raw = read_raw_sector(fh, physical + sector)
@@ -620,7 +722,7 @@ def extract_xa_raw(cue: CueSheet, path: str, out_path: Path) -> None:
         raise FileNotFoundError(path)
     _ent, physical, sectors = match
     out = bytearray()
-    with cue.bin_path.open("rb") as fh:
+    with cue.open() as fh:
         for sector in range(sectors):
             out += read_raw_sector(fh, physical + sector)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -631,8 +733,8 @@ def cmd_info(args: argparse.Namespace) -> None:
     cue = parse_cue(Path(args.cue))
     print(json.dumps({
         "cue": str(cue.cue_path),
-        "bin": str(cue.bin_path),
-        "bin_size": cue.bin_path.stat().st_size,
+        "files": [{"name": path.name, "size": path.stat().st_size} for path in cue.files],
+        "image_size": cue.size,
         "tracks": [asdict(track) | {"raw_offset": track.raw_offset} for track in cue.tracks],
     }, indent=2))
 
@@ -685,10 +787,12 @@ def cmd_verify(args: argparse.Namespace) -> None:
 
     cue = parse_cue(Path(args.cue))
     track1 = cue.track(1)
-    end = cue.track(2).index_lba if len(cue.tracks) > 1 else None
-    sectors = (end or 0) - track1.index_lba
-    with cue.bin_path.open("rb") as fh:
-        fh.seek(track1.raw_offset)
+    # Track 1 runs to where track 2 begins, which is its pregap when the dump
+    # stores one, not where track 2's data starts.
+    end = cue.track(2).start_lba if len(cue.tracks) > 1 else cue.size // SECTOR_RAW_SIZE
+    sectors = end - track1.start_lba
+    with cue.open() as fh:
+        fh.seek(track1.start_lba * SECTOR_RAW_SIZE)
         blob = fh.read(sectors * SECTOR_RAW_SIZE)
     have = {
         "sectors": sectors,
