@@ -95,8 +95,13 @@ there:
 iso/
   l5-ps1-jp/     SLPS-01818-9-B.bin  + .cue   # PPF patch, and the common reference
   l5-saturn-jp/  LANGRISSER_5.bin    + .cue   # Saturn build
-  l4-ps1-jp/     SLPS-01818.bin      + .cue   # Langrisser IV
+  l4-ps1-jp/     three redump tracks + .cue   # Langrisser IV
 ```
+
+Dumps keep the file names their dumper gave them, so the shape of a directory
+follows the rip: `l4-ps1-jp` holds one file per track, the other two hold a
+single track-1 image. Only `media.image` has to name the data track, which is
+why swapping in a differently named rip is a manifest edit and not a rename.
 
 The `l5-ps1-jp` cue names its track file in upper case, so that directory also
 holds an `SLPS-01818-9-B.BIN` symlink; the cue is authentic dump data and is not
@@ -233,8 +238,9 @@ live under `/L4`, and it has no `SCEN2.DAT`):
 
 ```bash
 mkdir -p work/l4
-python3 -m langrisser.iso_mode2 iso/l4-ps1-jp/SLPS-01818.bin extract /L4/SCEN.DAT   work/l4/SCEN.DAT
-python3 -m langrisser.iso_mode2 iso/l4-ps1-jp/SLPS-01818.bin extract /L4/SYSTEM.BIN work/l4/SYSTEM.BIN
+L4BIN='iso/l4-ps1-jp/Langrisser IV & V - Final Edition (Japan) (Disc 1) (Langrisser IV Disc) (Track 1).bin'
+python3 -m langrisser.iso_mode2 "$L4BIN" extract /L4/SCEN.DAT   work/l4/SCEN.DAT
+python3 -m langrisser.iso_mode2 "$L4BIN" extract /L4/SYSTEM.BIN work/l4/SYSTEM.BIN
 python3 -m langrisser.scendump     --game l4 --scen work/l4/SCEN.DAT --out-dir work/l4/scriptdump
 python3 -m langrisser.system_dump  --game l4 --system-bin work/l4/SYSTEM.BIN --out work/l4/system_strings.json
 ```
