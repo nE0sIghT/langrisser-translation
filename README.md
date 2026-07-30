@@ -38,12 +38,18 @@ patch outputs are not tracked.
 
 ## Patch Use
 
-Provide your own original Langrisser V disc image. The patch modifies only the
-`.bin`; the `.cue` is unchanged.
+Provide your own original Langrisser V disc image. The patch writes inside the
+data track only; the audio tracks and the `.cue` are unchanged.
 
-- DuckStation: put the language PPF next to your `.bin` and run the game.
-- Other emulators: apply the PPF3 patch to the `.bin` with a PPF tool, then keep
-  the original `.cue`.
+- If your dump keeps one file per track, patch the track 1 `.bin`.
+- If it is a single merged image, patch that: track 1 starts the file, so the
+  same records land on the same bytes.
+- DuckStation: put the language PPF next to the disc image and run the game.
+- Other emulators: apply the PPF3 patch with a PPF tool, then keep the original
+  `.cue`.
+
+The patch carries a PPF3 validation block, so a tool will refuse an image whose
+data track is not the one the patch was built against.
 
 Generated patch names:
 
