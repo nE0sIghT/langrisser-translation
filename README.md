@@ -31,6 +31,21 @@ exactly one release there.
 | `l5-ps1-jp` | `l5` | `SLPS-01819`, disc B of the two-disc set | complete: PS1 PPF patch |
 | `l5-saturn-jp` | `l5` | `T-2509G` | complete: remastered BIN/CUE |
 | `l4-ps1-jp` | `l4` | `SLPS-01818`, disc A | base only: formats verified, font map derived, empty packs |
+| `l1-2-ps1-jp` | `l1`, `l2` | `SLPM 86798` | next goal: disc analysed, see `docs/L1_2_DISC_FORMAT.md` |
+
+## Next Goal — Langrisser I & II in Russian
+
+The next target is a Russian translation of **Langrisser I & II** (PS1,
+`SLPM 86798`), made from the Japanese, as everything here is. The disc holds
+two complete games with one file set each, so it enters the model as one
+release naming two games.
+
+It does not run on the `l45` tooling as it stands. The disc analysis in
+`docs/L1_2_DISC_FORMAT.md` establishes what carries over and what does not:
+the `SCEN.DAT` chunk catalog and the 12 × 12 glyph cell are the same, while the
+record layer, the text codec and the glyph artwork are this game's own. So it
+needs its own engine descriptor rather than a flag on `l45`, and its own
+slot→character map read off its plane.
 
 The repository contains only durable translation data and tooling. Original game
 assets, extracted files, generated Japanese dumps, build products and local
