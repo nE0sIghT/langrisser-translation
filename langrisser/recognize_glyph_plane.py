@@ -22,14 +22,19 @@ from __future__ import annotations
 
 import argparse
 import csv
+import multiprocessing as mp
 import os
 import struct
+import subprocess
+import tempfile
 import warnings
 from collections import Counter, defaultdict
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
+
+_WORKER: dict = {}
 
 warnings.filterwarnings("ignore")
 os.environ.setdefault("GLOG_minloglevel", "3")
@@ -49,25 +54,50 @@ def load_plane(path: Path) -> list[np.ndarray]:
     return out
 
 
-UPSCALE = {"nearest": Image.NEAREST, "bicubic": Image.BICUBIC}
-
-
 def render_line(tiles: list[np.ndarray], scale: int = 6,
-                upscale: str = "nearest", pad: int = 6) -> np.ndarray:
+                xbrz_factor: int = 6, filters: str = "",
+                pad: int = 6) -> np.ndarray:
     """A row of tiles, enlarged for the recogniser.
 
-    How the enlargement smooths matters, but less than the context does:
-    measured against the known kana block, bicubic reads 51 of 84 and nearest
-    48, while blurring the enlarged strip makes it steadily worse (36 at radius
-    1.5, 12 at radius 5). Recognising the same tiles inside longer lines is
-    worth far more than either.
+    How the enlargement reconstructs the strokes decides most of the result,
+    and only the pixel-art algorithms help. Measured against the known kana
+    block: nearest reads 53 of 84, hqx 63, xbr 64, xBRZ 73, and xBRZ into xbr
+    75, while plain interpolation gains nothing (bicubic 51) and blurring the
+    enlarged strip makes it worse - 36 at radius 1.5, 12 at radius 5.
     """
+    import xbrz
+
     strip = np.concatenate(tiles, axis=1)
-    img = Image.fromarray(255 - strip * 255).resize(
-        (strip.shape[1] * scale, strip.shape[0] * scale), UPSCALE[upscale])
+    img = Image.fromarray(255 - strip * 255).convert("RGBA")
+    if xbrz_factor > 1:
+        img = xbrz.scale_pillow(img, xbrz_factor)
+    img = img.convert("RGB")
+    if filters:
+        with tempfile.TemporaryDirectory(prefix="glyph_line_") as td:
+            src, dst = Path(td) / "in.png", Path(td) / "out.png"
+            img.save(src)
+            subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", str(src),
+                            "-vf", filters, str(dst)], check=True)
+            img = Image.open(dst).convert("L")
+    else:
+        img = img.convert("L")
+    want = strip.shape[1] * scale
+    if img.width < want:
+        factor = max(1, want // img.width)
+        img = img.resize((img.width * factor, img.height * factor), Image.NEAREST)
     canvas = Image.new("L", (img.width + 2 * pad, img.height + 2 * pad), 255)
     canvas.paste(img, (pad, pad))
     return np.array(canvas.convert("RGB"))
+
+
+def _render_worker(job):
+    """Render one line in a pool worker; tiles are shared once via an initializer."""
+    window, scale, factor, filters = job
+    return render_line([_WORKER["tiles"][s] for s in window], scale, factor, filters)
+
+
+def _init_worker(tiles):
+    _WORKER["tiles"] = tiles
 
 
 # --- the L1&2 script container, only as far as reading its text needs ---
@@ -160,9 +190,22 @@ def main() -> None:
     ap.add_argument("--votes", type=int, default=6,
                     help="stop feeding a slot once this many lines have named it")
     ap.add_argument("--max-line", type=int, default=14, help="glyphs per rendered line")
-    ap.add_argument("--batch", type=int, default=32)
+    ap.add_argument("--batch", type=int, default=128)
+    ap.add_argument("--jobs", type=int, default=os.cpu_count() or 8,
+                    help="processes rendering lines while the model runs")
+    ap.add_argument("--max-lines", type=int, default=0,
+                    help="stop after this many lines; 0 means all")
+    ap.add_argument("--device", default=None,
+                    help="paddle device, e.g. gpu or cpu; default is paddle's own")
     ap.add_argument("--scale", type=int, default=6, help="pixel scale of a rendered line")
-    ap.add_argument("--upscale", choices=sorted(UPSCALE), default="bicubic")
+    ap.add_argument("--xbrz", type=int, default=6,
+                    help="xBRZ magnification; 1 disables it")
+    ap.add_argument("--filters", default="",
+                    help="ffmpeg filter chain applied after xBRZ. It costs a "
+                         "subprocess per line, so it is off by default: xbr=2 "
+                         "on top of xBRZ reads 75 of 84 on the known kana "
+                         "against 73 without, which does not pay for thousands "
+                         "of process spawns.")
     ap.add_argument("--model", default="PP-OCRv5_server_rec")
     args = ap.parse_args()
 
@@ -184,25 +227,33 @@ def main() -> None:
             window = [s for s in slots[k:k + args.max_line] if s < len(tiles)]
             if len(window) < 2:
                 continue
-            lines.append((window, render_line([tiles[s] for s in window],
-                                              args.scale, args.upscale)))
+            lines.append(window)
             for s in window:
                 if s in wanted:
                     votes[s][""] += 0
         for s in slots:
             if s in wanted:
                 votes[s]["#lines"] = votes[s].get("#lines", 0)
-    print(f"{len(lines)} lines to recognise")
+    print(f"{len(lines)} lines to recognise", flush=True)
+
+    if args.max_lines:
+        lines = lines[:args.max_lines]
+        print(f"limited to {len(lines)} lines", flush=True)
 
     from paddleocr import TextRecognition
-    model = TextRecognition(model_name=args.model)
+    model = TextRecognition(model_name=args.model,
+                            **({"device": args.device} if args.device else {}))
 
     tally: dict[int, Counter] = defaultdict(Counter)
     aligned = dropped = 0
+    pool = mp.Pool(args.jobs, initializer=_init_worker, initargs=(tiles,))
+    jobs = ((w, args.scale, args.xbrz, args.filters) for w in lines)
+    rendered = pool.imap(_render_worker, jobs, chunksize=16)
     for start in range(0, len(lines), args.batch):
-        batch = lines[start:start + args.batch]
-        results = model.predict([img for _slots, img in batch])
-        for (window, _img), res in zip(batch, results):
+        windows = lines[start:start + args.batch]
+        images = [next(rendered) for _ in windows]
+        results = model.predict(images)
+        for window, res in zip(windows, results):
             text = (res.get("rec_text") or "") if isinstance(res, dict) else ""
             if len(text) != len(window):
                 dropped += 1
@@ -211,8 +262,10 @@ def main() -> None:
             for slot, ch in zip(window, text):
                 tally[slot][ch] += 1
         if start % (args.batch * 20) == 0:
-            print(f"  {start + len(batch)}/{len(lines)} lines, "
-                  f"{aligned} aligned, {dropped} dropped")
+            print(f"  {start + len(windows)}/{len(lines)} lines, "
+                  f"{aligned} aligned, {dropped} dropped", flush=True)
+    pool.close()
+    pool.join()
     print(f"recognised {aligned} lines, dropped {dropped} on length mismatch")
 
     rows = []

@@ -175,7 +175,7 @@ of both games in order, and by every escape bank landing inside the font.
 | Byte | Meaning |
 | --- | --- |
 | `0x00` | end of string |
-| `0x01`–`0x09` | control codes, no operand |
+| `0x01`–`0x09` | control codes; some take the next byte as an operand — see below |
 | `0x0A`–`0xF6` | glyph, slot = byte − `0x0A` (slots 0–236) |
 | `0xF7`–`0xFB` | two bytes: slot = 237 + (byte − `0xF7`) × 256 + next byte (slots 237–1516) |
 
@@ -184,9 +184,30 @@ The five escape banks tile the font exactly: `0xF7` reaches slots 237–492,
 1506 in Langrisser I and 1494 in Langrisser II. `0xFC`–`0xFF` never appear in a
 text part, which is the check that says the banks stop at `0xFB`.
 
-Control-code frequency, over both scripts: `0x04` and `0x08` dominate (29,033
-and 24,901 in Langrisser II), then `0x05` (10,836). Their meanings are not yet
-proven and are the next thing to establish.
+Control-code frequency over both scripts, and what follows each one:
+
+| Code | Count | Distinct next bytes | Reading |
+| --- | ---: | ---: | --- |
+| `0x01` | 508 | 30 | operand |
+| `0x02` | 3,090 | 33 | operand |
+| `0x03` | 681 | 25 | operand |
+| `0x04` | 31,641 | 239 | bare; ordinary text follows |
+| `0x05` | 12,811 | 101 | bare; often doubled |
+| `0x06` | 6,029 | 22 | pairs with `0x07` 5,862 times of 6,029 |
+| `0x07` | 5,960 | 140 | bare |
+| `0x08` | 26,422 | 190 | bare |
+| `0x09` | 3,650 | 52 | operand, and a small one — the top followers are `0x01`, `0x16`, `0x0C`, `0x0B`, `0x13` |
+
+**Some of these take an operand, and that matters more than it looks.** A code
+whose next byte ranges over almost the whole alphabet is bare — real text
+follows it. One whose next byte is drawn from a couple of dozen low values is
+consuming that byte, and `0x09` is the clearest: decoded text puts it right
+before what reads as a character name, so it is almost certainly a name
+reference of the kind `l45` writes as `0xFB00`–`0xFBFF`.
+
+Which codes take an operand is not yet proven, only indicated, and it has to be
+settled before the text can be read — an operand byte decoded as a glyph is a
+character that was never on screen.
 
 Against `l45`: that engine reads `u16` tokens, treats everything below `0xE000`
 as a glyph index and ends a record with `0xFFFx`. This one is byte-oriented with
@@ -243,33 +264,40 @@ vote is what disambiguates them, exactly as it does for a human reader.
 each distinct string as a line of tiles, recognises the line, and counts a slot
 confirmed when at least three lines name it and at least four in five agree.
 
-### Where the first pass got to
+### Where the passes got to
 
-Seeded with the 84 kana and run over both scripts — 20,977 lines, of which
-16,613 came back the same length as the input and could be aligned:
+Seeded with the 84 kana and run over both scripts. The enlargement is the whole
+difference between the two runs — same lines, same model, same thresholds:
 
-| | Slots |
-| --- | ---: |
-| Confirmed | 1,032 of 1,536 |
-| of those, kana and full-width | 234 |
-| of those, kanji | 851 |
-| Unconfirmed | 504 |
+| Enlargement | Lines aligned | Slots confirmed |
+| --- | ---: | ---: |
+| Nearest-neighbour | 16,613 of 20,977 | 1,032 of 1,536 |
+| xBRZ ×6 | 19,486 of 20,977 | 1,075 of 1,536 |
 
-**The kana are right and the kanji are not.** Decoding the item and character
-tables with this map returns them cleanly — `エルウィン`, `ナイフ`,
-`ウォーハンマー`, `グレートソード`, `ラングリッサー` — while the kanji-heavy
-parts come back as plausible-looking nonsense. The agreement threshold admits
-wrong kanji because a homoglyph is wrong the same way in every line it appears
-in, so repetition confirms it.
+A line is only counted when the recogniser returns exactly as many characters
+as it was given, so the jump from 16,613 to 19,486 is the recogniser losing its
+place far less often. The two maps agree on 992 slots and disagree on 1.
 
-This is the same place the Langrisser V map was in at this stage: its
-`source` column still records 87 slots fixed by hand as Japanese-variant
-confusions and 79 confirmed from context on top of the recogniser's output.
+**The kana are right and the kanji are not**, in both. Decoding the item and
+character tables returns them cleanly — `エルウィン`, `ナイフ`,
+`ウォーハンマー`, `グレートソード`, `ラングリッサー` — and dialogue comes back
+half-readable: `ハァ、ハァ……ついに、`, `アッハハハハハハハハハハッ！` sit next
+to kanji that form no word.
+
+The cause is now visible in that same decode, and it is not the recogniser: the
+control codes above appear *inside* words, in places a character belongs. Their
+operand bytes were rendered as glyphs and fed to the model as part of the line,
+so every line carrying one taught it a character that was never there. Reading
+the plane cannot get much further until the operands are settled.
 
 ### What the next pass needs
 
+- The control-code operands settled first, so no line contains a glyph that is
+  not a glyph.
 - A candidate set per slot rather than one answer, so a wrong homoglyph can be
   overridden without re-recognising.
-- Agreement across *different* words weighted above repetition of the same one.
-- A pass that reads the decoded text as Japanese and corrects what does not
-  form words — which is what caught the Langrisser V errors.
+- Agreement across *different* words weighted above repetition of the same one:
+  a homoglyph is wrong the same way every time, so repetition confirms it.
+- A pass that reads the decoded text as Japanese and corrects what does not form
+  words — which is what caught the Langrisser V errors, and what its map still
+  records as 87 hand-fixed variant confusions and 79 context confirmations.
