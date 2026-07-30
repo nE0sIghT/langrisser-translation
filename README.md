@@ -93,39 +93,40 @@ there:
 
 ```text
 iso/
-  l5-ps1-jp/     SLPS-01818-9-B.bin  + .cue   # PPF patch, and the common reference
+  l5-ps1-jp/     four Redump tracks  + .cue   # PPF patch, and the common reference
   l5-saturn-jp/  LANGRISSER_5.bin    + .cue   # Saturn build
-  l4-ps1-jp/     three redump tracks + .cue   # Langrisser IV
+  l4-ps1-jp/     three Redump tracks + .cue   # Langrisser IV
 ```
 
 Dumps keep the file names their dumper gave them, so the shape of a directory
-follows the rip: `l4-ps1-jp` holds one file per track, the other two hold a
-single track-1 image. Only `media.image` has to name the data track, which is
-why swapping in a differently named rip is a manifest edit and not a rename.
+follows the rip: the PlayStation discs are dumped one file per track, the Saturn
+one as a single mixed-mode image. Only `media.image` has to name the data track,
+which is why swapping in a differently named rip is a manifest edit and not a
+rename.
 
-The `l5-ps1-jp` cue names its track file in upper case, so that directory also
-holds an `SLPS-01818-9-B.BIN` symlink; the cue is authentic dump data and is not
-edited to match.
+Every disc here is a mixed-mode CD, so a whole-image hash means nothing across
+rips: it depends on where that rip decided to keep the audio pregaps. What is
+verified is **data track 1**, where every file the patch touches lives. All
+three match their Redump entries exactly:
 
-| File | Size | CRC32 | MD5 | SHA-1 | SHA-256 |
-| --- | ---: | --- | --- | --- | --- |
-| `iso/l5-ps1-jp/SLPS-01818-9-B.bin` | `696248448` | `5d13a8df` | `7a9e431453fde9301188841f215bff98` | `e096604f2d4d69b48eb3c1b20ca5ea26e1ea8766` | `af3f5e1d6912f31f712d43cf71d954481fa9814021e62b41fdd8fce0c9429247` |
-| `iso/l5-ps1-jp/SLPS-01818-9-B.cue` | `224` | `2683304f` | `455eca5422d06973bb32f7fed4ce2416` | `f2f2f1abf836e26acfd37030d7d9a378cca2a0de` | `754cfdc98d0aa354dd1d8cd0c5e4d377883a2acccf9636fd5e9826f1b1e52a66` |
-| `iso/l5-saturn-jp/LANGRISSER_5.bin` | `507074736` | | | | `e517a65201ba9f087a14e2231ee3135acba173bc5041d1495fa333731e93dbc0` |
-| `iso/l5-saturn-jp/LANGRISSER_5.cue` | `399` | | | | `58d09590a5399282f707536d6c154ecc19f60fd0cf8fa52d3d7beb375da65b52` |
+| Release | Redump | Sectors | CRC-32 | MD5 | SHA-1 |
+| --- | --- | ---: | --- | --- | --- |
+| `l5-ps1-jp` | `SLPS-01819` disc 2 | `242095` | `b04469a3` | `78acb11d5fdd91b9361f29ccd9b944a4` | `1ea5c85ae8bdf4282e72dafbb2fc39b3e35d3619` |
+| `l4-ps1-jp` | `SLPS-01818` disc 1 | `245042` | `aff30325` | `fc0e02b6f2221b6e84e86fa41a193be1` | `2f7faba4e6ee24e9ed825103231984419fd85562` |
+| `l5-saturn-jp` | `T-2509G` v1.004 | `61901` | `ef034bde` | `37685a3ac74ac252abb2d01ea6987c73` | `b90529e379efde5787693ffda6fff53fddd7c2ee` |
 
-The Saturn image is a mixed-mode disc, so its whole-file hash depends on the
-rip's pregap convention. What must be verified is **data track 1** (every file
-the patch touches lives there); it matches the Redump entry for `T-2509G`
-v1.004 exactly:
+The PlayStation audio tracks match Redump too, but nothing reads them: the
+patch stays inside track 1, so it applies to the track-1 file on its own.
 
-| Track | Sectors | CRC-32 | MD5 | SHA-1 |
-| --- | ---: | --- | --- | --- |
-| 1 (Mode 1) | `61901` | `ef034bde` | `37685a3ac74ac252abb2d01ea6987c73` | `b90529e379efde5787693ffda6fff53fddd7c2ee` |
+The Saturn fingerprint is recorded in that release's manifest, so its disc can
+check itself:
 
 ```bash
 python3 -m langrisser.saturn_disc verify
 ```
+
+On the PlayStation side the check is `scripts/release.sh`, which hashes the
+data track before it builds anything and refuses an image it does not expect.
 
 ## Repository Layout
 
@@ -205,11 +206,12 @@ Extract original game files:
 
 ```bash
 mkdir -p work/l5/extracted
-python3 -m langrisser.iso_mode2 iso/l5-ps1-jp/SLPS-01818-9-B.bin extract /L5/SCEN.DAT  work/l5/extracted/SCEN.DAT
-python3 -m langrisser.iso_mode2 iso/l5-ps1-jp/SLPS-01818-9-B.bin extract /L5/SCEN2.DAT work/l5/extracted/SCEN2.DAT
-python3 -m langrisser.iso_mode2 iso/l5-ps1-jp/SLPS-01818-9-B.bin extract /L5/SYSTEM.BIN work/l5/extracted/SYSTEM.BIN
-python3 -m langrisser.iso_mode2 iso/l5-ps1-jp/SLPS-01818-9-B.bin extract /L5/IMG.DAT    work/l5/extracted/IMG.DAT
-python3 -m langrisser.iso_mode2 iso/l5-ps1-jp/SLPS-01818-9-B.bin extract /SLPS_018.19  work/l5/extracted/SLPS_018.19
+L5BIN='iso/l5-ps1-jp/Langrisser IV & V - Final Edition (Japan) (Disc 2) (Langrisser V Disc) (Track 1).bin'
+python3 -m langrisser.iso_mode2 "$L5BIN" extract /L5/SCEN.DAT   work/l5/extracted/SCEN.DAT
+python3 -m langrisser.iso_mode2 "$L5BIN" extract /L5/SCEN2.DAT  work/l5/extracted/SCEN2.DAT
+python3 -m langrisser.iso_mode2 "$L5BIN" extract /L5/SYSTEM.BIN work/l5/extracted/SYSTEM.BIN
+python3 -m langrisser.iso_mode2 "$L5BIN" extract /L5/IMG.DAT    work/l5/extracted/IMG.DAT
+python3 -m langrisser.iso_mode2 "$L5BIN" extract /SLPS_018.19   work/l5/extracted/SLPS_018.19
 ```
 
 Dump source text and verify the no-edit round trip:

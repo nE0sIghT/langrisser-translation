@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build release artifacts for Langrisser V (PS1) language-pack patches.
 #
-# The patches are binary diffs against the verified original game image, so the
+# The patches are binary diffs against the verified original data track, so the
 # build needs the local BIN in iso/ (never committed). A clean tagged commit
 # produces reproducible PPFs; --release refuses a dirty tree and must run on an
 # exact git tag unless --version is explicitly supplied.
@@ -18,8 +18,8 @@ cd "$(dirname "$0")/.."
 if [[ -z "${PYTHON:-}" ]]; then
 	if [[ -x .venv/bin/python ]]; then PYTHON=.venv/bin/python; else PYTHON=python3; fi
 fi
-ORIG_BIN="${ORIG_BIN:-iso/l5-ps1-jp/SLPS-01818-9-B.bin}"
-ORIG_SHA256="${ORIG_SHA256:-af3f5e1d6912f31f712d43cf71d954481fa9814021e62b41fdd8fce0c9429247}"
+ORIG_BIN="${ORIG_BIN:-iso/l5-ps1-jp/Langrisser IV & V - Final Edition (Japan) (Disc 2) (Langrisser V Disc) (Track 1).bin}"
+ORIG_SHA256="${ORIG_SHA256:-ec9a15e84d82df498fd85b267fb1494547b2074ed34f3257c983f5e67aedd14d}"
 EXTRACT_DIR="${EXTRACT_DIR:-work/l5/extracted}"
 DIST_ROOT="${DIST_ROOT:-dist}"
 
@@ -183,7 +183,7 @@ for lang in "${LANGS[@]}"; do
 		printf '\n'
 	} >> "$DIST/MANIFEST.txt"
 	metadata+=$'\n'
-	metadata+="# [$lang] Patched image (apply $ppf_name to the verified original BIN):"$'\n'
+	metadata+="# [$lang] Patched data track (apply $ppf_name to the verified original):"$'\n'
 	metadata+="#   crc32  $img_crc"$'\n'
 	metadata+="#   sha256 $img_sha"$'\n'
 	metadata+="#   md5    $img_md5"$'\n'
@@ -193,7 +193,8 @@ done
 {
 	printf '#\n'
 	printf '%s' "$metadata"
-	printf '# Required original SLPS-01818-9-B.bin (the .cue is unchanged):\n'
+	printf '# Required original data track (the audio tracks and .cue are unchanged):\n'
+	printf '#   file   %s\n' "$(basename "$ORIG_BIN")"
 	printf '#   crc32  %s\n' "$(file_crc32 "$ORIG_BIN")"
 	printf '#   sha256 %s\n' "$ORIG_SHA256"
 	printf '#   md5    %s\n' "$(md5sum "$ORIG_BIN" | cut -d' ' -f1)"
