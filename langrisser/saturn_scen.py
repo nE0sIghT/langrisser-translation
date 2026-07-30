@@ -6,7 +6,7 @@
 `resource_table.field_3c` local index table. This module holds the parsing that
 both `saturn_scen_scan.py` (structural diagnostics) and `saturn_scen_text.py`
 (text dump) need, so neither reimplements it. All multi-byte fields use the
-Saturn on-disc big-endian order by default. See docs/SATURN_DISC_FORMAT.md.
+Saturn on-disc big-endian order by default. See docs/L45_SATURN_DISC_FORMAT.md.
 """
 
 from __future__ import annotations

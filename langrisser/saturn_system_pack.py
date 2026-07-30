@@ -18,7 +18,7 @@ Fixed-size per group: the group stays at its base and within its original byte
 budget, so nothing that points at it moves. A group whose rebuild would exceed
 the budget is a strict build error unless `--allow-unmapped` is used for
 diagnostics.
-See docs/SATURN_DISC_FORMAT.md.
+See docs/L45_SATURN_DISC_FORMAT.md.
 """
 
 from __future__ import annotations

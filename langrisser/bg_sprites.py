@@ -16,7 +16,7 @@ round-trips a chosen image group through an indexed PNG.
   pack     indexed PNG -> that group   (in place, byte length unchanged)
   selftest decode->encode a group and assert the bytes are identical
 
-Notes / facts (see docs/VIRASH_CUTSCENE_SUBTITLES.md):
+Notes / facts (see docs/L45_VIRASH_SUBTITLES.md):
 * The palette MUST come from the same asset as the image: each asset bundles its
   own CLUT block(s) (typically 4 palette variants). Picking a palette globally,
   or reusing one VRAM CLUT for every image, gives wrong colours.

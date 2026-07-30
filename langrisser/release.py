@@ -207,7 +207,7 @@ class ReleasePack:
         A build-level fact, not a console one: it is the plane's own layout
         that decides. Saturn Langrisser V caps at 1819 because slot 1820's
         bytes cross file offset 0x8000, where its SYSTEM.DAT keeps the group
-        pointer directory (see docs/SATURN_DISC_FORMAT.md). A release that
+        pointer directory (see docs/L45_SATURN_DISC_FORMAT.md). A release that
         does not narrow it gets the engine's own ceiling.
         """
         value = self._data.get("max_font_slot")

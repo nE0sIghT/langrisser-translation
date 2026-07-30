@@ -37,7 +37,7 @@ def dump_file(src: Path, out_dir: Path, codec: Codec) -> list[dict[str, str]]:
     root.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, str]] = []
     # Per-record speaker, read straight from the display commands (no VM walk;
-    # see docs/SPEAKER_NAME_EXTRACTION.md). slot is the 0-based name-pool slot,
+    # see docs/L45_SPEAKER_PLATES.md). slot is the 0-based name-pool slot,
     # None = no plate, -1 = runtime-remapped crowd line.
     chunk_slots = semantic_plate_slots(src)
 

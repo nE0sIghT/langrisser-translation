@@ -42,7 +42,7 @@ though they still need normal playtest and style polish.
 ### SYSTEM.BIN triangle-button help (`data/games/l5/lang/en/system_strings.json`)
 
 The help strings are glyph runs in offset-table groups (see
-`docs/SYSTEM_BIN_FORMAT.md`); each display line is one on-screen line. English
+`docs/L45_SYSTEM_BIN_FORMAT.md`); each display line is one on-screen line. English
 was compressed to fit, line by line. Items below are the knowing semantic
 losses. With `langrisser/system_pack.py --repack` a line is no longer bound to the
 original byte length (only the group total and the on-screen width), so some of

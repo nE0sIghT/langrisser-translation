@@ -2,7 +2,7 @@
 """Dump the full Saturn SCEN.DAT scenario text pool in read-only mode.
 
 The scenario text lives in each payload block's ``resource_table.field_3c``
-local index table (see docs/SATURN_DISC_FORMAT.md). This tool walks all 131
+local index table (see docs/L45_SATURN_DISC_FORMAT.md). This tool walks all 131
 payload blocks, reads every indexed text entry and emits a stable
 ``(chunk_index, entry_index)`` record set, mirroring the PS1
 ``work/l5/scriptdump/all_records.csv`` shape so the two platforms can be aligned.

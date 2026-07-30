@@ -5,7 +5,7 @@ Reverse-engineering notes for the PlayStation 2 release of *Langrisser III*.
 **These notes were made in a separate working tree and are carried over here
 unchanged in substance — nothing below has been re-verified against this
 repository.** Where they name a tool or a path, it is that tree's, not this
-one's: `scripts/dat_container.py`, `scripts/script_text.py` and `docs/PLAN.md`
+one's: `scripts/dat_container.py` and `scripts/script_text.py`
 do not exist here. Treat every claim as sourced, not as checked.
 
 The disc itself is present at `iso/l3-ps2-jp/Langrisser III (Japan).bin`, and

@@ -561,15 +561,35 @@ and its current translations — everything needed to author the platform record
 
 ## Documentation
 
-- `AGENTS.md`: non-negotiable project rules for coding agents.
-- `docs/PLAN.md`: active Russian editorial and EN cross-check plan.
-- `docs/IMPLEMENTED.md`: completed toolkit, English and multilingual milestones.
-- `docs/INTERNAL_DATA_FORMATS.md`: format index and verified binary notes.
+`AGENTS.md` holds the project rules for coding agents. Everything else is in
+`docs/`, named by what it describes: a document about one engine's containers
+carries that engine's prefix, so `L45_` is Langrisser IV and V on both consoles,
+and a game with its own engine gets its own. What has no prefix applies to every
+game. There is no plan or milestone document — the goal lives at the top of this
+file and the work in the task list.
+
+**Per game or engine**
+
+- `docs/L45_PS1_DISC_FORMAT.md`: the PS1 disc, its files and containers.
+- `docs/L45_SATURN_DISC_FORMAT.md`: the Saturn disc, its SYSTEM/SCEN containers,
+  tilemap title screens and the Saturn build flow.
+- `docs/L45_SATURN_PARITY_GAPS.md`: where the two builds still differ.
+- `docs/L45_SYSTEM_BIN_FORMAT.md`: SYSTEM.BIN string groups.
+- `docs/L45_IMG_DAT_FORMAT.md`: the IMG.DAT image container.
+- `docs/L45_FONT_RENDERING.md`: how the runtime draws text.
+- `docs/L45_BATTLE_SUFFIX.md`: battle chunk suffix payloads.
+- `docs/L45_SPEAKER_PLATES.md`: speaker plate extraction and wrapping.
+- `docs/L45_SPEAKER_TEST_SET.md`: the in-game-verified plates `check_speakers`
+  asserts against.
+- `docs/L45_NAME_ENTRY.md`: the name-entry alphabet and its rejected-name rule.
+- `docs/L45_DISASM_SUMMARY.md`: the text and control path, from disassembly.
+- `docs/L45_VIRASH_SUBTITLES.md`: the voiced monologue, how it was subtitled and
+  the two engine routes that stayed unsolved.
+- `docs/L1_2_DISC_FORMAT.md`: the Langrisser I & II disc — the next goal.
+- `docs/L3_DISC_FORMAT.md`: the Langrisser III disc, carried over unverified.
+
+**Across games**
+
 - `docs/LANGUAGE_PACK_FORMAT.md`: language-pack structure.
 - `docs/RU_TERMINOLOGY.md`: canonical Russian names and terminology policy.
-- `docs/SYSTEM_BIN_FORMAT.md`: SYSTEM.BIN string groups.
-- `docs/IMG_DAT_FORMAT.md`: IMG.DAT image container.
-- `docs/BATTLE_SUFFIX_FORMAT.md`: battle chunk suffix payloads.
-- `docs/SPEAKER_NAME_EXTRACTION.md`: speaker plate extraction and wrapping.
-- `docs/SATURN_DISC_FORMAT.md`: Saturn disc, SYSTEM/SCEN containers, tilemap
-  title screens and the Saturn build flow.
+- `docs/COMPRESSION_DEBT.md`: wording a byte budget forced, to revisit.

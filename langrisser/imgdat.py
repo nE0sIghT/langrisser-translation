@@ -602,7 +602,7 @@ def read_palette(asset: bytes, profile: GapBitmapProfile) -> list[tuple[int, int
     return [rgb555_to_rgb888(word) for word in words]
 
 
-# --- Type-8 scanline-packet images (see docs/IMG_DAT_FORMAT.md) ---
+# --- Type-8 scanline-packet images (see docs/L45_IMG_DAT_FORMAT.md) ---
 # Decoded type-8 images are streams of 2048-byte packets: a 0x20 header
 # (magic 0x0160) followed by 2016 bytes of 8bpp pixel data.
 # width_px = u16[10] * 2. Consecutive same-width type-8 packets form one image;

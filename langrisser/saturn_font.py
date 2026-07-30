@@ -5,7 +5,7 @@ The Saturn text font uses the same format as PS1 SYSTEM.BIN: a 12x12 1bpp glyph
 plane addressed as ``index * 18`` from offset 0, glyph slots 0..1820, 12 bits
 per row MSB-first with rows packed continuously (18 bytes/glyph). Both the
 SYSTEM UI text and the SCEN dialogue index into this one plane. See
-docs/SATURN_DISC_FORMAT.md.
+docs/L45_SATURN_DISC_FORMAT.md.
 
 Subcommands:
   render  ASCII-render one or more glyph slots.

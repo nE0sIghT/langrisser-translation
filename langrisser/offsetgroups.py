@@ -12,7 +12,7 @@ per-platform differences are the byte order of the 16-bit words and where the
 first group starts. This module captures that logic once; PS1 tooling uses the
 default little-endian config, Saturn tooling passes a big-endian config.
 
-See docs/SYSTEM_BIN_FORMAT.md (PS1) and docs/SATURN_DISC_FORMAT.md (Saturn).
+See docs/L45_SYSTEM_BIN_FORMAT.md (PS1) and docs/L45_SATURN_DISC_FORMAT.md (Saturn).
 """
 
 from __future__ import annotations

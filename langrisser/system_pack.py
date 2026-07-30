@@ -14,7 +14,7 @@ default growth limit and explicit stable-id exceptions for strings verified to
 need more room. Strings left untranslated keep their original bytes;
 `text == "{BLANK}"` clears the line.
 
-See docs/SYSTEM_BIN_FORMAT.md.
+See docs/L45_SYSTEM_BIN_FORMAT.md.
 """
 import argparse
 import json

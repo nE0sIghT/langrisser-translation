@@ -32,7 +32,7 @@ which for this build is `0x8052` (each release records its own as
 `system_scan_start`); that group's first string base is `0x8298`. `langrisser/build_font.py`
 rewrites glyphs only up to slot 1820 to draw the target alphabet. Runtime font
 cell behavior and the verified 12x12 boundary probes are documented in
-`docs/FONT_RENDERING_MODEL.md` (see also `IMG_DAT_FORMAT.md` for the unrelated
+`docs/L45_FONT_RENDERING.md` (see also `IMG_DAT_FORMAT.md` for the unrelated
 picture assets).
 
 ## String groups

@@ -1,10 +1,9 @@
 # Agent instructions
 
-Toolkit for translating Langrisser V (PS1, SLPS-01818). Read `README.md`
-first for the human translation workflow; `docs/PLAN.md` holds active work,
-`docs/IMPLEMENTED.md` records completed milestones, and the format-specific
-documents hold verified binary details. This file lists the rules that must not
-be broken.
+Toolkit for translating the Langrisser series. Read `README.md` first: it holds
+the human translation workflow, the current goal and the index of the
+format-specific documents, which are where verified binary details live. This
+file lists the rules that must not be broken.
 
 ## Hard invariants
 
@@ -43,10 +42,10 @@ python3 -m langrisser.build_ppf --lang en          # full build must succeed
 
 Speaker/author correctness is **mandatory**: `langrisser/check_speakers.py` must print
 `OK`. It verifies that `semantic_plate_slots` resolves each record in
-`docs/SPEAKER_TEST_SET.md` to the in-game–verified speaker; a wrong speaker means
+`docs/L45_SPEAKER_TEST_SET.md` to the in-game–verified speaker; a wrong speaker means
 a wrong plate reserve and wrong wrapping. A failure is a bug in the extractor —
 fix the extractor, never relax the expected value. When you confirm a plate in
-game, add a row to `docs/SPEAKER_TEST_SET.md`.
+game, add a row to `docs/L45_SPEAKER_TEST_SET.md`.
 
 ## Translation conventions
 

@@ -14,7 +14,7 @@ With --allow-grow, a text block that no longer fits is enlarged in place:
 the block size word is updated, the chunk suffix shifts down, the chunk is
 re-padded to sector alignment and the container chunk pointer table is
 rebuilt. The block base stays put because the game derives it as
-vm_off + vm_size (see docs/INTERNAL_DATA_FORMATS.md), both of which are untouched.
+vm_off + vm_size (see docs/L45_PS1_DISC_FORMAT.md), both of which are untouched.
 """
 import argparse
 import struct

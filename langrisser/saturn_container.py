@@ -3,7 +3,7 @@
 
 These per-screen `.DAT` files are the Saturn analogue of PS1 `IMG.DAT`: one file
 holding several assets behind a table of contents. The layout (verified byte-exact
-on TITLE1/TITLE2/OPEN/CAST/STAFF — see docs/SATURN_DISC_FORMAT.md) is:
+on TITLE1/TITLE2/OPEN/CAST/STAFF — see docs/L45_SATURN_DISC_FORMAT.md) is:
 
     u32 count
     count x (u32 sub_offset, u32 sub_size)      # contiguous sub-assets

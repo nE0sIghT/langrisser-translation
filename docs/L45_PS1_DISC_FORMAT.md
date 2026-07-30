@@ -25,7 +25,7 @@ Record word format:
 
 Battle chunks `001`-`042` have a suffix asset-slot pointer table immediately
 after the text block. Its current reverse-engineering notes and alignment risk
-are in `docs/BATTLE_SUFFIX_FORMAT.md`.
+are in `docs/L45_BATTLE_SUFFIX.md`.
 
 ## Text stream model
 
@@ -81,4 +81,4 @@ text_id`. Plate selection is:
 `work/l5/scriptdump/all_records.csv`. No hand-written speaker map is canonical.
 
 Detailed dispatch-level evidence is in:
-- `docs/DISASM_SUMMARY.md`
+- `docs/L45_DISASM_SUMMARY.md`

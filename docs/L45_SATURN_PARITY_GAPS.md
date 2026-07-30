@@ -4,9 +4,9 @@ This document is a delta report, not another format description. The baseline
 format details remain in:
 
 - `README.md` and `AGENTS.md` for the PS1 translation workflow and invariants.
-- `docs/SYSTEM_BIN_FORMAT.md` for PS1 SYSTEM text and UI constraints.
-- `docs/IMG_DAT_FORMAT.md` for PS1 IMG.DAT graphics.
-- `docs/SATURN_DISC_FORMAT.md` for Saturn disc, SCEN, SYSTEM and graphics
+- `docs/L45_SYSTEM_BIN_FORMAT.md` for PS1 SYSTEM text and UI constraints.
+- `docs/L45_IMG_DAT_FORMAT.md` for PS1 IMG.DAT graphics.
+- `docs/L45_SATURN_DISC_FORMAT.md` for Saturn disc, SCEN, SYSTEM and graphics
   container findings.
 
 The parity target is strict: the Saturn flow should cover the same translation

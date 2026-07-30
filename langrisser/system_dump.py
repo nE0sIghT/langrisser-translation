@@ -18,7 +18,7 @@ soft line break; `0xFFFF` terminates.
 This is the single source of truth for what text the game shows: there is no
 heuristic FFFF scan and no minimum-length filter, so short tails and the first
 string of a group (which an FFFF scan would glue onto the table) are captured
-exactly. See docs/SYSTEM_BIN_FORMAT.md.
+exactly. See docs/L45_SYSTEM_BIN_FORMAT.md.
 
 It dumps whichever release is being built, not one particular console: the byte
 order comes from the platform, the scan start and group offsets from the release

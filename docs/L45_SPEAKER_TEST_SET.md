@@ -17,7 +17,7 @@ How to use it:
 - A failure here is a real bug in the extractor, not a reason to edit the test:
   fix `semantic_plate_slots`, do not relax the expected value.
 
-Background and the decoded mechanism are in `docs/SPEAKER_NAME_EXTRACTION.md`.
+Background and the decoded mechanism are in `docs/L45_SPEAKER_PLATES.md`.
 
 ## Chunk 4
 

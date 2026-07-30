@@ -290,7 +290,7 @@ def main() -> None:
             "--out-preview", saturn / f"now_loading_{lang.suffix}_preview.png")
     # The runtime addresses SYSTEM text through the pointer directory at
     # +0x8000; validate the final file against the write contract so no
-    # stage can clobber it again (see docs/SATURN_DISC_FORMAT.md).
+    # stage can clobber it again (see docs/L45_SATURN_DISC_FORMAT.md).
     run("-m", "langrisser.saturn_system_validate",
         "--orig", system_in,
         "--system", system_out,

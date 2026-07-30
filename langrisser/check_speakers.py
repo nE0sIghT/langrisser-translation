@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Assert the speaker-plate extractor matches the in-game test set.
 
-Reads the ground-truth table in docs/SPEAKER_TEST_SET.md and checks that
+Reads the ground-truth table in docs/L45_SPEAKER_TEST_SET.md and checks that
 `semantic_plate_slots` resolves each record to the listed speaker. A mismatch
 means the per-record plate reserve (and so the line wrapping) is wrong; this is a
 mandatory check (AGENTS.md). Exits non-zero on any failure.
@@ -51,7 +51,7 @@ def plate_names(target_file: Path, pool_size: int) -> dict[int, str]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     add_language_args(ap)
-    ap.add_argument("--test-set", default="docs/SPEAKER_TEST_SET.md")
+    ap.add_argument("--test-set", default="docs/L45_SPEAKER_TEST_SET.md")
     ap.add_argument("--scen", default="work/l5/extracted/SCEN.DAT")
     ap.add_argument("--translation-root", default=None,
                     help="Override the language pack's translated-text root.")

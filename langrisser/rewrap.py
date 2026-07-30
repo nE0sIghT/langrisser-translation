@@ -500,7 +500,7 @@ def semantic_plate_slots(scen_path: Path) -> dict[int, dict[int, int | None]]:
     byte +6..7 is the actor key used for other routing, not the plate. An earlier
     revision read the plate from that key (via the actor-plate table) and from
     `record = first FB00 + text id`; the in-game speaker test set rejects that
-    model on the verified plated lines. See docs/SPEAKER_NAME_EXTRACTION.md.
+    model on the verified plated lines. See docs/L45_SPEAKER_PLATES.md.
 
     Returns chunk -> record -> slot, where slot is the zero-based speaker-pool
     slot, `None` for no plate, or `-1` for a location/unresolved plate (fall back

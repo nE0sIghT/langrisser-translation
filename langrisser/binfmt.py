@@ -5,7 +5,7 @@ The PlayStation build stores multi-byte SYSTEM/SCEN fields little-endian; the
 Saturn disc stores the same logical structures in on-disc big-endian
 (byte-swapped) order. Any parser that must handle both selects the byte order
 once, as a :class:`ByteOrder`, and reuses identical parsing logic regardless of
-platform. See docs/SATURN_DISC_FORMAT.md.
+platform. See docs/L45_SATURN_DISC_FORMAT.md.
 """
 
 from __future__ import annotations

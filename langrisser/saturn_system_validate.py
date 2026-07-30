@@ -4,7 +4,7 @@
 The Saturn runtime addresses SYSTEM UI text through a pointer directory at
 file offset 0x8000: pairs of big-endian RAM addresses (offset table, string
 base) per group, pre-relocated for the load base 0x00200000 (see
-docs/SATURN_DISC_FORMAT.md). The font glyph plane grows from offset 0 toward
+docs/L45_SATURN_DISC_FORMAT.md). The font glyph plane grows from offset 0 toward
 that directory: slot 1819 ends exactly at 0x7FF8, slot 1820 would cross into
 the directory and clobber the group 0/1 pointers — the game then renders
 empty menus and hangs walking garbage offset tables. This is a real failure

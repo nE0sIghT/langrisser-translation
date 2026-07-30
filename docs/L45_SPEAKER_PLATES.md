@@ -39,7 +39,7 @@ the real `p+9=1`/`p+8=0` Mariandel command; taking the first gave Sigma.)
 > **History.** A prior revision read the speaker from the actor key at `u16@p+6`
 > (via `actor_plate_table.field2`) with record = `first_fb + text_id`. A static
 > read of the window handler suggested `p+6..7` was the speaker and `p+9` mere
-> routing, but the in-game plate test set in `docs/SPEAKER_TEST_SET.md` proved
+> routing, but the in-game plate test set in `docs/L45_SPEAKER_TEST_SET.md` proved
 > it wrong on the verified plated lines: `p+9` is the plate selector and
 > `p+6..7` is unrelated routing.
 
