@@ -354,7 +354,7 @@ index_dec,index_hex,group,char,source
 352,160,confirmed,げ,vision
 353,161,confirmed,害,vision
 354,162,confirmed,新,vision
-355,163,confirmed,聞,vision
+355,163,confirmed,間,context
 356,164,confirmed,後,vision
 357,165,confirmed,内,vision
 358,166,confirmed,移,vision
@@ -369,7 +369,7 @@ index_dec,index_hex,group,char,source
 367,16f,confirmed,せ,vision
 368,170,confirmed,恐,vision
 369,171,confirmed,鋭,vision
-370,172,confirmed,取,vision
+370,172,confirmed,敢,context
 371,173,confirmed,市,vision
 372,174,confirmed,民,vision
 373,175,confirmed,霊,vision
@@ -380,12 +380,12 @@ index_dec,index_hex,group,char,source
 378,17a,confirmed,夜,vision
 379,17b,confirmed,明,vision
 380,17c,confirmed,辺,vision
-381,17d,confirmed,閣,vision
+381,17d,confirmed,闇,context
 382,17e,confirmed,昼,vision
 383,17f,confirmed,闘,vision
 384,180,confirmed,静,vision
 385,181,confirmed,返,vision
-386,182,confirmed,基,vision
+386,182,confirmed,墓,context
 387,183,confirmed,地,vision
 388,184,confirmed,男,vision
 389,185,confirmed,儀,vision
@@ -465,7 +465,7 @@ index_dec,index_hex,group,char,source
 463,1cf,confirmed,決,vision
 464,1d0,confirmed,倒,vision
 465,1d1,confirmed,現,vision
-466,1d2,confirmed,専,vision
+466,1d2,confirmed,奪,context
 467,1d3,confirmed,去,vision
 468,1d4,confirmed,輝,vision
 469,1d5,confirmed,末,vision
@@ -621,8 +621,8 @@ index_dec,index_hex,group,char,source
 619,26b,confirmed,ゎ,vision
 620,26c,confirmed,掃,vision
 621,26d,confirmed,負,vision
-622,26e,confirmed,闘,vision
-623,26f,confirmed,陸,vision
+622,26e,confirmed,聞,context
+623,26f,confirmed,陛,context
 624,270,confirmed,命,vision
 625,271,confirmed,令,vision
 626,272,confirmed,編,vision
@@ -630,7 +630,7 @@ index_dec,index_hex,group,char,source
 628,274,confirmed,理,vision
 629,275,confirmed,ぇ,vision
 630,276,confirmed,申,vision
-631,277,confirmed,営,vision
+631,277,confirmed,誉,context
 632,278,confirmed,抵,vision
 633,279,confirmed,抗,vision
 634,27a,confirmed,捨,vision
@@ -659,7 +659,7 @@ index_dec,index_hex,group,char,source
 657,291,confirmed,父,vision
 658,292,confirmed,優,vision
 659,293,confirmed,親,vision
-660,294,confirmed,音,vision
+660,294,confirmed,育,context
 661,295,confirmed,悲,vision
 662,296,confirmed,仕,vision
 663,297,confirmed,会,vision
@@ -689,7 +689,7 @@ index_dec,index_hex,group,char,source
 687,2af,confirmed,送,vision
 688,2b0,confirmed,念,vision
 689,2b1,confirmed,怒,vision
-690,2b2,confirmed,ば,vision
+690,2b2,confirmed,ぼ,context
 691,2b3,confirmed,次,vision
 692,2b4,confirmed,福,vision
 693,2b5,confirmed,声,vision
@@ -731,9 +731,9 @@ index_dec,index_hex,group,char,source
 729,2d9,confirmed,資,vision
 730,2da,confirmed,格,vision
 731,2db,confirmed,絶,vision
-732,2dc,confirmed,隊,vision
+732,2dc,confirmed,隣,context
 733,2dd,confirmed,左,vision
-734,2de,confirmed,字,vision
+734,2de,confirmed,学,context
 735,2df,confirmed,誇,vision
 736,2e0,confirmed,却,vision
 737,2e1,confirmed,乗,vision
@@ -752,7 +752,7 @@ index_dec,index_hex,group,char,source
 750,2ee,confirmed,支,vision
 751,2ef,confirmed,臭,vision
 752,2f0,confirmed,転,vision
-753,2f1,confirmed,滅,vision
+753,2f1,confirmed,減,context
 754,2f2,confirmed,焼,vision
 755,2f3,confirmed,火,vision
 756,2f4,confirmed,乱,vision
@@ -766,7 +766,7 @@ index_dec,index_hex,group,char,source
 764,2fc,confirmed,例,vision
 765,2fd,confirmed,定,vision
 766,2fe,confirmed,識,vision
-767,2ff,confirmed,憤,vision
+767,2ff,confirmed,情,context
 768,300,confirmed,争,vision
 769,301,confirmed,歴,vision
 770,302,confirmed,史,vision
@@ -836,7 +836,7 @@ index_dec,index_hex,group,char,source
 834,342,confirmed,院,vision
 835,343,confirmed,財,vision
 836,344,confirmed,宝,vision
-837,345,confirmed,奪,vision
+837,345,confirmed,奮,context
 838,346,confirmed,証,vision
 839,347,confirmed,銀,vision
 840,348,confirmed,景,vision
@@ -922,7 +922,7 @@ index_dec,index_hex,group,char,source
 920,398,confirmed,済,vision
 921,399,confirmed,贈,vision
 922,39a,confirmed,検,vision
-923,39b,confirmed,備,vision
+923,39b,confirmed,傭,context
 924,39c,confirmed,公,vision
 925,39d,confirmed,払,vision
 926,39e,confirmed,庫,vision
@@ -994,7 +994,7 @@ index_dec,index_hex,group,char,source
 992,3e0,confirmed,勧,vision
 993,3e1,confirmed,巻,vision
 994,3e2,confirmed,慎,vision
-995,3e3,confirmed,欽,vision
+995,3e3,confirmed,歓,context
 996,3e4,confirmed,汗,vision
 997,3e5,confirmed,監,vision
 998,3e6,confirmed,管,vision
@@ -1089,7 +1089,7 @@ index_dec,index_hex,group,char,source
 1087,43f,confirmed,皇,vision
 1088,440,confirmed,肯,vision
 1089,441,confirmed,航,vision
-1090,442,confirmed,衝,vision
+1090,442,confirmed,衡,context
 1091,443,confirmed,講,vision
 1092,444,confirmed,鋼,vision
 1093,445,confirmed,降,vision
@@ -1350,7 +1350,7 @@ index_dec,index_hex,group,char,source
 1348,544,confirmed,恥,vision
 1349,545,confirmed,槍,vision
 1350,546,confirmed,益,vision
-1351,547,confirmed,魔,vision
+1351,547,confirmed,慮,context
 1352,548,confirmed,点,vision
 1353,549,confirmed,狙,vision
 1354,54a,confirmed,虫,vision
@@ -1360,7 +1360,7 @@ index_dec,index_hex,group,char,source
 1358,54e,confirmed,標,vision
 1359,54f,confirmed,嬢,vision
 1360,550,confirmed,暇,vision
-1361,551,confirmed,氷,vision
+1361,551,confirmed,派,context
 1362,552,confirmed,赦,vision
 1363,553,confirmed,迂,vision
 1364,554,confirmed,臆,vision
@@ -1455,7 +1455,7 @@ index_dec,index_hex,group,char,source
 1453,5ad,confirmed,竹,vision
 1454,5ae,confirmed,浅,vision
 1455,5af,confirmed,縛,vision
-1456,5b0,confirmed,碁,vision
+1456,5b0,confirmed,暮,context
 1457,5b1,confirmed,荷,vision
 1458,5b2,confirmed,獄,vision
 1459,5b3,confirmed,堂,vision
