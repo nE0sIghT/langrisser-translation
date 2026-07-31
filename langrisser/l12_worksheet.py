@@ -22,6 +22,7 @@ from langrisser.l12_scen import NAME_PART, PHRASE_PART, Reader, read_chunks
 from langrisser.scen import load_charmap_csv
 
 REF_RE = re.compile(r"<(phrase|name):(\d+)>")
+TAG_RE = re.compile(r"<[^>]+>")
 DIALOGUE = (7, 6, 5, 0, 2, 3)
 
 
@@ -34,6 +35,11 @@ def main() -> None:
     ap.add_argument("--font-map", default=None)
     ap.add_argument("--parts", default="7,6,5",
                     help="Parts to print, in the order to print them.")
+    ap.add_argument("--skeleton", metavar="PART/INDEX",
+                    help="Print one record as a fill-in template: its tags in "
+                         "order with the text between them blanked. Layout tags "
+                         "have to land in the same places or the screen breaks, "
+                         "and matching them by hand is how it goes wrong.")
     args = ap.parse_args()
 
     game = game_from_args(args)
@@ -42,6 +48,23 @@ def main() -> None:
     chunk = next(c for c in read_chunks(scen.read_bytes()) if c.index == args.chunk)
     reader = Reader(font, chunk)
     parts = [int(p) for p in args.parts.split(",")]
+
+    if args.skeleton:
+        pi, _, si = args.skeleton.partition("/")
+        raw = chunk.part(int(pi))[int(si)]
+        text = reader.decode(raw, expand=False)
+        out, last = [], 0
+        for m in TAG_RE.finditer(text):
+            if m.start() > last:
+                out.append(f"«{text[last:m.start()]}»")
+            out.append(m.group(0))
+            last = m.end()
+        if last < len(text):
+            out.append(f"«{text[last:]}»")
+        print("".join(out))
+        print(f"\n{len(TAG_RE.findall(text))} tags, "
+              f"{sum(1 for x in out if x.startswith('«'))} text slots to fill")
+        return
 
     refs: set[tuple[str, int]] = set()
     for pi in parts:

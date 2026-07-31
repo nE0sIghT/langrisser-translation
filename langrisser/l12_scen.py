@@ -214,6 +214,27 @@ class Reader:
                 i += 1
         return "".join(out)
 
+    def inline_phrases(self, text: str, depth: int = 2) -> str:
+        """Editable text with phrase references replaced by their own editable
+        text.
+
+        The phrase table is the script's own compression, so a translation may
+        keep a reference or write the words out and the screen looks the same.
+        Inlining states both forms in the same terms — including the layout
+        tags a phrase carries inside it, which surface as the reference goes.
+        """
+        def sub(m: re.Match[str]) -> str:
+            kind, _, arg = m.group(1).partition(":")
+            if kind != "phrase" or not arg or depth <= 0:
+                return m.group(0)
+            strings = self.chunk.part(PHRASE_PART)
+            if not 1 <= int(arg) <= len(strings):
+                return m.group(0)
+            inner = self.decode(strings[int(arg) - 1], expand=False)
+            return self.inline_phrases(inner, depth - 1)
+
+        return TAG_RE.sub(sub, text)
+
     def control(self, name: str, arg: int | None, depth: int) -> str:
         # Reading form uses real breaks; the editable form uses tags, because a
         # newline at the edge of a record cannot survive a line-based file.

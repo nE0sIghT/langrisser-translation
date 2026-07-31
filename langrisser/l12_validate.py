@@ -14,8 +14,10 @@ is what actually breaks a scenario if it is wrong:
   characters, since a pair glyph is one cell and a single is one cell;
 * nothing is left in Japanese.
 
-`--budget` also reports what the chunk would cost to pack, so a scenario that
-cannot fit is caught while it is being written rather than at build time.
+What it deliberately does not check is whether the result fits the chunk in
+bytes. That answer depends on the glyph plane, which does not carry the target
+alphabet yet, and `l12_sceninsert` already reports the chunk that overruns its
+padding — asking the same question twice would only let the two answers drift.
 """
 from __future__ import annotations
 
@@ -31,11 +33,12 @@ from langrisser.project import add_language_args, language_from_args
 from langrisser.scen import load_charmap_csv
 
 TAG_RE = re.compile(r"<(?:\$[0-9A-Fa-f]{4}|[a-z]+(?::\d+)?)>")
-# A phrase reference is the Japanese script's own compression, not something the
-# text says, so a translation drops it and writes the words out. Everything else
-# either substitutes something at runtime or lays the page out, and losing one
-# of those breaks the scene.
-DROPPABLE = re.compile(r"<(?:phrase:\d+|\$[0-9A-Fa-f]{4})>")
+# A raw glyph tag names one character of the plane, so a translation that spells
+# the word differently loses it and nothing breaks. Every other tag either
+# substitutes something at runtime or lays the page out, and losing one of those
+# breaks the scene. Phrase references are neither: they are the script's own
+# compression, so both sides are compared with them inlined (see `tags`).
+DROPPABLE = re.compile(r"<\$[0-9A-Fa-f]{4}>")
 # The bullet, the ellipsis and the corner brackets are punctuation the plane
 # draws, not Japanese words, and the target text keeps using them.
 PUNCT = "・‥「」、。！？～ー－＋×（）／＆．＿＾"
@@ -43,8 +46,17 @@ JP_RE = re.compile(f"[぀-ヿ㐀-鿿]")
 BREAKS = ("<line>", "<page>")
 
 
-def tags(text: str) -> list[str]:
-    return [t for t in TAG_RE.findall(text) if not DROPPABLE.fullmatch(t)]
+def tags(reader: Reader, text: str) -> list[str]:
+    """The tags a record lays out, with phrase references written out first.
+
+    A translation is free to drop a phrase reference and spell the words, but
+    a phrase can hold layout tags of its own — `<phrase:131>` is three blanks
+    and a corner bracket — and those become the record's own once the
+    reference goes. Comparing the two sides unexpanded counts them as newly
+    invented, which is how a correct title card gets reported as broken.
+    """
+    inlined = reader.inline_phrases(text)
+    return [t for t in TAG_RE.findall(inlined) if not DROPPABLE.fullmatch(t)]
 
 
 CYRILLIC = re.compile(r"[А-Яа-яЁё]")
@@ -108,7 +120,7 @@ def main() -> None:
                 continue          # untranslated, nothing to check
             checked += 1
             where = f"chunk {chunk.index} part {pi} #{si}"
-            was, now = tags(source), tags(text)
+            was, now = tags(reader, source), tags(reader, text)
             if was != now:
                 lost = [t for t in was if now.count(t) < was.count(t)]
                 extra = [t for t in now if was.count(t) < now.count(t)]
