@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import struct
 from dataclasses import dataclass
 from pathlib import Path
@@ -42,6 +43,7 @@ BANK_LAST = 0xFB
 BANK_WIDTH = 255
 BANK_BASE = 236
 GLYPH_FIRST = 0x0A
+GLYPH_MAX_SLOT = 0xF6 - GLYPH_FIRST   # highest slot a single byte can name
 
 # Control codes, by what the executable's jump table at 0x8001017C does with
 # them. `operand` is whether the byte after the code belongs to it.
@@ -159,6 +161,13 @@ def read_chunks(blob: bytes) -> list[Chunk]:
     return out
 
 
+# Editable form of a control: what a translator sees and may move, but not
+# invent. `decode(expand=False)` writes these and `encode` reads them back, so a
+# record round-trips through the pack unchanged.
+TAG_RE = re.compile(r"<(\$[0-9A-Fa-f]{4}|[a-z]+(?::\d+)?)>")
+BREAKS = {"line": "\n", "page": "\n\n", "blank": " "}
+
+
 class Reader:
     """Decodes a string, following the references the engine follows."""
 
@@ -166,13 +175,25 @@ class Reader:
         self.font = font
         self.chunk = chunk
         self.depth = depth
+        # The plane draws some characters twice, so a character alone does not
+        # say which slot wrote it. The first slot is canonical; any other is
+        # written as a raw tag, the way l45 writes one, so the record still
+        # encodes back to the bytes it came from.
+        self.canonical: dict[str, int] = {}
+        for slot, ch in sorted(font.items()):
+            self.canonical.setdefault(ch, slot)
 
     def slot(self, index: int) -> str:
         ch = self.font.get(index)
-        return ch if ch else f"<${index:04X}>"
+        if not ch or self.canonical.get(ch) != index:
+            return f"<${index:04X}>"
+        return ch
 
-    def decode(self, data: bytes, depth: int | None = None) -> str:
-        depth = self.depth if depth is None else depth
+    def decode(self, data: bytes, depth: int | None = None,
+               expand: bool = True) -> str:
+        """Text of a string. `expand=False` keeps references as tags, which is
+        the form a translation is written in and the form `encode` reverses."""
+        depth = (self.depth if depth is None else depth) if expand else 0
         out: list[str] = []
         i = 0
         while i < len(data):
@@ -200,6 +221,8 @@ class Reader:
             return "\n\n"
         if name == "blank":
             return " "
+        if name in ("phrase", "name") and arg is not None and depth <= 0:
+            return f"<{name}:{arg}>"
         if name in ("phrase", "name") and arg is not None:
             part = PHRASE_PART if name == "phrase" else NAME_PART
             # Numbers are 1-based over the strings of that part.
@@ -239,6 +262,102 @@ def roundtrip(blob: bytes) -> tuple[int, int, list[int]]:
     return ok, total, bad
 
 
+class Writer:
+    """Encodes a record back to the bytes the engine reads.
+
+    The inverse of `decode(expand=False)`: every glyph becomes its slot, every
+    tag becomes its control, and a slot too high for one byte becomes a bank
+    escape. It refuses a character the plane does not have rather than dropping
+    it, because a silently missing glyph is a hole nobody sees until the game
+    draws it.
+    """
+
+    def __init__(self, font: dict[int, str]):
+        self.slot_of: dict[str, int] = {}
+        for slot, ch in sorted(font.items()):
+            self.slot_of.setdefault(ch, slot)
+        self.by_name = {name: code for code, (name, _takes) in CONTROLS.items()}
+
+    def slot_bytes(self, slot: int) -> bytes:
+        if slot < 0 or slot > BANK_BASE + (BANK_LAST - BANK_FIRST) * BANK_WIDTH + 0xFE:
+            raise ValueError(f"slot {slot} is outside the plane")
+        if slot <= GLYPH_MAX_SLOT:
+            return bytes((slot + GLYPH_FIRST,))
+        rel = slot - BANK_BASE
+        bank, arg = divmod(rel, BANK_WIDTH)
+        if bank and arg == 0:
+            # Banks meet: bank N argument 255 and bank N+1 argument 0 name the
+            # same slot. The game's own packer took the lower bank, so match it,
+            # or a rebuilt chunk differs from the original for no reason.
+            bank, arg = bank - 1, BANK_WIDTH
+        return bytes((BANK_FIRST + bank, arg))
+
+    def encode(self, text: str) -> bytes:
+        out = bytearray()
+        i = 0
+        while i < len(text):
+            ch = text[i]
+            if ch == "\n":
+                page = text.startswith("\n\n", i)
+                out.append(self.by_name["page" if page else "line"])
+                i += 2 if page else 1
+                continue
+            if ch == " ":
+                out.append(self.by_name["blank"])
+                i += 1
+                continue
+            m = TAG_RE.match(text, i)
+            if m:
+                out += self.tag_bytes(m.group(1))
+                i = m.end()
+                continue
+            slot = self.slot_of.get(ch)
+            if slot is None:
+                raise ValueError(f"no slot for {ch!r}")
+            out += self.slot_bytes(slot)
+            i += 1
+        return bytes(out)
+
+    def tag_bytes(self, body: str) -> bytes:
+        if body.startswith("$"):
+            return self.slot_bytes(int(body[1:], 16))
+        name, _, arg = body.partition(":")
+        code = self.by_name.get(name)
+        if code is None:
+            raise ValueError(f"unknown control <{body}>")
+        takes = CONTROLS[code][1]
+        if takes != bool(arg):
+            raise ValueError(f"<{body}> has the wrong shape for control {code}")
+        return bytes((code, int(arg))) if takes else bytes((code,))
+
+
+def verify_text(blob: bytes, font: dict[int, str]) -> tuple[int, int, tuple | None]:
+    """Every string through text and back. The check a translation rests on:
+    if a record cannot survive being read and written unchanged, an edited one
+    cannot be trusted either."""
+    writer = Writer(font)
+    ok = bad = 0
+    first = None
+    for chunk in read_chunks(blob):
+        reader = Reader(font, chunk)
+        for pi, strings in enumerate(chunk.parts):
+            for si, raw in enumerate(strings):
+                if not raw:
+                    continue
+                text = reader.decode(raw, expand=False)
+                try:
+                    same = writer.encode(text) == raw
+                except ValueError:
+                    same = False
+                if same:
+                    ok += 1
+                else:
+                    bad += 1
+                    if first is None:
+                        first = (chunk.index, pi, si, text[:60])
+    return ok, bad, first
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -250,6 +369,8 @@ def main() -> None:
                     help="Slot map (default: the game manifest's).")
     ap.add_argument("--roundtrip", action="store_true",
                     help="rebuild every chunk unchanged and check it is byte-identical")
+    ap.add_argument("--verify-text", action="store_true",
+                    help="decode every string to text and encode it back")
     ap.add_argument("--out-dir")
     ap.add_argument("--depth", type=int, default=2,
                     help="how far to follow phrase and name references")
@@ -260,6 +381,13 @@ def main() -> None:
     scen = Path(args.scen) if args.scen else Path(
         "work", game.code, "extracted", release.media_path("SCEN.DAT", game.code).lstrip("/").split("/")[-1])
     blob = scen.read_bytes()
+    if args.verify_text:
+        font = load_charmap_csv(Path(args.font_map) if args.font_map else game.font_map)
+        ok, bad, first = verify_text(blob, font)
+        print(f"text round trip: {ok}/{ok + bad} strings byte-identical"
+              + (f", first at chunk {first[0]} part {first[1]} #{first[2]}: {first[3]!r}"
+                 if first else ""))
+        raise SystemExit(0 if not bad else 1)
     if args.roundtrip:
         ok, total, bad = roundtrip(blob)
         print(f"no-edit round trip: {ok}/{total} chunks byte-identical"

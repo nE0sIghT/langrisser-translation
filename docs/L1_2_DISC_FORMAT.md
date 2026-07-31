@@ -222,10 +222,12 @@ addu  $a0, $v0, $a0
 A bank is **255** slots wide, not 256, and that is worth stating loudly because
 a 256-wide guess reads as plausible nonsense: the neighbour of the right
 character is still a real character, and the error grows by one per bank, so one
-string looks almost right while another is clearly wrong. Independently of the
-code, no argument byte ever reaches `0xFF` in either script — the highest are
-`0xFB` after `0xF7` and `0xFE` after `0xF8` — which is what a 255-wide bank
-allows and a 256-wide one cannot explain.
+string looks almost right while another is clearly wrong.
+
+Because the step is 255 and the argument is a full byte, **the banks overlap at
+their seams**: `0xF7 0xFF` and `0xF8 0x00` both name slot 491. The game's own
+packer takes the lower bank, and a rebuilt chunk has to do the same or it
+differs from the original for no reason at all.
 
 ### Control codes
 
@@ -299,10 +301,23 @@ phrase table. So "system" and "script" are one packing problem here, not two —
 and a change to a shared part has to be written into every chunk that carries
 that variant.
 
-### The round trip
+### The round trips
 
-`python3 -m langrisser.l12_scen --scen <file> --roundtrip` reads every chunk,
-rebuilds it from what it read, and compares:
+There are two, and a translation needs both. `--verify-text` decodes every
+string to text and encodes it back:
+
+| | Strings | Byte-identical |
+| --- | ---: | ---: |
+| `LANG1/SCEN.DAT` | 24,957 | **24,957** |
+| `LANG2/SCEN.DAT` | 126,445 | **126,445** |
+
+Two things make that exact rather than approximate. The plane draws some
+characters twice, so a character alone does not say which slot wrote it; the
+first slot is canonical and any other is written as a raw `<$XXXX>` tag, the way
+`l45` writes one. And the bank seams are honoured, as above.
+
+`--roundtrip` then reads every chunk, rebuilds it from what it read, and
+compares:
 
 | | Chunks | Byte-identical |
 | --- | ---: | ---: |
