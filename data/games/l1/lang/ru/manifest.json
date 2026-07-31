@@ -1,0 +1,26 @@
+{
+  "lang": "ru",
+  "label": "Russian",
+  "patch_suffix": "ru",
+  "patch_description": "Langrisser I RU script+font",
+  "caps_font": "../../../../fonts/ter-u14n.bdf",
+  "caps_font_size": 14,
+  "choice_width": 20,
+  "font": "../../../../fonts/terminus-normal.otb",
+  "font_assignments": "font_slot_assignments.csv",
+  "font_size": 12,
+  "forced_pairs": [
+    "ОК",
+    "нб"
+  ],
+  "glossary": "glossary.csv",
+  "max_lines": 4,
+  "names": "names.csv",
+  "review_status": "review_status.csv",
+  "script_dir": "SCEN",
+  "single_chars": "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя«»—;!?/%",
+  "system_complete": false,
+  "system_layout": "system_layout.json",
+  "system_strings": "system_strings.json",
+  "window_width": 21
+}

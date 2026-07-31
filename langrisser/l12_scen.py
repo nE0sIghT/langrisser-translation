@@ -215,13 +215,11 @@ class Reader:
         return "".join(out)
 
     def control(self, name: str, arg: int | None, depth: int) -> str:
-        if name == "line":
-            return "\n"
-        if name == "page":
-            return "\n\n"
-        if name == "blank":
-            return " "
-        if name in ("phrase", "name") and arg is not None and depth <= 0:
+        # Reading form uses real breaks; the editable form uses tags, because a
+        # newline at the edge of a record cannot survive a line-based file.
+        if name in BREAKS:
+            return BREAKS[name] if depth > 0 else f"<{name}>"
+        if name in ("phrase", "name") and arg is not None and depth <= 0:  # noqa: E501
             return f"<{name}:{arg}>"
         if name in ("phrase", "name") and arg is not None:
             part = PHRASE_PART if name == "phrase" else NAME_PART

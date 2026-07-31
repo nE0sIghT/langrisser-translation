@@ -329,6 +329,29 @@ own section table is recomputed because every section after the text one moves,
 and the chunk is padded back to the length it had. Nothing is copied through
 except the sections this format does not touch.
 
+### Writing a pack back
+
+`langrisser/l12_sceninsert.py` is the counterpart of the dump and the same
+shape `sceninsert` has for `l45`: the original file is the base, the pack
+supplies the records it has translated, and a record it leaves out stays as it
+was, because a partial translation has to build. Records are addressed
+`chunk / part / index`, which is how the dump writes them, so nothing has to
+agree on a separate id scheme.
+
+Feeding the dump straight back in reproduces both files byte for byte —
+24,957 records for Langrisser I and 126,445 for Langrisser II, none of them
+written, because none of them changed. Editing one record changes exactly two
+bytes and the file still rebuilds and re-reads.
+
+That works because a record is one line and breaks are tags, not real
+newlines. With real newlines a break at the edge of a record is
+indistinguishable from the separator after it, and the last record of every
+part silently gained one.
+
+The encoder refuses a character the plane does not have rather than dropping
+it. Right now that means Cyrillic is refused: the target glyphs are not in
+`FONT.DAT` yet, and building them is the next stage, not a detail of this one.
+
 ### The growth budget
 
 Chunks start on `0x800` boundaries, so each one ends with padding that a longer

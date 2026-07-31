@@ -14,7 +14,7 @@ import json
 import shutil
 from pathlib import Path
 
-from langrisser.game import add_game_args, game_from_args
+from langrisser.game import add_game_args, game_from_args, load_game
 from langrisser.project import ROOT, load_language
 from langrisser.release import releases_for
 
@@ -147,6 +147,9 @@ def main() -> None:
     ap.add_argument("lang", help="New language code, e.g. ru.")
     ap.add_argument("--label", default=None, help="Human-readable language label.")
     ap.add_argument("--from-lang", default="en", help="Source pack to copy scaffold data from.")
+    ap.add_argument("--from-game", default=None,
+                    help="Game whose pack the scaffold is copied from, when this "
+                         "game has none yet. Only the shape is copied, never text.")
     add_game_args(ap)
     ap.add_argument("--lang-root", default=None,
                     help="Override the pack root (default: the game manifest's).")
@@ -159,7 +162,16 @@ def main() -> None:
     lang_root = Path(args.lang_root) if args.lang_root else game.lang_root
     if not lang_root.is_absolute():
         lang_root = Path.cwd() / lang_root
-    src = load_language(args.from_lang, lang_root)
+    # The first pack of a new game has nothing of its own to copy the shape
+    # from, so it may borrow another game's. Only the scaffold crosses over -
+    # `write_scaffold` clears every translated value on the way.
+    src_root = lang_root
+    if args.from_game:
+        other = load_game(args.from_game, getattr(args, "game_root", "data/games"))
+        src_root = other.lang_root
+        if not src_root.is_absolute():
+            src_root = Path.cwd() / src_root
+    src = load_language(args.from_lang, src_root)
     dst_root = lang_root / args.lang
     dst_root.mkdir(parents=True, exist_ok=True)
     (dst_root / "SCEN").mkdir(exist_ok=True)
@@ -178,7 +190,7 @@ def main() -> None:
     manifest["lang"] = args.lang
     manifest["label"] = args.label or args.lang.upper()
     manifest["patch_suffix"] = args.lang
-    manifest["patch_description"] = f"Langrisser V {args.lang.upper()} script+font"
+    manifest["patch_description"] = f"{game.label} {args.lang.upper()} script+font"
 
     for key in SCALAR_FILES:
         value = manifest.get(key)
