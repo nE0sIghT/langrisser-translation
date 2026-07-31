@@ -160,21 +160,26 @@ def repack_file(blob: bytes, chunks: list[bytes]) -> bytes:
     sector can have it as long as the file-level total holds. This is the same
     move `l45` makes when a chunk outgrows its span.
 
-    Sector alignment is kept. The pointers do not require it — they are plain
-    byte offsets — but the disc was built that way and nothing here is worth
-    finding out about a disc drive the hard way.
+    Chunks stay on sector boundaries while that still fits. The pointers do not
+    require it — they are plain byte offsets, and the engine seeks with them —
+    but the disc was built that way, so the layout only tightens when keeping
+    it would mean not building at all. Falling back to word alignment recovers
+    the rounding, about a kilobyte per chunk.
     """
     spans = read_chunk_spans(blob)
     if len(chunks) != len(spans):
         raise ValueError(f"expected {len(spans)} chunks, got {len(chunks)}")
-    out = bytearray(len(blob))
-    at = spans[0][0]                      # the catalog keeps its place
-    offsets = []
-    for data in chunks:
-        offsets.append(at)
-        out[at:at + len(data)] = data
-        at += -(-len(data) // SECTOR) * SECTOR
-    if at > len(blob):
+    for align in (SECTOR, 4):
+        out = bytearray(len(blob))
+        at = spans[0][0]                  # the catalog keeps its place
+        offsets = []
+        for data in chunks:
+            offsets.append(at)
+            out[at:at + len(data)] = data
+            at += -(-len(data) // align) * align
+        if at <= len(blob):
+            break
+    else:
         raise ValueError(
             f"the chunks no longer fit the container: {at} > {len(blob)}")
     for i, off in enumerate(offsets):
