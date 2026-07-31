@@ -11,12 +11,16 @@ taken once nothing still in Japanese needs it: an untranslated record keeps its
 original bytes, so a sacrificed kanji does not vanish from the screen, it draws
 a Cyrillic letter in the middle of a Japanese sentence.
 
-That makes the pool grow as the translation does. Slots are handed out in the
-order they are safe to lose: tiles the Japanese map never named, then tiles no
-remaining Japanese string references, and among those the ones the script never
-referenced at all before the ones our own translation freed. Existing
-assignments are kept exactly where they are, because moving a glyph rewrites
-every record that used it.
+Slots are handed out in the order they are cheapest to lose: tiles the Japanese
+map never named, then tiles no remaining Japanese string references, and then
+the kanji the remaining Japanese uses least. That last group is not free — a
+line still in Japanese keeps its original bytes, so a sacrificed kanji draws a
+Cyrillic letter in the middle of it — but those lines are going to be
+translated, and a rare kanji costs one wrong glyph in one line while the tiles
+buy the pairs that decide whether any chunk fits at all.
+
+Existing assignments are kept exactly where they are, because moving a glyph
+rewrites every record that used it.
 """
 from __future__ import annotations
 
@@ -27,6 +31,7 @@ import re
 from pathlib import Path
 
 from langrisser.assign_font_slots import ALPHA_WORD_RE, word_pairs
+from langrisser.build_font import pick_fonts, render_tile
 from langrisser.game import add_game_args, game_from_args
 from langrisser.l12_scen import (BANK_BASE, BANK_FIRST, BANK_WIDTH, CONTROLS,
                                  GLYPH_FIRST, MAX_SLOT, read_chunks)
@@ -63,7 +68,7 @@ def survey(games: list[str], lang: str):
     Pair rules are `assign_font_slots`', so both engines pack a word the same
     way.
     """
-    still: set[int] = set()
+    still: collections.Counter = collections.Counter()
     ever: set[int] = set()
     wanted: collections.Counter = collections.Counter()
     pairs: collections.Counter = collections.Counter()
@@ -82,10 +87,10 @@ def survey(games: list[str], lang: str):
                 for si, raw in enumerate(part):
                     if not raw:
                         continue
-                    slots = set(string_slots(raw))
-                    ever |= slots
+                    slots = list(string_slots(raw))
+                    ever.update(slots)
                     if (pi, si) not in records:
-                        still |= slots
+                        still.update(slots)
     return still, ever, wanted, pairs
 
 
@@ -110,23 +115,34 @@ def main() -> None:
     games = sorted(release.games) if hasattr(release, "games") else [game.code]
     still, ever, wanted, pairs = survey(games, lang.code)
 
+    # A pair has to fit one cell at a 6px pitch. Fullwidth characters do not,
+    # and the text does carry a few — the scenario number is drawn in them —
+    # so ask the renderer rather than guessing which those are.
+    fonts = pick_fonts(str(lang.font) if lang.font else "", lang.font_size)
+    def packable(pair: str) -> bool:
+        try:
+            render_tile(pair, fonts, [])
+        except ValueError:
+            return False
+        return True
+
     have = {ch for ch in font.values() if ch}
     kept: dict[int, tuple[str, str]] = {}
     taken: dict[str, int] = {}
     if out.exists():
         for row in csv.DictReader(out.open(encoding="utf-8")):
             slot, ch = int(row["index_dec"]), row["char"]
-            if slot <= MAX_SLOT and slot not in still:
+            if slot <= MAX_SLOT and packable(ch):
                 kept[slot] = (ch, row.get("replaced_char") or "")
                 taken[ch] = slot
 
     need = sorted(ch for ch in wanted if ch not in have and ch not in taken)
 
-    free = [s for s in range(MAX_SLOT + 1)
-            if s not in still and s not in kept]
+    free = [s for s in range(MAX_SLOT + 1) if s not in kept]
     # Cheapest first: never named by the Japanese map, then never referenced by
-    # any string, then freed by our own translation.
-    free.sort(key=lambda s: (bool(font.get(s)), s in ever, s))
+    # any string, then freed by our own translation, and last the kanji the
+    # Japanese that is left still draws — rarest of those first.
+    free.sort(key=lambda s: (bool(font.get(s)), s in ever, still[s], s))
 
     if len(need) > len(free):
         raise SystemExit(
@@ -141,7 +157,8 @@ def main() -> None:
     # the width of the Japanese it replaces, and the chunk has about a kilobyte
     # of padding to grow into.
     spare = free[len(need):]
-    want_pairs = [p for p, _ in pairs.most_common() if p not in taken]
+    want_pairs = [p for p, _ in pairs.most_common()
+                  if p not in taken and packable(p)]
     added_pairs = 0
     for pair, slot in zip(want_pairs, spare):
         kept[slot] = (pair, font.get(slot) or "")
@@ -152,7 +169,8 @@ def main() -> None:
     print(f"{game.code}+{','.join(games)}/{lang.code}: {len(rows)} slots assigned "
           f"({len(need)} new singles, {added_pairs} pairs of {len(want_pairs)} wanted), "
           f"{len(free) - len(need) - added_pairs} still free "
-          f"(ceiling {MAX_SLOT}, {len(still)} slots still Japanese)")
+          f"(ceiling {MAX_SLOT}, {len(still)} slots still Japanese, "
+          f"{sum(1 for s in kept if still[s])} of them taken)")
     if args.dry_run:
         for row in rows if args.dry_run and False else []:
             print(f"   {row['index_dec']:5} {row['char']} <- {row['replaced_char'] or '(blank)'}")

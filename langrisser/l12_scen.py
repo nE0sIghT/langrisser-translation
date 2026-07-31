@@ -122,12 +122,16 @@ class Chunk:
         return self.parts[number] if number < len(self.parts) else ()
 
 
-def pack_chunk(original: bytes, parts) -> bytes:
+def pack_chunk(original: bytes, parts, cap: bool = True) -> bytes:
     """Rebuild a chunk with a new text section, keeping every other section.
 
     Sections after the text one move, so the chunk's own table is rewritten;
     the chunk is then padded back to its sector-aligned length, which is where
     the growth budget comes from. Raises if the result no longer fits.
+
+    `cap=False` returns the chunk at its natural length instead, for the
+    caller that is going to lay every chunk out again and can spend another
+    chunk's padding here (see `repack_file`).
     """
     sections = offset_table(original)
     if not sections:
@@ -139,10 +143,44 @@ def pack_chunk(original: bytes, parts) -> bytes:
     # padding; strip that so the rebuilt chunk is padded once, not twice.
     blocks[-1] = blocks[-1].rstrip(b"\x00")
     packed = build_table(blocks)
+    if not cap:
+        return packed
     if len(packed) > len(original):
         raise ValueError(
             f"chunk grew past its sector: {len(packed)} > {len(original)}")
     return packed + b"\x00" * (len(original) - len(packed))
+
+
+def repack_file(blob: bytes, chunks: list[bytes]) -> bytes:
+    """Lay every chunk out again inside a container of unchanged size.
+
+    A chunk's own trailing padding is about a kilobyte, which one scenario of
+    Russian can exhaust while the container as a whole still has room: the
+    catalog is nothing but absolute byte offsets, so a chunk that needs another
+    sector can have it as long as the file-level total holds. This is the same
+    move `l45` makes when a chunk outgrows its span.
+
+    Sector alignment is kept. The pointers do not require it — they are plain
+    byte offsets — but the disc was built that way and nothing here is worth
+    finding out about a disc drive the hard way.
+    """
+    spans = read_chunk_spans(blob)
+    if len(chunks) != len(spans):
+        raise ValueError(f"expected {len(spans)} chunks, got {len(chunks)}")
+    out = bytearray(len(blob))
+    at = spans[0][0]                      # the catalog keeps its place
+    offsets = []
+    for data in chunks:
+        offsets.append(at)
+        out[at:at + len(data)] = data
+        at += -(-len(data) // SECTOR) * SECTOR
+    if at > len(blob):
+        raise ValueError(
+            f"the chunks no longer fit the container: {at} > {len(blob)}")
+    for i, off in enumerate(offsets):
+        struct.pack_into("<I", out, i * 4, off)
+    struct.pack_into("<I", out, len(offsets) * 4, len(blob))
+    return bytes(out)
 
 
 def read_chunks(blob: bytes) -> list[Chunk]:

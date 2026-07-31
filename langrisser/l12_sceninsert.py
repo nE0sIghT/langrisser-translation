@@ -22,8 +22,11 @@ import re
 from pathlib import Path
 
 from langrisser.game import add_game_args, game_from_args
-from langrisser.l12_scen import (Reader, Writer, load_assignments, merged_plane,
-                                 pack_chunk, read_chunks)
+from langrisser.l12_phrases import rebuild as rebuild_phrases
+from langrisser.l12_scen import (PHRASE_PART, Reader, Writer, load_assignments,
+                                 merged_plane, pack_chunk, read_chunks,
+                                 repack_file)
+from langrisser.scen import read_chunk_spans
 from langrisser.project import add_language_args, language_from_args
 from langrisser.release import add_release_args, release_from_args
 from langrisser.scen import load_charmap_csv
@@ -80,10 +83,10 @@ def main() -> None:
     root = Path(args.translation_root) if args.translation_root else lang.script_dir
     scen = Path(args.scen) if args.scen else Path(
         "work", game.code, "extracted", "SCEN.DAT")
-    blob = bytearray(scen.read_bytes())
+    blob = scen.read_bytes()
+    pieces = [blob[a:b] for a, b in read_chunk_spans(blob)]
 
     translated = applied = 0
-    grown: list[tuple[int, str]] = []
     for chunk in read_chunks(bytes(blob)):
         pack_file = root / f"chunk_{chunk.index:03d}.txt"
         records = read_pack(pack_file) if pack_file.exists() else {}
@@ -92,7 +95,7 @@ def main() -> None:
             continue
         reader = Reader(font, chunk)
         parts: list[list[bytes]] = [list(p) for p in chunk.parts]
-        touched = 0
+        edited: dict[tuple[int, int], str] = {}
         for (pi, si), text in sorted(records.items()):
             if pi >= len(parts) or si >= len(parts[pi]):
                 raise SystemExit(
@@ -102,26 +105,34 @@ def main() -> None:
                 continue
             if text == reader.decode(was, expand=False):
                 continue
-            parts[pi][si] = writer.encode(text)
-            touched += 1
+            edited[(pi, si)] = text
+        touched = len(edited)
+        if touched:
+            table, rewritten = rebuild_phrases(chunk, edited, writer)
+            parts[PHRASE_PART] = table
+            for (pi, si), text in rewritten.items():
+                parts[pi][si] = writer.encode(text)
         if not touched:
             continue
-        original = bytes(blob[chunk.start:chunk.end])
-        try:
-            blob[chunk.start:chunk.end] = pack_chunk(original, parts)
-        except ValueError as exc:
-            grown.append((chunk.index, str(exc)))
-            continue
+        # Uncapped: a chunk may outgrow its own padding, and the layout below
+        # pays for it out of the container's.
+        pieces[chunk.index] = pack_chunk(bytes(blob[chunk.start:chunk.end]),
+                                         parts, cap=False)
         applied += touched
 
+    try:
+        rebuilt = repack_file(blob, pieces)
+    except ValueError as exc:
+        raise SystemExit(f"{scen}: {exc}")
+    if len(rebuilt) != len(blob):
+        raise SystemExit("the container changed size, which the disc cannot take")
+
     Path(args.out_scen).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.out_scen).write_bytes(bytes(blob))
+    Path(args.out_scen).write_bytes(rebuilt)
+    moved = sum(1 for (a, _), off in zip(read_chunk_spans(blob),
+                                         read_chunk_spans(rebuilt)) if a != off[0])
     print(f"{game.code}/{lang.code}: {translated} records in the pack, "
-          f"{applied} written -> {args.out_scen}")
-    for index, why in grown:
-        print(f"  chunk {index} left unchanged: {why}")
-    if grown:
-        raise SystemExit(1)
+          f"{applied} written, {moved} chunk(s) relocated -> {args.out_scen}")
 
 
 if __name__ == "__main__":
