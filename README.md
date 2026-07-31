@@ -31,7 +31,7 @@ exactly one release there.
 | `l5-ps1-jp` | `l5` | `SLPS-01819`, disc B of the two-disc set | complete: PS1 PPF patch |
 | `l5-saturn-jp` | `l5` | `T-2509G` | complete: remastered BIN/CUE |
 | `l4-ps1-jp` | `l4` | `SLPS-01818`, disc A | base only: formats verified, font map derived, empty packs |
-| `l1-2-ps1-jp` | `l1`, `l2` | `SLPM 86798` | next goal: disc analysed, see `docs/L1_2_DISC_FORMAT.md` |
+| `l1-2-ps1-jp` | `l1`, `l2` | `SLPM 86798` | next goal: formats read, script round-trips, empty packs |
 
 ## Next Goal — Langrisser I & II in Russian
 
@@ -40,12 +40,16 @@ The next target is a Russian translation of **Langrisser I & II** (PS1,
 two complete games with one file set each, so it enters the model as one
 release naming two games.
 
-It does not run on the `l45` tooling as it stands. The disc analysis in
-`docs/L1_2_DISC_FORMAT.md` establishes what carries over and what does not:
-the `SCEN.DAT` chunk catalog and the 12 × 12 glyph cell are the same, while the
-record layer, the text codec and the glyph artwork are this game's own. So it
-needs its own engine descriptor rather than a flag on `l45`, and its own
-slot→character map read off its plane.
+It runs on its own engine, `l12`, rather than a flag on `l45`: the two share the
+`SCEN.DAT` chunk catalog and the 12 × 12 glyph cell and disagree below that.
+`docs/L1_2_DISC_FORMAT.md` has the formats. What is done: the glyph plane is
+read, the script decodes with its phrase and name references followed, every
+chunk is bound to its scenario, and all 127 chunks rebuild byte-identically.
+What is not: the language packs are empty, and three control codes are still
+unread.
+
+There is no separate SYSTEM file on this disc — the UI text is parts 0–4 of the
+same text section — so system and script are one packing problem.
 
 The repository contains only durable translation data and tooling. Original game
 assets, extracted files, generated Japanese dumps, build products and local
@@ -585,7 +589,8 @@ file and the work in the task list.
 - `docs/L45_DISASM_SUMMARY.md`: the text and control path, from disassembly.
 - `docs/L45_VIRASH_SUBTITLES.md`: the voiced monologue, how it was subtitled and
   the two engine routes that stayed unsolved.
-- `docs/L1_2_DISC_FORMAT.md`: the Langrisser I & II disc — the next goal.
+- `docs/L1_2_DISC_FORMAT.md`: the Langrisser I & II disc, its script container
+  and codec — the next goal.
 - `docs/L3_DISC_FORMAT.md`: the Langrisser III disc, carried over unverified.
 
 **Across games**
