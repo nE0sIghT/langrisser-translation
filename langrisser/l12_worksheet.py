@@ -35,6 +35,12 @@ def main() -> None:
     ap.add_argument("--font-map", default=None)
     ap.add_argument("--parts", default="7,6,5",
                     help="Parts to print, in the order to print them.")
+    ap.add_argument("--pack-skeleton", metavar="FILE",
+                    help="Write a pack file with every record numbered and its "
+                         "Japanese in place, to translate over. Transcribing "
+                         "numbers by hand is how a whole scenario slips by one "
+                         "record. Goes under work/: extracted Japanese is not "
+                         "kept in the language pack.")
     ap.add_argument("--skeleton", metavar="PART/INDEX",
                     help="Print one record as a fill-in template: its tags in "
                          "order with the text between them blanked. Layout tags "
@@ -48,6 +54,20 @@ def main() -> None:
     chunk = next(c for c in read_chunks(scen.read_bytes()) if c.index == args.chunk)
     reader = Reader(font, chunk)
     parts = [int(p) for p in args.parts.split(",")]
+
+    if args.pack_skeleton:
+        out = Path(args.pack_skeleton)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        blocks = []
+        for pi in parts:
+            rows = [f"{si}\t{reader.decode(raw, expand=False)}"
+                    for si, raw in enumerate(chunk.part(pi)) if raw]
+            if rows:
+                blocks.append(f"# part {pi}  {len(chunk.part(pi))} strings\n"
+                              + "\n".join(rows))
+        out.write_text("\n\n".join(blocks) + "\n", encoding="utf-8")
+        print(f"{out}: {sum(b.count(chr(10)) for b in blocks)} records to translate")
+        return
 
     if args.skeleton:
         pi, _, si = args.skeleton.partition("/")
