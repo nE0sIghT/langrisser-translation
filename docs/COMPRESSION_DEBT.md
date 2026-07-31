@@ -88,3 +88,23 @@ these can be reopened once the repack layout is verified in an emulator.
 | Сценарий | Запись | Что потеряно | Статус |
 | --- | --- | --- | --- |
 | l1 / 0 | 5/22 | `父上の事が心配だ` — «неспокойно за отца» ужато до «неспокойно»: строка не влезала в окно | открыто |
+
+## Langrisser I & II, Russian
+
+The window is 15 cells by 3 lines and the objectives panel is one line per
+condition, so a condition that reads as a clause in Japanese has to read as a
+label in Russian. Everything below is a place where that, or a reference the
+script substitutes at runtime, cost the line something the Japanese said.
+
+| ID | Scenario / chunk | Records | What was lost |
+| --- | --- | --- | --- |
+| RU-001 | L1 scenario 1, `chunk_000.txt` | part 6 `3` | `レディンがナームと合流` — "joins up with Naam" became "reached Naam". The panel line does not fit the reunion sense. |
+| RU-002 | L1 scenario 2, `chunk_001.txt` | part 6 `3`, `4` | The gate is "the upper-left gate of the map"; the panel says "the gate at the top left". |
+| RU-003 | L1 scenario 4, `chunk_003.txt` | part 6 `3` | `１６ターンの間レディンが生存する` — "survives for 16 turns" became "is alive 16 turns". |
+| RU-004 | L1 scenario 5, `chunk_004.txt` | part 6 `3`, card | `黒騎士ランスの撃破` lost "the Black Knight"; the panel names Lance only. The epithet is still said in the dialogue. |
+| RU-005 | L1 scenario 6, `chunk_005.txt` | part 6 `3`, card | `占領軍司令ゼルドの撃破` lost "commander of the occupying army". |
+| RU-006 | L1 scenario 11, `chunk_010.txt` | part 6 `3`, `4` | `最上階の階段` — "the staircase to the top floor" became "the staircase up". |
+| RU-007 | L1 scenarios 14, 15, `chunk_013.txt`, `chunk_014.txt` | part 6 `6` | `ＮＰＣの全滅` says NPC, which is the game talking about itself. The panel says "all the townsfolk", which is what those NPCs are in both scenarios. |
+| RU-008 | L2 scenario 2, `chunk_001.txt` | part 7 `0` | The card's last page names Riana once in Japanese and the Russian wanted her twice for the sentence to read naturally; the second mention was dropped to keep the reference sequence. |
+| RU-009 | L2 scenario 3, `chunk_002.txt` | `155` | Morgan's jibe calls Zolm a fool of a commander through the name table's `指揮官`. Russian cannot decline a substituted word, so the line says "this fool — and he a commander" rather than "a fool of a commander". |
+| RU-010 | L2 scenario 3, `chunk_002.txt` | part 6 `6` | `司祭・神官の全滅` distinguishes the high priest from the temple clergy; the panel line says "all the priests". |
