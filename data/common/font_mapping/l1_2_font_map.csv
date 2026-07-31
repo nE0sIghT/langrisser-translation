@@ -122,7 +122,7 @@ index_dec,index_hex,group,char,source
 120,78,confirmed,う,vision
 121,79,confirmed,が,vision
 122,7a,confirmed,に,vision
-123,7b,confirmed,ゃ,vision
+123,7b,confirmed,っ,vision+usage
 124,7c,confirmed,い,vision
 125,7d,confirmed,る,vision
 126,7e,confirmed,長,vision
@@ -515,7 +515,7 @@ index_dec,index_hex,group,char,source
 513,201,confirmed,興,vision
 514,202,confirmed,様,vision
 515,203,confirmed,迎,vision
-516,204,confirmed,繋,vision
+516,204,confirmed,襲,vision+usage
 517,205,confirmed,楽,vision
 518,206,confirmed,当,vision
 519,207,confirmed,操,vision
