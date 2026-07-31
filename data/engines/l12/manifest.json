@@ -1,0 +1,17 @@
+{
+  "engine": "l12",
+  "label": "Langrisser I & II container family",
+  "_comment": "The engine the 1998 PlayStation remake of Langrisser I and II was built on. It shares the SCEN.DAT chunk catalog with l45 and the 12x12 glyph cell, and nothing else: a chunk carries a self-describing section table rather than one text block, and text is byte tokens with banked escapes rather than u16 words. Confirmed against the decoder at 0x800164E8 in LANG2.EXE.",
+  "glyph": {
+    "width": 12,
+    "height": 12,
+    "bpp": 1,
+    "bytes_per_glyph": 18,
+    "plane_offset": 0,
+    "default_max_slot": 1535,
+    "_comment": "Rows are packed continuously, 12 bits per row MSB-first, so slot N starts at N*18 - the same cell l45 uses. Here the plane is a whole file, FONT.DAT, not a region of the executable's data, and the game loads it at 0x80168000."
+  },
+  "containers": ["l12_scen"],
+  "codec": "byte_slots_banked",
+  "_codec_comment": "0x00 ends a string, 0x0A-0xF6 is slot byte-0x0A, 0xF7-0xFB opens a 255-wide bank completed by the next byte as 236 + (byte-0xF7)*255 + arg, and 0x01-0x09 are control codes. A bank is 255 wide, not 256: no argument byte reaches 0xFF in either script."
+}

@@ -1,0 +1,29 @@
+{
+  "release": "l1-2-ps1-jp",
+  "label": "Langrisser I & II (PlayStation, JP)",
+  "games": ["l1", "l2"],
+  "platform": "ps1",
+  "engine": "l12",
+  "region": "jp",
+  "serial": "SLPM-86798",
+  "_comment": "One disc, two complete games, one boot executable. Each game has its own directory holding the same file names, so a tool that reads one reads the other with --game.",
+  "media": {
+    "kind": "iso-mode2",
+    "image": "iso/l1-2-ps1-jp/Langrisser I & II (Japan) (Track 1).bin",
+    "roots": { "l1": "/LANG1", "l2": "/LANG2" },
+    "boot": { "l1": "/LANG1.EXE", "l2": "/LANG2.EXE" }
+  },
+  "max_font_slot": 1535,
+  "_max_font_slot_comment": "FONT.DAT is a whole file of exactly 1536 slots, so nothing follows the plane to overrun.",
+  "verify": [
+    {
+      "role": "track1",
+      "source": "redump",
+      "note": "SLPM 86798 data track. Every file the patch touches lives on it; the whole-image hash is not comparable across rips because a mixed-mode dump may or may not store the audio pregap.",
+      "sectors": 286345,
+      "crc32": "b2ebdb90",
+      "md5": "6ed6e5461125c39f7a14345bc19fc6d3",
+      "sha1": "5477f40953b7051a531ad44239d1fb1ffb191321"
+    }
+  ]
+}

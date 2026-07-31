@@ -1,0 +1,9 @@
+{
+  "game": "l2",
+  "label": "Langrisser II",
+  "patch_stem": "langrisser_ii",
+  "engine": "l12",
+  "font_map": "../../common/font_mapping/l1_2_font_map.csv",
+  "_font_map_comment": "Shared with Langrisser II: the two FONT.DAT files on the disc are byte-identical, so the map lives in common/ rather than being copied per game.",
+  "lang_root": "lang"
+}

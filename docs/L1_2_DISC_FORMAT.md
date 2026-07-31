@@ -349,6 +349,27 @@ slot is one 12 × 12 cell whatever is drawn in it:
 The slot budget is tight: 34 blank slots, and the 130 the script never names are
 mostly credit surnames that something outside `SCEN.DAT` still draws.
 
+## Where this lives in the project
+
+Nothing here needed a new concept — the disc fits the axes the repository
+already has:
+
+| Path | What it holds |
+| --- | --- |
+| `data/engines/l12/manifest.json` | the container family: glyph cell, container list, codec |
+| `data/games/l1/manifest.json`, `data/games/l2/manifest.json` | one per game, both naming engine `l12` and the shared font map |
+| `data/releases/l1-2-ps1-jp/manifest.json` | the disc: two games, their roots and boot files, and the Redump fingerprint of its data track |
+| `data/common/font_mapping/l1_2_font_map.csv` | the slot map, in `common/` because the two `FONT.DAT` files are byte-identical |
+
+The tools take `--game` and `--release` like the rest, so `l12_scen --game l1`
+resolves its script, its slot map and its disc from the manifests.
+
+`langrisser/l12_scen.py` carries only what differs from `l45`: the section
+table, the nine parts, the byte codec and the control codes. The chunk pointer
+table comes from `scen.read_chunk_spans` and the slot map from
+`scen.load_charmap_csv`; `langrisser/l12_review_html.py` builds its styling on
+`review_html`'s.
+
 ## Still open
 
 - **Chunk to scenario binding.** Which chunk is which scenario is not mapped.

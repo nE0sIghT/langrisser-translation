@@ -29,6 +29,8 @@ import struct
 from dataclasses import dataclass
 from pathlib import Path
 
+from langrisser.game import add_game_args, game_from_args
+from langrisser.release import add_release_args, release_from_args
 from langrisser.scen import load_charmap_csv, read_chunk_spans
 
 SECTOR = 0x800
@@ -240,22 +242,30 @@ def roundtrip(blob: bytes) -> tuple[int, int, list[int]]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--scen", required=True)
+    add_game_args(ap, default="l2")
+    add_release_args(ap, default="l1-2-ps1-jp")
+    ap.add_argument("--scen", default=None,
+                    help="Script container (default: the extracted copy for --game).")
+    ap.add_argument("--font-map", default=None,
+                    help="Slot map (default: the game manifest's).")
     ap.add_argument("--roundtrip", action="store_true",
                     help="rebuild every chunk unchanged and check it is byte-identical")
-    ap.add_argument("--font-map", default="data/common/font_mapping/l1_2_font_map.csv")
     ap.add_argument("--out-dir")
     ap.add_argument("--depth", type=int, default=2,
                     help="how far to follow phrase and name references")
     args = ap.parse_args()
 
-    blob = Path(args.scen).read_bytes()
+    game = game_from_args(args)
+    release = release_from_args(args, platform="ps1")
+    scen = Path(args.scen) if args.scen else Path(
+        "work", game.code, "extracted", release.media_path("SCEN.DAT", game.code).lstrip("/").split("/")[-1])
+    blob = scen.read_bytes()
     if args.roundtrip:
         ok, total, bad = roundtrip(blob)
         print(f"no-edit round trip: {ok}/{total} chunks byte-identical"
               + (f", first mismatch at 0x{bad[0]:X}" if bad else ""))
         raise SystemExit(0 if ok == total else 1)
-    font = load_charmap_csv(Path(args.font_map))
+    font = load_charmap_csv(Path(args.font_map) if args.font_map else game.font_map)
     chunks = read_chunks(blob)
     if not args.out_dir:
         raise SystemExit("--out-dir is required unless --roundtrip")

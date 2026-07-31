@@ -19,6 +19,7 @@ from pathlib import Path
 
 from langrisser.l12_scen import Reader, read_chunks
 from langrisser.review_html import CSS as BASE_CSS
+from langrisser.game import load_game
 from langrisser.scen import load_charmap_csv
 
 PART_ROLES = {
@@ -133,18 +134,22 @@ def main() -> None:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--scen", action="append", required=True,
                     metavar="GAME=PATH", help="e.g. l2=work/l1-2/extracted/LANG2.SCEN.DAT")
-    ap.add_argument("--font-map", default="data/common/font_mapping/l1_2_font_map.csv")
+    ap.add_argument("--font-map", default=None,
+                    help="Slot map (default: the first game's manifest).")
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--depth", type=int, default=2)
     args = ap.parse_args()
 
-    font = load_charmap_csv(Path(args.font_map))
+    first_game = args.scen[0].split("=")[0]
+    font = load_charmap_csv(Path(args.font_map) if args.font_map
+                            else load_game(first_game).font_map)
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    labels = {"l1": "Langrisser I", "l2": "Langrisser II"}
+    labels = {}
     pages = []
     for spec in args.scen:
         game, _, path = spec.partition("=")
+        labels.setdefault(game, load_game(game).label)
         chunks = read_chunks(Path(path).read_bytes())
         body = render(game, labels.get(game, game), chunks, font, args.depth)
         nav = " ".join(f'<a href="{g}.html">{labels.get(g, g)}</a>'
