@@ -1,0 +1,226 @@
+#!/usr/bin/env python3
+"""Langrisser I & II SCEN.DAT: read the script, macros expanded.
+
+The container spine is the one `scen.py` documents — a `u32` pointer table whose
+last entry is the file size — but everything below it is this engine's own, so
+this module carries the parts that differ and nothing else.
+
+    catalog:  u32 chunk_pointers[], last == file size
+    chunk:    u32 section_table[], section_table[0] == its own byte size
+    section 2 is the text, itself a table of that same self-describing form
+    part:     NUL-terminated strings, back to back
+
+A string is bytes: `0x00` ends it, `0x0A`-`0xF6` is a glyph, `0xF7`-`0xFB` opens
+a 255-wide bank whose next byte completes the slot, and `0x01`-`0x09` are
+control codes, four of which take the byte after them.
+
+Two of those controls print another string in place of themselves - `0x04` from
+part 4, the phrase table, and `0x09` from part 1, the character names. A third
+of the bytes in a line of dialogue are one of those references, so a reader that
+does not follow them is not reading the script. Expansion is one level deep
+here; the engine restores the caller's stream pointer afterwards, so a nested
+string could in principle nest again.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import struct
+from dataclasses import dataclass
+from pathlib import Path
+
+SECTOR = 0x800
+TEXT_SECTION = 2
+PHRASE_PART = 4
+NAME_PART = 1
+BANK_FIRST = 0xF7
+BANK_LAST = 0xFB
+BANK_WIDTH = 255
+BANK_BASE = 236
+GLYPH_FIRST = 0x0A
+
+# Control codes, by what the executable's jump table at 0x8001017C does with
+# them. `operand` is whether the byte after the code belongs to it.
+CONTROLS = {
+    0x01: ("state", True),
+    0x02: ("pair", False),
+    0x03: ("number", False),
+    0x04: ("phrase", True),
+    0x05: ("blank", False),
+    0x06: ("wait", False),
+    0x07: ("page", False),
+    0x08: ("line", False),
+    0x09: ("name", True),
+}
+
+
+def load_font_map(path: Path) -> dict[int, str]:
+    return {int(r["index_dec"]): r["char"]
+            for r in csv.DictReader(path.open(encoding="utf-8")) if r["char"]}
+
+
+def offset_table(seg: bytes) -> list[int] | None:
+    """A self-describing u32 table: its first entry is its own byte size."""
+    if len(seg) < 4:
+        return None
+    first = struct.unpack_from("<I", seg, 0)[0]
+    if first < 8 or first % 4 or first > len(seg):
+        return None
+    table = list(struct.unpack_from(f"<{first // 4}I", seg, 0))
+    if table[0] != first or any(table[i] > table[i + 1] for i in range(len(table) - 1)):
+        return None
+    return table if table[-1] <= len(seg) else None
+
+
+def catalog(blob: bytes) -> list[tuple[int, int]]:
+    limit = min(512, SECTOR // 4)
+    words = list(struct.unpack_from(f"<{limit}I", blob, 0))
+    n = 1
+    while n < limit and words[n] > words[n - 1] and words[n] <= len(blob):
+        n += 1
+    return [(words[i], words[i + 1]) for i in range(n - 1)]
+
+
+def split_strings(part: bytes) -> list[bytes]:
+    """Strings of a part, keeping bank escapes whole so `0x00` never splits one."""
+    out: list[bytes] = []
+    cur = bytearray()
+    i = 0
+    while i < len(part):
+        v = part[i]
+        if v == 0:
+            out.append(bytes(cur))
+            cur = bytearray()
+            i += 1
+        elif BANK_FIRST <= v <= BANK_LAST and i + 1 < len(part):
+            cur += part[i:i + 2]
+            i += 2
+        else:
+            cur.append(v)
+            i += 1
+    if cur:
+        out.append(bytes(cur))
+    return out
+
+
+@dataclass(frozen=True)
+class Chunk:
+    index: int
+    start: int
+    end: int
+    parts: tuple[tuple[bytes, ...], ...]
+
+    def part(self, number: int) -> tuple[bytes, ...]:
+        return self.parts[number] if number < len(self.parts) else ()
+
+
+def read_chunks(blob: bytes) -> list[Chunk]:
+    out = []
+    for index, (start, end) in enumerate(catalog(blob)):
+        chunk = blob[start:end]
+        sections = offset_table(chunk)
+        if not sections or len(sections) <= TEXT_SECTION + 1:
+            continue
+        text = chunk[sections[TEXT_SECTION]:sections[TEXT_SECTION + 1]]
+        parts = offset_table(text)
+        if not parts:
+            continue
+        bounds = list(zip(parts, parts[1:] + [len(text)]))
+        out.append(Chunk(index, start, end,
+                         tuple(tuple(split_strings(text[a:b])) for a, b in bounds)))
+    return out
+
+
+class Reader:
+    """Decodes a string, following the references the engine follows."""
+
+    def __init__(self, font: dict[int, str], chunk: Chunk, depth: int = 2):
+        self.font = font
+        self.chunk = chunk
+        self.depth = depth
+
+    def slot(self, index: int) -> str:
+        ch = self.font.get(index)
+        return ch if ch else f"<${index:04X}>"
+
+    def decode(self, data: bytes, depth: int | None = None) -> str:
+        depth = self.depth if depth is None else depth
+        out: list[str] = []
+        i = 0
+        while i < len(data):
+            v = data[i]
+            if v in CONTROLS:
+                name, takes = CONTROLS[v]
+                arg = data[i + 1] if takes and i + 1 < len(data) else None
+                i += 2 if takes else 1
+                out.append(self.control(name, arg, depth))
+            elif v >= BANK_FIRST and i + 1 < len(data):
+                out.append(self.slot(BANK_BASE + (v - BANK_FIRST) * BANK_WIDTH + data[i + 1]))
+                i += 2
+            elif v >= GLYPH_FIRST:
+                out.append(self.slot(v - GLYPH_FIRST))
+                i += 1
+            else:
+                out.append(f"<!{v:02X}>")
+                i += 1
+        return "".join(out)
+
+    def control(self, name: str, arg: int | None, depth: int) -> str:
+        if name == "line":
+            return "\n"
+        if name == "page":
+            return "\n\n"
+        if name == "blank":
+            return " "
+        if name in ("phrase", "name") and arg is not None:
+            part = PHRASE_PART if name == "phrase" else NAME_PART
+            # Numbers are 1-based over the strings of that part.
+            number = arg if name == "phrase" else arg + 2
+            strings = self.chunk.part(part)
+            if depth > 0 and 1 <= number <= len(strings):
+                return self.decode(strings[number - 1], depth - 1)
+            return f"<{name}:{number}>"
+        if arg is not None:
+            return f"<{name}:{arg}>"
+        return f"<{name}>"
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--scen", required=True)
+    ap.add_argument("--font-map", default="data/common/font_mapping/l1_2_font_map.csv")
+    ap.add_argument("--out-dir", required=True)
+    ap.add_argument("--depth", type=int, default=2,
+                    help="how far to follow phrase and name references")
+    args = ap.parse_args()
+
+    font = load_font_map(Path(args.font_map))
+    blob = Path(args.scen).read_bytes()
+    chunks = read_chunks(blob)
+    out = Path(args.out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    summary = []
+    for chunk in chunks:
+        reader = Reader(font, chunk, args.depth)
+        lines = []
+        counts = []
+        for pi, strings in enumerate(chunk.parts):
+            counts.append(len(strings))
+            lines.append(f"# part {pi}  {len(strings)} strings")
+            for si, raw in enumerate(strings):
+                if raw:
+                    lines.append(f"{si}\t{reader.decode(raw)}")
+            lines.append("")
+        (out / f"chunk_{chunk.index:03d}.txt").write_text(
+            "\n".join(lines), encoding="utf-8")
+        summary.append({"chunk": chunk.index, "offset": chunk.start,
+                        "bytes": chunk.end - chunk.start, "parts": counts})
+    (out / "chunks.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    print(f"{len(chunks)} chunks -> {out}")
+
+
+if __name__ == "__main__":
+    main()
