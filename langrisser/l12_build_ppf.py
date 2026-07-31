@@ -21,6 +21,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from langrisser.game import add_game_args, game_from_args
 from langrisser.media import writer_for
 from langrisser.ppf3 import write_ppf3
 from langrisser.project import add_language_args, language_from_args
@@ -35,6 +36,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     add_language_args(ap)
+    add_game_args(ap, default="l1")
     add_release_args(ap, default="l1-2-ps1-jp")
     ap.add_argument("--orig-bin", default=None)
     ap.add_argument("--work-bin", default=None)
@@ -42,9 +44,16 @@ def main() -> None:
     ap.add_argument("--build-dir", default=None)
     args = ap.parse_args()
 
-    lang = language_from_args(args)
     release = release_from_args(args, platform="ps1")
     games = list(release.games)
+    # The language pack has to be this disc's. Resolved without a game it
+    # falls back to Langrisser V's, whose description would then be stamped
+    # into a Langrisser I & II patch.
+    game = game_from_args(args)
+    if game.code not in games:
+        raise SystemExit(f"{game.code} is not on release {release.code}")
+    args.lang_root = str(game.root / "lang")
+    lang = language_from_args(args)
     build = Path(args.build_dir) if args.build_dir else Path("work", "build", release.code)
     build.mkdir(parents=True, exist_ok=True)
     orig_bin = Path(args.orig_bin) if args.orig_bin else release.image
@@ -77,8 +86,11 @@ def main() -> None:
     out_ppf = Path(args.out_ppf) if args.out_ppf else Path(
         "patches", f"langrisser_1_2_{lang.suffix}.ppf")
     out_ppf.parent.mkdir(parents=True, exist_ok=True)
+    # The patch covers the whole disc, so it is described by the release
+    # rather than by whichever game's pack supplied the fonts.
+    description = f"{release.label} {lang.label} script+font"
     records = write_ppf3(orig_bin.read_bytes(), written.read_bytes(), out_ppf,
-                         lang.patch_description)
+                         description)
     print(f"ppf_records={records} out={out_ppf}")
 
 

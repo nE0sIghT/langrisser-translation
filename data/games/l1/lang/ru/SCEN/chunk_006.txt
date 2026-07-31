@@ -77,4 +77,4 @@
 6	<blank>・гибель Альберта
 
 # part 7  1 strings
-0	<blank><line><blank><blank>ＳＣＥＮＡＲＩＯ－０<number><line><blank><blank><blank>「<blank>Витязь крепости<blank>」<wait><page><blank>Замок отбит, Джессика и Тейлор<line>вызволены из заточения, но меч<line>Лангриссер к тому часу<line>был уже похищен.<wait><page><blank>И тут же пришла весть:<line>крепость Анзель, оплот<line>обороны Бальдии, осаждена<line>имперским войском.<wait><page>×Условия победы<line><blank>・разбить Бернулли<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<line><blank>・гибель Альберта<wait><page>
+0	<blank><line><blank><blank>ＳＣＥＮＡＲＩＯ－０<number><line><blank><blank><blank>「<blank>Витязь крепости<blank>」<wait><page><blank>Замок отбит, Джессика и Тейлор<line>вызволены из заточения, но меч<line>Лангриссер к тому часу<line>был уже похищен.<wait><page><blank>И тут же пришла весть:<line>крепость Анзель, оплот<line>обороны Балдеи, осаждена<line>имперским войском.<wait><page>×Условия победы<line><blank>・разбить Бернулли<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<line><blank>・гибель Альберта<wait><page>
