@@ -7,7 +7,7 @@
   "caps_font_size": 14,
   "choice_width": 20,
   "font": "../../../../fonts/terminus-normal.otb",
-  "font_assignments": "font_slot_assignments.csv",
+  "font_assignments": "../../../../common/font_mapping/l1_2_slots_ru.csv",
   "font_size": 12,
   "forced_pairs": [
     "ОК",

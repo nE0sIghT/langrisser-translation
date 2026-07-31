@@ -22,7 +22,8 @@ import re
 from pathlib import Path
 
 from langrisser.game import add_game_args, game_from_args
-from langrisser.l12_scen import Reader, Writer, pack_chunk, read_chunks
+from langrisser.l12_scen import (Reader, Writer, load_assignments, merged_plane,
+                                 pack_chunk, read_chunks)
 from langrisser.project import add_language_args, language_from_args
 from langrisser.release import add_release_args, release_from_args
 from langrisser.scen import load_charmap_csv
@@ -63,13 +64,19 @@ def main() -> None:
     ap.add_argument("--translation-root", default=None,
                     help="Override the pack's text root.")
     ap.add_argument("--font-map", default=None)
+    ap.add_argument("--assignments", default=None,
+                    help="Target-language slot table; default is the pack's. "
+                         "The encoder needs it because a sacrificed slot no "
+                         "longer draws the kanji the Japanese map names.")
     args = ap.parse_args()
 
     game = game_from_args(args)
     release_from_args(args, platform="ps1")   # validates --game against --release
     lang = language_from_args(args)
     font = load_charmap_csv(Path(args.font_map) if args.font_map else game.font_map)
-    writer = Writer(font)
+    table = Path(args.assignments) if args.assignments else lang.font_assignments
+    plane = merged_plane(font, load_assignments(table)) if table.exists() else font
+    writer = Writer(plane)
     root = Path(args.translation_root) if args.translation_root else lang.script_dir
     scen = Path(args.scen) if args.scen else Path(
         "work", game.code, "extracted", "SCEN.DAT")

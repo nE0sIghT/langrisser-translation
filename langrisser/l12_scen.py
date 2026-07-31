@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import csv
 import re
 import struct
 from dataclasses import dataclass
@@ -281,6 +282,32 @@ def roundtrip(blob: bytes) -> tuple[int, int, list[int]]:
     return ok, total, bad
 
 
+# The last slot `Writer.slot_bytes` can encode: five banks of `BANK_WIDTH`
+# above `BANK_BASE`. No argument byte reaches 0xFF in either script, which is
+# why the top of the last bank is one short of the width. Tiles above this
+# exist in the plane but no string can name them.
+MAX_SLOT = BANK_BASE + (BANK_LAST - BANK_FIRST) * BANK_WIDTH + BANK_WIDTH - 1
+
+
+def load_assignments(path: Path) -> dict[int, str]:
+    """`slot -> text` from a target-language slot table."""
+    with path.open(encoding="utf-8") as fh:
+        return {int(r["index_dec"]): r["char"] for r in csv.DictReader(fh)}
+
+
+def merged_plane(font: dict[int, str], assignments: dict[int, str]) -> dict[int, str]:
+    """The plane as a built disc will draw it.
+
+    A sacrificed slot stops being the kanji it was: its tile gets redrawn, so
+    a record that still encoded through it would come out as a Cyrillic letter
+    mid-sentence. Dropping the old reading here is what makes the encoder
+    refuse such a record instead of writing it.
+    """
+    plane = dict(font)
+    plane.update(assignments)
+    return plane
+
+
 class Writer:
     """Encodes a record back to the bytes the engine reads.
 
@@ -296,6 +323,46 @@ class Writer:
         for slot, ch in sorted(font.items()):
             self.slot_of.setdefault(ch, slot)
         self.by_name = {name: code for code, (name, _takes) in CONTROLS.items()}
+        self.pairs = max((len(t) for t in self.slot_of), default=1)
+
+    def tile_cost(self, text: str) -> int | None:
+        """Bytes a tile costs, or None if the plane cannot draw it."""
+        slot = self.slot_of.get(text)
+        return None if slot is None else len(self.slot_bytes(slot))
+
+    def tile_run(self, text: str) -> bytes:
+        """Encode a run of plain text with the fewest bytes.
+
+        A tile may hold two letters, and which pairs exist is decided per
+        target language, so the split is not obvious locally: taking a pair
+        here can leave an orphan letter there. This costs the run properly
+        rather than reaching for the longest tile each time.
+        """
+        n = len(text)
+        best: list[int | None] = [0] + [None] * n
+        take: list[int] = [0] * (n + 1)
+        for i in range(1, n + 1):
+            for size in range(1, min(self.pairs, i) + 1):
+                if best[i - size] is None:
+                    continue
+                cost = self.tile_cost(text[i - size:i])
+                if cost is None:
+                    continue
+                total = best[i - size] + cost
+                if best[i] is None or total < best[i]:
+                    best[i], take[i] = total, size
+        if best[n] is None:
+            missing = next(c for c in text if c not in self.slot_of)
+            raise ValueError(f"no slot for {missing!r}")
+        out = bytearray()
+        cuts: list[int] = []
+        i = n
+        while i:
+            cuts.append(i)
+            i -= take[i]
+        for end in reversed(cuts):
+            out += self.slot_bytes(self.slot_of[text[end - take[end]:end]])
+        return bytes(out)
 
     def slot_bytes(self, slot: int) -> bytes:
         if slot < 0 or slot > BANK_BASE + (BANK_LAST - BANK_FIRST) * BANK_WIDTH + 0xFE:
@@ -330,11 +397,11 @@ class Writer:
                 out += self.tag_bytes(m.group(1))
                 i = m.end()
                 continue
-            slot = self.slot_of.get(ch)
-            if slot is None:
-                raise ValueError(f"no slot for {ch!r}")
-            out += self.slot_bytes(slot)
-            i += 1
+            j = i
+            while j < len(text) and text[j] not in "\n " and not TAG_RE.match(text, j):
+                j += 1
+            out += self.tile_run(text[i:j])
+            i = j
         return bytes(out)
 
     def tag_bytes(self, body: str) -> bytes:
