@@ -99,13 +99,20 @@ def main() -> None:
 
     problems = 0
     checked = 0
+    seen_shared = False
     for chunk in read_chunks(scen.read_bytes()):
         if args.chunks and chunk.index not in args.chunks:
             continue
         pack_file = root / f"chunk_{chunk.index:03d}.txt"
-        if not pack_file.exists():
+        shared_file = root / "shared.txt"
+        records = read_pack(pack_file) if pack_file.exists() else {}
+        # The shared tables sit in every chunk but are translated once, so they
+        # are checked once too, against the first chunk that carries them.
+        if shared_file.exists() and not seen_shared:
+            records = {**read_pack(shared_file), **records}
+            seen_shared = True
+        if not records:
             continue
-        records = read_pack(pack_file)
         reader = Reader(font, chunk)
         for (pi, si), text in sorted(records.items()):
             if pi >= len(chunk.parts) or si >= len(chunk.parts[pi]):

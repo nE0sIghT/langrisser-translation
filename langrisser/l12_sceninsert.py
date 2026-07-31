@@ -86,11 +86,32 @@ def main() -> None:
     blob = scen.read_bytes()
     pieces = [blob[a:b] for a, b in read_chunk_spans(blob)]
 
-    translated = applied = 0
+    # Parts 0-4 are one table copied into every chunk, so they are translated
+    # once, in `shared.txt`, and applied wherever the copy is really the same.
+    # Langrisser II carries a second variant of some of them; a chunk holding
+    # that one keeps its Japanese rather than being given the wrong strings.
+    shared_file = root / "shared.txt"
+    shared = read_pack(shared_file) if shared_file.exists() else {}
+    reference: dict[tuple[int, int], bytes] = {}
+    if shared:
+        first = next(iter(read_chunks(blob)))
+        for pi, si in shared:
+            if pi < len(first.parts) and si < len(first.parts[pi]):
+                reference[(pi, si)] = first.parts[pi][si]
+
+    translated = applied = skipped = 0
     for chunk in read_chunks(bytes(blob)):
         pack_file = root / f"chunk_{chunk.index:03d}.txt"
-        records = read_pack(pack_file) if pack_file.exists() else {}
+        records = dict(read_pack(pack_file)) if pack_file.exists() else {}
         translated += len(records)
+        for key, text in shared.items():
+            pi, si = key
+            if pi >= len(chunk.parts) or si >= len(chunk.parts[pi]):
+                continue
+            if chunk.parts[pi][si] != reference.get(key):
+                skipped += 1
+                continue
+            records.setdefault(key, text)
         if not records:
             continue
         reader = Reader(font, chunk)
@@ -132,7 +153,11 @@ def main() -> None:
     moved = sum(1 for (a, _), off in zip(read_chunk_spans(blob),
                                          read_chunk_spans(rebuilt)) if a != off[0])
     print(f"{game.code}/{lang.code}: {translated} records in the pack, "
-          f"{applied} written, {moved} chunk(s) relocated -> {args.out_scen}")
+          f"{len(shared)} shared-table records, {applied} written, "
+          f"{moved} chunk(s) relocated -> {args.out_scen}")
+    if skipped:
+        print(f"  {skipped} shared-table record(s) left alone: the chunk holds "
+              f"a different variant of that table")
 
 
 if __name__ == "__main__":

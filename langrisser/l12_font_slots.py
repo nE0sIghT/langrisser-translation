@@ -75,10 +75,23 @@ def survey(games: list[str], lang: str):
     for game in games:
         root = Path("data", "games", game, "lang", lang, "SCEN")
         scen = Path("work", game, "extracted", "SCEN.DAT")
+        # The shared tables live in one file but sit in every chunk, so they
+        # count as translated everywhere: their kanji are free and their
+        # letters need slots like any other.
+        shared_file = root / "shared.txt"
+        shared = read_pack(shared_file) if shared_file.exists() else {}
+        for text in shared.values():
+            plain = TAG_RE.sub("", text)
+            wanted.update(plain)
+            for word in ALPHA_WORD_RE.findall(plain):
+                pairs.update(word_pairs(word))
         for chunk in read_chunks(scen.read_bytes()):
             pack = root / f"chunk_{chunk.index:03d}.txt"
-            records = read_pack(pack) if pack.exists() else {}
-            for text in records.values():
+            records = dict(read_pack(pack)) if pack.exists() else {}
+            records.update(shared)
+            for key, text in records.items():
+                if key in shared:
+                    continue
                 plain = TAG_RE.sub("", text)
                 wanted.update(plain)
                 for word in ALPHA_WORD_RE.findall(plain):
