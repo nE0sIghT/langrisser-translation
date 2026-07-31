@@ -288,6 +288,52 @@ These are counts of stored bytes, so they under-count what a reader sees — eve
 `0x04` expands to a phrase — and over-count what has to be translated, since the
 phrase table is written once and referenced everywhere.
 
+## Writing it back
+
+### There is no SYSTEM file
+
+This engine has no counterpart to `l45`'s `SYSTEM.BIN`. The UI text lives in
+`SCEN.DAT` like everything else, as parts 0–4 of each chunk's text section:
+menu wording, character names, item names, spell and skill names, and the
+phrase table. So "system" and "script" are one packing problem here, not two —
+and a change to a shared part has to be written into every chunk that carries
+that variant.
+
+### The round trip
+
+`python3 -m langrisser.l12_scen --scen <file> --roundtrip` reads every chunk,
+rebuilds it from what it read, and compares:
+
+| | Chunks | Byte-identical |
+| --- | ---: | ---: |
+| `LANG1/SCEN.DAT` | 21 | **21** |
+| `LANG2/SCEN.DAT` | 106 | **106** |
+
+Rebuilding means the text section is written afresh from its parts, the chunk's
+own section table is recomputed because every section after the text one moves,
+and the chunk is padded back to the length it had. Nothing is copied through
+except the sections this format does not touch.
+
+### The growth budget
+
+Chunks start on `0x800` boundaries, so each one ends with padding that a longer
+text section can eat before anything has to move:
+
+| | Chunks | Padding | Median per chunk |
+| --- | ---: | ---: | ---: |
+| `LANG1/SCEN.DAT` | 21 | 24,233 bytes | 1,203 |
+| `LANG2/SCEN.DAT` | 106 | 120,805 bytes | 1,101 |
+
+About a kilobyte per chunk, which is the first budget any translation has to
+fit. Beyond it the chunk would have to claim another sector and every later
+chunk pointer would move — possible, since the catalog is just pointers, but
+untested, and `pack_chunk` refuses rather than silently overrunning.
+
+Two things make the budget go further than it looks. The phrase table is one
+indirection the target text can use as well: a Russian ending or a recurring
+name costs one byte per use once it is in part 4. And parts 0–4 are shared, so
+translating them is paid for once per variant, not once per chunk.
+
 ## How the target text will use the plane
 
 Same two mechanisms Langrisser V already builds, and for the same reason — a

@@ -104,6 +104,21 @@ def split_strings(part: bytes) -> list[bytes]:
     return out
 
 
+def build_table(blocks: list[bytes]) -> bytes:
+    """A self-describing u32 table over `blocks`, in the form the game reads."""
+    head = 4 * len(blocks)
+    offsets, cursor = [], head
+    for block in blocks:
+        offsets.append(cursor)
+        cursor += len(block)
+    return struct.pack(f"<{len(blocks)}I", *offsets) + b"".join(blocks)
+
+
+def join_strings(strings) -> bytes:
+    """A part: every string NUL-terminated, back to back."""
+    return b"".join(bytes(s) + b"\x00" for s in strings)
+
+
 @dataclass(frozen=True)
 class Chunk:
     index: int
@@ -113,6 +128,29 @@ class Chunk:
 
     def part(self, number: int) -> tuple[bytes, ...]:
         return self.parts[number] if number < len(self.parts) else ()
+
+
+def pack_chunk(original: bytes, parts) -> bytes:
+    """Rebuild a chunk with a new text section, keeping every other section.
+
+    Sections after the text one move, so the chunk's own table is rewritten;
+    the chunk is then padded back to its sector-aligned length, which is where
+    the growth budget comes from. Raises if the result no longer fits.
+    """
+    sections = offset_table(original)
+    if not sections:
+        raise ValueError("chunk has no section table")
+    bounds = list(zip(sections, sections[1:] + [len(original)]))
+    blocks = [original[a:b] for a, b in bounds]
+    blocks[TEXT_SECTION] = build_table([join_strings(p) for p in parts])
+    # The last section's bytes run to the end of the chunk and include its
+    # padding; strip that so the rebuilt chunk is padded once, not twice.
+    blocks[-1] = blocks[-1].rstrip(b"\x00")
+    packed = build_table(blocks)
+    if len(packed) > len(original):
+        raise ValueError(
+            f"chunk grew past its sector: {len(packed)} > {len(original)}")
+    return packed + b"\x00" * (len(original) - len(packed))
 
 
 def read_chunks(blob: bytes) -> list[Chunk]:
@@ -186,19 +224,54 @@ class Reader:
         return f"<{name}>"
 
 
+def roundtrip(blob: bytes) -> tuple[int, int, list[int]]:
+    """Rebuild every chunk from what was read and compare. Returns (ok, total, bad)."""
+    ok, total, bad = 0, 0, []
+    for start, end in catalog(blob):
+        original = blob[start:end]
+        sections = offset_table(original)
+        if not sections or len(sections) <= TEXT_SECTION + 1:
+            continue
+        text = original[sections[TEXT_SECTION]:sections[TEXT_SECTION + 1]]
+        parts = offset_table(text)
+        if not parts:
+            continue
+        total += 1
+        bounds = list(zip(parts, parts[1:] + [len(text)]))
+        strings = [split_strings(text[a:b]) for a, b in bounds]
+        try:
+            same = pack_chunk(original, strings) == original
+        except ValueError:
+            same = False
+        if same:
+            ok += 1
+        else:
+            bad.append(start)
+    return ok, total, bad
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--scen", required=True)
+    ap.add_argument("--roundtrip", action="store_true",
+                    help="rebuild every chunk unchanged and check it is byte-identical")
     ap.add_argument("--font-map", default="data/common/font_mapping/l1_2_font_map.csv")
-    ap.add_argument("--out-dir", required=True)
+    ap.add_argument("--out-dir")
     ap.add_argument("--depth", type=int, default=2,
                     help="how far to follow phrase and name references")
     args = ap.parse_args()
 
-    font = load_font_map(Path(args.font_map))
     blob = Path(args.scen).read_bytes()
+    if args.roundtrip:
+        ok, total, bad = roundtrip(blob)
+        print(f"no-edit round trip: {ok}/{total} chunks byte-identical"
+              + (f", first mismatch at 0x{bad[0]:X}" if bad else ""))
+        raise SystemExit(0 if ok == total else 1)
+    font = load_font_map(Path(args.font_map))
     chunks = read_chunks(blob)
+    if not args.out_dir:
+        raise SystemExit("--out-dir is required unless --roundtrip")
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
