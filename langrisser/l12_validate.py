@@ -45,6 +45,9 @@ TAG_RE = re.compile(r"<(?:\$[0-9A-Fa-f]{4}|[a-z]+(?::\d+)?)>")
 # Nor are phrase references, which are the script's own compression — both
 # sides are compared with them inlined (see `references`).
 REFERENCE_RE = re.compile(r"<(?:name:\d+|pair|number)>")
+# Katakana letters only: the middle dot ・ lives in the same block but
+# separates names rather than continuing a word.
+KATAKANA_RE = re.compile(r"[ァ-ヶーヽヾ]")
 # The bullet, the ellipsis and the corner brackets are punctuation the plane
 # draws, not Japanese words, and the target text keeps using them.
 PUNCT = "・‥「」、。！？～ー－＋×（）／＆．＿＾"
@@ -57,8 +60,22 @@ def references(reader: Reader, text: str) -> list[str]:
 
     Phrase references are inlined first: a translation may keep one or spell
     the words out, and a phrase can hold a name reference of its own.
+
+    A reference that continues a katakana word is not naming anybody. The
+    script writes バランス as バ + the name Lance, because the name table
+    already holds ランス and that saves two bytes. Katakana *before* the
+    reference is what tells this apart: a real mention follows a particle,
+    punctuation or a break, never the middle of a word. Spelling the word out
+    is the only thing a translation can do with it.
     """
-    return REFERENCE_RE.findall(reader.inline_phrases(text))
+    inlined = reader.inline_phrases(text)
+    out = []
+    for m in REFERENCE_RE.finditer(inlined):
+        before = inlined[m.start() - 1] if m.start() else ""
+        if KATAKANA_RE.match(before):
+            continue
+        out.append(m.group(0))
+    return out
 
 
 def pages(text: str) -> list[list[str]]:
