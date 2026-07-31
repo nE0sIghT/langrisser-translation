@@ -226,7 +226,34 @@ staff credits draw from somewhere other than `SCEN.DAT`. Before any slot is
 treated as reusable, whatever else draws text has to be checked; `SCEN.DAT`
 silence alone does not make a slot free.
 
-Control-code frequency over both scripts, and what follows each one:
+### Control codes
+
+Two of them are settled, and one of those changes what the script *is*.
+
+**`0x09` takes an operand and names a character.** The operand indexes the
+character-name table in part 1, as `index = byte − 0x0A`. Checked against a
+chunk whose cast is known: the operands there resolve to exactly the people in
+that scene and nobody else. This is the same mechanism `l45` writes as
+`0xFB00`–`0xFBFF`.
+
+**`0x04` takes an operand and expands to a phrase.** The script is
+dictionary-packed. The proof is that one operand always yields the same words:
+`負け❨4❩ぶ` reads `負けない` and `邪魔はさせ❨4❩ぶ` reads `邪魔はさせない`, while
+`復活❨4❩石` and `滅ぼすことが❨4❩石` both want `できる`. With 237 distinct
+operands the dictionary holds on the order of 237 entries.
+
+**The dictionary has not been located.** It is not in the chunk's other
+sections — those carry almost no zero bytes and are code or art, not strings.
+It is not any of the nine text parts under `index = byte − 0x0A`. A scan of
+`LANG1.EXE`, `LANG2.EXE` and the loader for runs of NUL-separated codec strings
+finds only padding. Until it is found the script cannot be read in full, and
+about a third of the bytes in a line of dialogue are dictionary references.
+
+`0x08` (26,422) and `0x04` aside, `0x06` is followed by `0x07` 5,862 times out
+of 6,029, which reads as a fixed pair — a page break against `0x08`'s line
+break. Neither is proven.
+
+Frequency over both scripts, and what follows each one:
 
 | Code | Count | Distinct next bytes | Reading |
 | --- | ---: | ---: | --- |
