@@ -42,6 +42,10 @@ def main() -> None:
     ap.add_argument("--work-bin", default=None)
     ap.add_argument("--out-ppf", default=None)
     ap.add_argument("--build-dir", default=None)
+    ap.add_argument("--translation-root", default=None,
+                    help="Use these packs instead of the language pack's. For "
+                         "throwaway builds — a ruler patch for measuring a "
+                         "window, say — that must not touch tracked text.")
     args = ap.parse_args()
 
     release = release_from_args(args, platform="ps1")
@@ -73,9 +77,12 @@ def main() -> None:
     injections = {}
     for game in games:
         out_scen = build / f"SCEN.{game}.{lang.suffix}.DAT"
-        run("-m", "langrisser.l12_sceninsert",
-            "--lang", args.lang, "--game", game, "--release", release.code,
-            "--out-scen", out_scen)
+        insert = ["-m", "langrisser.l12_sceninsert",
+                  "--lang", args.lang, "--game", game, "--release", release.code,
+                  "--out-scen", out_scen]
+        if args.translation_root:
+            insert += ["--translation-root", args.translation_root]
+        run(*insert)
         injections[release.media_path("SCEN.DAT", game)] = out_scen
         # Both game directories hold their own copy of the same plane.
         injections[release.media_path("FONT.DAT", game)] = font_dat

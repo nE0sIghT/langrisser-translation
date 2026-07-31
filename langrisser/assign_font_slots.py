@@ -15,76 +15,15 @@ import re
 import struct
 from pathlib import Path
 
+from langrisser.font_units import (PUNCT_PAIRS, SINGLE_PUNCTUATION, continuity_pairs,
+                                   hyphen_boundary_pairs, is_pair_tail, needed_units,
+                                   word_pairs)
 from langrisser.offsetgroups import is_system_key
 from langrisser.project import COMMON_FONT_MAP, add_language_args, language_from_args
 from langrisser.scen import (FORCE_PAGE_BREAK, consumes_argument, find_text_block,
                         raw_glyph_slots, read_chunk_spans, words_from_bytes)
 
 TAG_RE = re.compile(r"<\$[0-9A-Fa-f]{4}>")
-WORD_RE = re.compile(r"[\w'.,]+", re.UNICODE)
-ALPHA_WORD_RE = re.compile(r"[^\W_]+", re.UNICODE)
-HYPHENATED_WORD_RE = re.compile(
-    r"[^\W_]+(?:-[^\W_]+)+",
-    re.UNICODE,
-)
-SPACE_LETTER_RE = re.compile(r" ([^\W_])", re.UNICODE)
-LETTER_SPACE_RE = re.compile(r"([^\W_]) (?=[^\W_])", re.UNICODE)
-PUNCT_SPACE_RE = re.compile(r"([,\.…？！:]) ")
-LETTER_COLON_RE = re.compile(r"([^\W_]):", re.UNICODE)
-SINGLE_PUNCTUATION = "'.,…()"
-PAIR_PUNCTUATION = "'.,"
-PUNCT_PAIRS = ("！？", "？！", " -")
-
-
-def is_pair_tail(ch: str) -> bool:
-    return ch.islower() or ch.isdigit() or ch in PAIR_PUNCTUATION
-
-
-def word_pairs(w: str):
-    """Every usable adjacent pair in a word.
-
-    Codec.encode chooses the globally cheapest tiling. Supplying only one
-    greedy tiling prevents it from shifting pair boundaries to avoid an
-    interior single glyph or to combine the preceding space with the first
-    letter. A capital is still allowed only at the start of a word; all-caps
-    words stay native full-width singles.
-    """
-    if len(w) == 2 and w.isupper():
-        yield w
-        return
-    for i in range(len(w) - 1):
-        a, b = w[i], w[i + 1]
-        ok = is_pair_tail(b) and (
-            is_pair_tail(a) or (a.isupper() and i == 0)
-        )
-        if ok:
-            yield w[i : i + 2]
-
-
-def hyphen_boundary_pairs(word: str):
-    """Yield the boundary pairs needed for a gap-free hyphenated word.
-
-    A pair font puts two half-width characters in one native cell. Without a
-    pair crossing each hyphen, the standalone narrow hyphen or adjacent letter
-    leaves half a cell blank and makes ``Наконец-то`` look like
-    ``Наконец -то``. Choose one boundary pair per hyphen according to the
-    current segment parity, so the whole word tiles tightly without spending
-    two scarce glyph slots on both ``letter-`` and ``-letter``.
-    """
-    parts = word.split("-")
-    consumed_prefix = 0
-    for i in range(len(parts) - 1):
-        left = parts[i]
-        right = parts[i + 1]
-        available = len(left) - consumed_prefix
-        if available % 2:
-            yield left[-1] + "-"
-            consumed_prefix = 0
-        else:
-            yield "-" + right[0]
-            consumed_prefix = 1
-
-
 def map_target_texts(mp: Path) -> list[str]:
     """Target strings from a translation map or unified string list."""
     data = json.loads(mp.read_text(encoding="utf-8"))
@@ -115,57 +54,6 @@ def map_jp_keys(mp: Path, source_by_id: dict[str, dict]) -> set[str]:
     return {e["jp"] for e in data if e.get("jp")}
 
 
-def continuity_pairs(texts: list[str], known: set[str],
-                     frequency: collections.Counter) -> collections.Counter:
-    """Pairs needed to avoid full-cell singleton letters inside words.
-
-    Odd-length words can tile from either edge, including a neighbouring
-    space. Choose the alignment requiring the fewest new pair glyphs; normal
-    pair frequency breaks ties so the selected additions remain reusable.
-    """
-    out: collections.Counter = collections.Counter()
-    available = set(known)
-    for text in texts:
-        for match in ALPHA_WORD_RE.finditer(text):
-            word = match.group(0)
-            if len(word) < 2:
-                continue
-            valid = set(word_pairs(word))
-            options: list[list[str]] = []
-
-            even = [word[i:i + 2] for i in range(0, len(word) - 1, 2)]
-            if all(pair in valid for pair in even):
-                if len(word) % 2 == 0:
-                    options.append(even)
-                elif match.end() < len(text) and text[match.end()] == " ":
-                    options.append([*even, word[-1] + " "])
-
-            if len(word) % 2:
-                odd = [word[i:i + 2] for i in range(1, len(word) - 1, 2)]
-                if (
-                    match.start() > 0
-                    and text[match.start() - 1] == " "
-                    and all(pair in valid for pair in odd)
-                ):
-                    options.append([" " + word[0], *odd])
-
-            # A boundary singleton is still preferable to an interior one when
-            # punctuation prevents a space pair.
-            if not options:
-                options.append(even)
-
-            def score(option: list[str]) -> tuple[int, int]:
-                missing = {pair for pair in option if pair not in available}
-                return len(missing), -sum(frequency[pair] for pair in option)
-
-            chosen = min(options, key=score)
-            for pair in chosen:
-                if pair not in available:
-                    out[pair] += 1
-                    available.add(pair)
-    return out
-
-
 def script_record_texts(translation_root: Path,
                         extra_script_dirs: list[Path] | None = None) -> list[str]:
     """Target-language record bodies from the translated chunk files."""
@@ -178,106 +66,6 @@ def script_record_texts(translation_root: Path,
             if "\t" in raw and not raw.startswith("#"):
                 out.append(raw.split("\t", 1)[1].replace(FORCE_PAGE_BREAK, "<$FFFD>"))
     return out
-
-
-def needed_units(translation_root: Path, menu_maps: list[Path],
-                 extra_singles: str = "", forced_pairs: list[str] | None = None,
-                 existing_units: set[str] | None = None,
-                 extra_script_dirs: list[Path] | None = None,
-                 extra_menu_maps: list[Path] | None = None):
-    """Return singles and prioritized pair groups needed by target text.
-
-    Menu labels must fit fixed slot counts, so they get the full pairing
-    rules (capital-initial, digits, punctuation) and absolute priority.
-    Spacing pairs are optional encodings that improve readability and save
-    tokens: leading/trailing space pairs keep half-width word edges from
-    visually doubling the inter-word gap, punctuation-space pairs render
-    punctuation plus a narrow trailing gap, and letter-colon pairs avoid a
-    visible gap after narrow word tails like "Earth:".
-    Script dialogs have room: lowercase pairs only, prioritized by frequency,
-    assigned while the sacrificial pool lasts.
-    """
-    # The codec never forms a pair across a control tag, so tags must break
-    # pair candidates too; joining the halves would demand phantom pairs like
-    # ",п" from line breaks.
-    script_texts = [TAG_RE.sub(" ", body) for body in
-                    script_record_texts(translation_root, extra_script_dirs)]
-    menu_texts: list[str] = []
-    for mp in list(menu_maps) + list(extra_menu_maps or []):
-        if mp.exists():
-            menu_texts.extend(map_target_texts(mp))
-
-    singles: set[str] = set()
-    menu_pairs: collections.Counter = collections.Counter()
-    spacing_pairs: collections.Counter = collections.Counter()
-    script_pairs: collections.Counter = collections.Counter()
-    singles.update(extra_singles)
-    for pair in forced_pairs or []:
-        menu_pairs[pair] += 1_000_000
-
-    def collect_spacing(text: str, target: collections.Counter,
-                        hyphen_target: collections.Counter | None = None) -> None:
-        target.update(
-            " " + match.group(1)
-            for match in SPACE_LETTER_RE.finditer(text)
-        )
-        target.update(
-            match.group(1) + " "
-            for match in LETTER_SPACE_RE.finditer(text)
-        )
-        target.update(
-            match.group(1) + " "
-            for match in PUNCT_SPACE_RE.finditer(text)
-        )
-        target.update(
-            match.group(1) + ":"
-            for match in LETTER_COLON_RE.finditer(text)
-        )
-        for match in HYPHENATED_WORD_RE.finditer(text):
-            (hyphen_target if hyphen_target is not None
-             else target).update(hyphen_boundary_pairs(match.group(0)))
-
-    # A missing boundary pair leaves a mid-word hole ("Наконец ‑то"), the
-    # same artifact continuity pairs exist to prevent, so dialog hyphen
-    # pairs rank with continuity instead of the cosmetic spacing tier.
-    script_hyphens: collections.Counter = collections.Counter()
-    for t in script_texts:
-        for ch in t:
-            if ch.islower() or ch in SINGLE_PUNCTUATION:
-                singles.add(ch)
-        collect_spacing(t, spacing_pairs, script_hyphens)
-    for t in menu_texts:
-        for ch in t:
-            if ch.islower() or ch in SINGLE_PUNCTUATION:
-                singles.add(ch)
-        collect_spacing(t, menu_pairs)
-    for p in PUNCT_PAIRS:
-        menu_pairs[p] += 1_000_000
-    for t in menu_texts:
-        for m in WORD_RE.finditer(t):
-            for p in word_pairs(m.group(0)):
-                menu_pairs[p] += 1
-    for t in script_texts:
-        for m in WORD_RE.finditer(t):
-            for p in word_pairs(m.group(0)):
-                script_pairs[p] += 1
-    continuity = continuity_pairs(
-        script_texts,
-        set(existing_units or ()) | set(menu_pairs),
-        script_pairs,
-    )
-    # An all-caps dialog word with no pairs renders uniformly (every
-    # letter fullwidth), which reads fine; holes appear only when it is
-    # partially paired. So dialog caps-caps pairs are not demanded at
-    # all, freeing their slots for lowercase word pairs. Menu labels
-    # keep theirs: menu widths depend on packing.
-    for p in [p for p in continuity if len(p) == 2 and p[0].isupper() and p[1].isupper()]:
-        del continuity[p]
-    # Boost so even a once-used boundary outranks rare in-word pairs: a
-    # split like "кое ‑как" reads worse than one thin letter elsewhere.
-    for p, c in script_hyphens.items():
-        continuity[p] += c + 4
-    return singles, menu_pairs, spacing_pairs, continuity, script_pairs
 
 
 def decode_run_key(words: list[int], tok2char: dict[int, str]) -> str:
@@ -460,9 +248,15 @@ def main() -> None:
         for r in rows:
             existing[r["char"]] = int(r["index_dec"])
 
+    menu_texts: list[str] = []
+    for mp in list(maps) + list(extra_menu_maps or []):
+        if mp.exists():
+            menu_texts.extend(map_target_texts(mp))
     singles, menu_pairs, spacing_pairs, continuity, script_pairs = needed_units(
-        translation_root, maps, lang.single_chars + forced_singles,
-        lang.forced_pairs, set(existing), extra_script_dirs, extra_menu_maps
+        [TAG_RE.sub(" ", body) for body in
+         script_record_texts(translation_root, extra_script_dirs)],
+        menu_texts, lang.single_chars + forced_singles,
+        lang.forced_pairs, set(existing),
     )
     must = [c for c in sorted(singles) if c not in existing]
     must += [p for p, _ in menu_pairs.most_common() if p not in existing]

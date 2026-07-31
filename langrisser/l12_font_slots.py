@@ -30,7 +30,7 @@ import csv
 import re
 from pathlib import Path
 
-from langrisser.assign_font_slots import ALPHA_WORD_RE, word_pairs
+from langrisser.font_units import needed_units
 from langrisser.build_font import pick_fonts, render_tile
 from langrisser.game import add_game_args, game_from_args
 from langrisser.l12_scen import (BANK_BASE, BANK_FIRST, BANK_WIDTH, CONTROLS,
@@ -61,17 +61,14 @@ def string_slots(raw: bytes):
 
 
 def survey(games: list[str], lang: str):
-    """Slots still needed, slots the script ever used, and target-text demand.
+    """Slots still needed by Japanese, slots ever used, and single-char demand.
 
-    Demand is counted twice: single characters, which the text cannot be
-    written without, and the two-letter tiles that decide whether it fits.
-    Pair rules are `assign_font_slots`', so both engines pack a word the same
-    way.
+    Which pairs to cut is a separate question and a harder one; it is
+    `assign_font_slots.needed_units`' job, not repeated here.
     """
     still: collections.Counter = collections.Counter()
     ever: set[int] = set()
     wanted: collections.Counter = collections.Counter()
-    pairs: collections.Counter = collections.Counter()
     for game in games:
         root = Path("data", "games", game, "lang", lang, "SCEN")
         scen = Path("work", game, "extracted", "SCEN.DAT")
@@ -81,21 +78,14 @@ def survey(games: list[str], lang: str):
         shared_file = root / "shared.txt"
         shared = read_pack(shared_file) if shared_file.exists() else {}
         for text in shared.values():
-            plain = TAG_RE.sub("", text)
-            wanted.update(plain)
-            for word in ALPHA_WORD_RE.findall(plain):
-                pairs.update(word_pairs(word))
+            wanted.update(TAG_RE.sub("", text))
         for chunk in read_chunks(scen.read_bytes()):
             pack = root / f"chunk_{chunk.index:03d}.txt"
             records = dict(read_pack(pack)) if pack.exists() else {}
             records.update(shared)
             for key, text in records.items():
-                if key in shared:
-                    continue
-                plain = TAG_RE.sub("", text)
-                wanted.update(plain)
-                for word in ALPHA_WORD_RE.findall(plain):
-                    pairs.update(word_pairs(word))
+                if key not in shared:
+                    wanted.update(TAG_RE.sub("", text))
             for pi, part in enumerate(chunk.parts):
                 for si, raw in enumerate(part):
                     if not raw:
@@ -104,7 +94,7 @@ def survey(games: list[str], lang: str):
                     ever.update(slots)
                     if (pi, si) not in records:
                         still.update(slots)
-    return still, ever, wanted, pairs
+    return still, ever, wanted
 
 
 def main() -> None:
@@ -126,7 +116,7 @@ def main() -> None:
     out = Path(args.out) if args.out else lang.font_assignments
 
     games = sorted(release.games) if hasattr(release, "games") else [game.code]
-    still, ever, wanted, pairs = survey(games, lang.code)
+    still, ever, wanted = survey(games, lang.code)
 
     # A pair has to fit one cell at a 6px pitch. Fullwidth characters do not,
     # and the text does carry a few — the scenario number is drawn in them —
@@ -145,13 +135,24 @@ def main() -> None:
     if out.exists():
         for row in csv.DictReader(out.open(encoding="utf-8")):
             slot, ch = int(row["index_dec"]), row["char"]
-            if slot <= MAX_SLOT and packable(ch):
+            # Single characters keep their slot; the text cannot be written
+            # without them and their identity never changes. Pairs are chosen
+            # again from scratch every build, because which ones are worth a
+            # slot depends on the whole corpus and that grows with every
+            # scenario. Nothing is pinned to them: every record the pack
+            # carries is re-encoded here anyway.
+            if len(ch) == 1 and slot <= MAX_SLOT and packable(ch):
                 kept[slot] = (ch, row.get("replaced_char") or "")
                 taken[ch] = slot
 
     need = sorted(ch for ch in wanted if ch not in have and ch not in taken)
 
-    free = [s for s in range(MAX_SLOT + 1) if s not in kept]
+    # A plane character the target text itself uses is not spare, however
+    # rare it is in the Japanese that is left: the corner brackets around a
+    # scenario title are drawn by the same glyphs the Japanese card used.
+    borrowed = {slot for slot, ch in font.items() if ch and ch in wanted}
+    free = [s for s in range(MAX_SLOT + 1)
+            if s not in kept and s not in borrowed]
     # Cheapest first: never named by the Japanese map, then never referenced by
     # any string, then freed by our own translation, and last the kanji the
     # Japanese that is left still draws — rarest of those first.
@@ -165,13 +166,33 @@ def main() -> None:
     for ch, slot in zip(need, free):
         kept[slot] = (ch, font.get(slot) or "")
 
-    # Whatever is left goes to the two-letter tiles, most used first. These are
-    # not optional decoration: one letter per cell makes a Russian line twice
-    # the width of the Japanese it replaces, and the chunk has about a kilobyte
-    # of padding to grow into.
+    # Whatever is left goes to the two-letter tiles. These are not optional
+    # decoration: one letter per cell makes a Russian line twice the width of
+    # the Japanese it replaces, and doubles what it costs in bytes.
+    #
+    # Which pairs, and in what order, is `assign_font_slots`' analysis, used
+    # here as it stands. Frequency alone picks the wrong set: it misses the
+    # pairs that span a space, and it ignores that an odd-length word has two
+    # ways to tile — so a word can end up with one full-width letter stranded
+    # in the middle of narrow ones. Continuity pairs are chosen to prevent
+    # exactly that and therefore come first.
     spare = free[len(need):]
-    want_pairs = [p for p, _ in pairs.most_common()
-                  if p not in taken and packable(p)]
+    texts: list[str] = []
+    for code in games:
+        for pack in sorted(Path("data", "games", code, "lang",
+                                lang.code, "SCEN").glob("*.txt")):
+            texts.extend(TAG_RE.sub(" ", t) for t in read_pack(pack).values())
+    _, menu_pairs, spacing_pairs, continuity, script_pairs = needed_units(
+        texts, forced_pairs=list(lang.forced_pairs or []),
+        existing_units=set(taken),
+    )
+    ranked: list[str] = []
+    for group in (menu_pairs, continuity, spacing_pairs, script_pairs):
+        ranked.extend(p for p, _ in group.most_common())
+    seen: set[str] = set()
+    want_pairs = [p for p in ranked
+                  if len(p) == 2 and p not in taken and p not in seen
+                  and not seen.add(p) and packable(p)]
     added_pairs = 0
     for pair, slot in zip(want_pairs, spare):
         kept[slot] = (pair, font.get(slot) or "")
