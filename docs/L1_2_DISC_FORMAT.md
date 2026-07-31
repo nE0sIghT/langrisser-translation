@@ -1,19 +1,19 @@
 # Langrisser I & II (PS1) Disc Format
 
 Reverse-engineering notes for the PlayStation release of *Langrisser I & II*,
-written while working out what a Russian translation would have to touch. This
-is a different engine from the `l45` family that the rest of this repository
-targets: the disc holds two complete games side by side, each with its own copy
-of every data file.
+written while working out what a Russian translation would have to touch. The
+disc holds two complete games side by side, each with its own copy of every data
+file, and they run on a different engine from the `l45` family the rest of this
+repository targets.
 
-Findings are appended as they are confirmed against the disc. Anything not
-stated here is not yet proven.
+Everything below is confirmed against the disc or the executable. Where a claim
+is inference, it says so.
 
 Source: `iso/l1-2-ps1-jp/Langrisser I & II (Japan) (Track 1).bin`, matching the
 Redump entry for `SLPM 86798 / SLPS 00897 / SLPS 01822` (data track `b2ebdb90`,
 286345 sectors).
 
-## Disc Layout
+## Disc layout
 
 Two games, one filesystem, one boot executable:
 
@@ -25,6 +25,9 @@ Two games, one filesystem, one boot executable:
 /MOVIE.EXE     126,976   full-motion video player
 /MOVIE/*.STR             22 MDEC streams, 340 MB total
 ```
+
+All three are `PS-X EXE` images loading at `0x80010000`, so a file offset `f`
+maps to address `0x80010000 + f − 0x800`.
 
 Each game directory carries the same file names, so a tool that understands one
 understands the other. Sizes differ because Langrisser II is the larger game:
@@ -53,8 +56,8 @@ own directory, exactly as `l4-ps1-jp` and `l5-ps1-jp` root theirs at `/L4` and
 
 ## FONT.DAT — the glyph plane
 
-**Confirmed.** `LANG1/FONT.DAT` and `LANG2/FONT.DAT` are byte-identical, so both
-games draw from one glyph plane.
+`LANG1/FONT.DAT` and `LANG2/FONT.DAT` are byte-identical, so both games draw
+from one plane.
 
 | Property | Value |
 | --- | --- |
@@ -64,71 +67,98 @@ games draw from one glyph plane.
 | Bytes per glyph | 18 (144 bits, used exactly) |
 | Slots | 1536 |
 
-This is the same glyph geometry as Langrisser V's `SYSTEM.BIN` font — 12 × 12
-one-bit cells in 18-byte slots — so the renderer that builds target glyphs for
-`l45` produces cells of the right shape for this game too. What differs is
-where they live: a whole file here, a region of the executable's data there.
+The executable confirms it: the glyph writer computes `slot × 18` against a
+plane loaded at `0x80168000`.
 
-Rendered contact sheet (regenerate any time; `work/` is not tracked):
+This is the same cell geometry as `l45` — `data/engines/l45/manifest.json`
+describes exactly these 18-byte cells — so the renderer that builds target
+glyphs there produces cells of the right shape here. **The artwork is not
+shared.** Comparing every tile against Langrisser V's plane, at every byte
+alignment, matches 35 tiles of 1536, and 34 of those are blank. The slot order
+differs too: Langrisser V opens with punctuation, digits and Latin, this plane
+with katakana.
 
-```bash
-python3 -m langrisser.iso_mode2 "$L12BIN" extract /LANG1/FONT.DAT work/l1-2/extracted/LANG1.FONT.DAT
-```
+So `langrisser/derive_font_map.py`, which recovers a map by finding a
+byte-identical tile in an already-mapped plane, has nothing to inherit here.
+
+### The map
+
+`data/common/font_mapping/l1_2_font_map.csv`, under `common/` because the two
+games share the file byte for byte.
+
+| | Slots |
+| --- | ---: |
+| Characters | 1500 |
+| Icons, no character value | 2 |
+| Blank | 34 |
+
+All 1536 are accounted for. The plane was **read**, not recognised: recognisers
+get the kana and guess the kanji, because at 12 × 12 ア and 了, エ and 工, カ and
+力 are one drawing, and a homoglyph is wrong the same way in every context, so
+agreement across contexts confirms it rather than catching it. Each slot was
+then checked against the character rendered beside it.
+
+Two slots were corrected afterwards by how the script uses them rather than how
+they look: 818 is `Ｘ` and not `×`, 781 is `Ｉ`.
+
+The blanks are literally zero — all 18 bytes — at slots **84**, **902**, and the
+tail **1504–1535**. The thinnest real glyph has four lit pixels, so there is no
+grey area between "blank" and "faint".
 
 ### Slot order
 
-The plane is not in any standard code order. It opens with a fixed syllabary
-block and then becomes a pool:
+Katakana first, then a pool with no character-code order:
 
 | Slots | Contents |
 | --- | --- |
 | `0`–`44` | katakana, ア through ロ |
-| `45`–`68` | voiced and semi-voiced katakana, ガ through ポ |
+| `45`–`68` | voiced and semi-voiced katakana |
 | `69` | ヴ |
 | `70`–`73` | ！ ？ ・ ー |
-| `74`–`82` | small katakana ァィゥェォャュョッ |
-| `84`–`94` | full-width digits, `１`–`０`, then `Ｄ` |
-| `95`+ | mixed hiragana, kanji, Latin letters and punctuation |
+| `74`–`83` | small katakana |
+| `85`–`95` | full-width digits, then `Ｄ` |
+| `96`+ | hiragana, kanji, Latin, punctuation, in no code order |
 
-From slot 95 on the plane is a pool with no character-code order: laid out in
-sequence it reads as fragments of running wording, so it was clearly built from
-some text in the order that text needed glyphs. It is **not** `SCEN.DAT`'s
-order — walking both scripts and recording where each slot is first named puts
-the appearances in increasing order only 54% of the time, which is chance. So
-the pool follows something else, and a slot number carries no meaning outside
-this disc.
+Laid out in sequence the pool reads as fragments of running wording, so it was
+built from some text in the order that text needed glyphs. It is **not**
+`SCEN.DAT`'s order — first appearances there rise only 54% of the time, which is
+chance.
 
-The correspondence between slot and character therefore has to come from the
-plane itself, as `data/games/l4/font_map.csv` did.
+### Icons
 
-The last slots hold the ◯ and ✕ controller-button glyphs.
+Slots **1502** and **1503** are the controller buttons. Both are drawn in a
+heavy stroke unlike anything else on the plane, and neither is named by either
+script even once — while the thin `×` at slot 275, which looks similar at a
+glance, is ordinary text used 375 times.
 
-### The plane is this game's own
+They are recorded the way Langrisser V records its icons: `group` is `symbol`
+and **`char` is empty**. An icon with no character value cannot be handed to a
+font and cannot be named by target text; the empty cell is the enforcement, not
+a convention someone has to remember.
 
-**Confirmed, and it is a negative result worth recording.** The cell format is
-identical to the `l45` engine's — `data/engines/l45/manifest.json` describes
-exactly these 12 × 12 one-bit cells packed 12 bits per row MSB-first into 18
-bytes, slot N at N × 18 — but the artwork is not shared. Comparing every tile of
-`FONT.DAT` against Langrisser V's plane in `SYSTEM.BIN`, at every byte
-alignment, matches 35 tiles of 1536, and 34 of those are blank.
+### Latin
 
-The slot order differs as well: Langrisser V's plane opens with punctuation,
-digits and Latin letters, this one with katakana.
+All 26 capitals are present and used, plus two lower-case letters (`ｍ`, `ｚ`)
+and the ten digits. It is not decoration — the game writes real Latin words:
+`ＧＡＭＥＯＶＥＲ`, `ウィンドウＯＰＥＮ`, `ＮＰＣ`, `ＢＧＭ`,
+`Ｆ．Ａ．Ｉインターナショナル`, and monster cries like `ＧＵＷＡＡＡＡＡ！` and
+`Ｚｚｚｚｚｚ`. It also carries the stat abbreviations `ＡＴ`, `ＤＦ`, `ＭＰ`,
+`ＭＶ` with `＋`, `－`, `×`, `（`, `）` — `ＡＴ＋８・ＤＦ－３`,
+`ＭＰ×２・魔法射程＋３`, `ＭＶ＋２（部下含）`.
 
-So `langrisser/derive_font_map.py`, which recovers a map by finding a
-byte-identical tile in an already-mapped plane, has nothing to inherit from
-here. The slot→character map for this disc has to be built the way Langrisser
-V's reference map was built in the first place: read off the rendered plane.
-The renderer and the CSV convention still apply.
+Of the 1502 drawn slots the script names 1372; 130 it never names. Those 130 are
+**not** free: most are the surname kanji at 1408–1471, which the staff credits
+draw from somewhere other than `SCEN.DAT`. `SCEN.DAT` silence alone does not
+make a slot reusable.
 
 ## SCEN.DAT — the script container
 
 ### Catalog
 
-**Confirmed.** The file opens with a `u32` little-endian pointer table; the last
-pointer equals the file size, so N pointers describe N−1 chunks. Every chunk
-starts on a `0x800` boundary — one CD sector — and the first pointer is `0x800`,
-so the catalog owns the first sector.
+The file opens with a `u32` little-endian pointer table; the last pointer equals
+the file size, so N pointers describe N−1 chunks. Every chunk starts on a
+`0x800` boundary — one CD sector — and the first pointer is `0x800`, so the
+catalog owns the first sector.
 
 | | `LANG1/SCEN.DAT` | `LANG2/SCEN.DAT` |
 | --- | ---: | ---: |
@@ -136,27 +166,27 @@ so the catalog owns the first sector.
 | Chunks | 21 | 107 |
 
 This is the same catalog Langrisser V uses — `langrisser/scen.py` documents
-`u32 chunk_pointers[]` with the last equal to the file size. Below it, the two
+`u32 chunk_pointers[]` with the last equal to the file size. Below it the two
 formats part company.
 
 ### Chunk interior
 
-**Confirmed.** A chunk begins with its own `u32` section table, and the table's
-first entry is the table's own byte size, which is what makes it
-self-describing. Section counts vary by chunk (7, 9, 10, 13, 16 and 46 were all
-observed); most sections hold packed art or code.
+A chunk begins with its own `u32` section table whose first entry is the table's
+own byte size, which is what makes it self-describing. Section counts vary by
+chunk (7, 9, 10, 13, 16 and 46 were all observed); most sections hold packed art
+or code.
 
 **Section 2 is the text**, in every chunk that has one — 21 of 21 in Langrisser
-I, 106 of 107 in Langrisser II. It is itself a table in the same self-describing
-form, and it holds nine parts with stable roles:
+I, 106 of 107 in Langrisser II. It is a table in the same self-describing form
+holding nine parts, and the executable addresses those parts by number:
 
 | Part | Holds | Scope |
 | --- | --- | --- |
 | 0 | menu and system wording | shared |
-| 1 | character names | shared |
+| 1 | **character names** — the target of control `0x09` | shared |
 | 2 | item, weapon and armour names | shared |
-| 3 | spell and skill names, labels | shared |
-| 4 | scenario and place names | shared |
+| 3 | spell and skill names, debug menu labels | shared |
+| 4 | **the phrase table** — the target of control `0x04` | shared |
 | 5 | dialogue | per chunk |
 | 6 | short on-map labels | per chunk |
 | 7 | narration and event text | per chunk |
@@ -169,81 +199,35 @@ variant back into every chunk that carries it.
 
 ### Text codec
 
-**Confirmed** by decoding the character-name table, which comes out as the cast
-of both games in order, and by every escape bank landing inside the font.
+Confirmed from the decoder at `0x800164E8` in `LANG2.EXE`:
 
 | Byte | Meaning |
 | --- | --- |
 | `0x00` | end of string |
-| `0x01`–`0x09` | control codes; some take the next byte as an operand — see below |
+| `0x01`–`0x09` | control codes, four of which take the next byte |
 | `0x0A`–`0xF6` | glyph, slot = byte − `0x0A` (slots 0–236) |
-| `0xF7`–`0xFB` | two bytes: slot = 236 + (byte − `0xF7`) × **255** + next byte (slots 236–1510) |
-
-The five escape banks tile the font: the highest slot any script names is 1504,
-and `0xFC`–`0xFF` never appear in a text part, which is the check that says the
-banks stop at `0xFB`.
-
-**A bank is 255 slots wide, not 256, and that only became visible once the
-font map was trustworthy.** With a 256 step the plane reads as plausible
-nonsense, because the neighbour of the right character is still a real
-character; the error grows by one per bank, so one string can look almost right
-while another is clearly wrong. With 255 the same bytes read as Japanese
-throughout — the debug menu comes out `面セレクト`, `ＢＧＭ`, `効果音`,
-`戦闘テスト`, and place names as `レイガルド帝国`, `ヴェルゼリア城`.
-
-The check that settles it: no argument byte ever reaches `0xFF` in either
-script. The highest seen are `0xFB` after `0xF7`, `0xFE` after `0xF8`, `0xFD`
-after `0xFB` — exactly what a 255-wide bank allows and a 256-wide one would
-not explain.
-
-## What the script names, and what it does not
-
-Of the 1502 drawn slots the script names **1372**; **130** it never names.
-
-Latin is complete: all 26 capitals are present and in use, plus two lower-case
-letters (`ｍ`, `ｚ`) and the ten digits. It is not decoration — the game writes
-real Latin words with it: `ＧＡＭＥＯＶＥＲ`, `ウィンドウＯＰＥＮ`, `ＮＰＣ`,
-`ＢＧＭ`, `Ｆ．Ａ．Ｉインターナショナル`, and monster cries like
-`ＧＵＷＡＡＡＡＡ！` and `Ｚｚｚｚｚｚ`. It also carries the stat abbreviations
-`ＡＴ`, `ＤＦ`, `ＭＰ`, `ＭＶ` with `＋`, `－`, `×`, `（`, `）` —
-`ＡＴ＋８・ＤＦ－３`, `ＭＰ×２・魔法射程＋３`, `ＭＶ＋２（部下含）`.
-
-Two slots are icons rather than characters: **1502 and 1503**, the controller
-buttons. Both are drawn in a heavy stroke unlike anything else on the plane, and
-neither is named by either script even once — while the thin `×` at slot 275,
-which looks similar at a glance, is ordinary text used 375 times.
-
-They are recorded the way Langrisser V records its own icons: `group` is
-`symbol` and **`char` is empty**. An icon has no character value at all, so no
-font can be asked to draw one and no target text can name one. Reading a
-button back as `✕` and then rendering that through a font would put a
-typographic glyph where the game draws a control; the empty cell makes that
-impossible rather than merely discouraged.
-
-The other 128 unnamed slots are **not** free. Most are the surname kanji at
-1408–1471 — `澤`, `樋`, `鈴`, `薮`, `眞`, `鮎`, `鶴`, `嶋`, `篤` — which the
-staff credits draw from somewhere other than `SCEN.DAT`. Before any slot is
-treated as reusable, whatever else draws text has to be checked; `SCEN.DAT`
-silence alone does not make a slot free.
-
-### Control codes
-
-Settled by disassembling `LANG2.EXE`, which is how `l45`'s own opcodes were
-settled. The decoder is at `0x800164E8` and reads exactly the codec above:
+| `0xF7`–`0xFB` | two bytes: slot = 236 + (byte − `0xF7`) × **255** + next byte |
 
 ```mips
 lbu   $a0, ($a1)          ; byte
 sltiu $v0, $a0, 0xa       ; < 0x0A -> control
-sltiu $v0, $a0, 0xf7      ; < 0xF7 -> glyph, slot = byte - 0x0A
+sltiu $v0, $a0, 0xf7      ; < 0xF7 -> slot = byte - 0x0A
 addiu $v1, $a0, -0xf7     ; else bank = byte - 0xF7
 sll   $v0, $v1, 8
 subu  $v0, $v0, $v1       ; bank * 255
 addiu $a0, $a0, 0xec      ; arg + 236
-addu  $a0, $v0, $a0       ; slot = bank*255 + arg + 236
+addu  $a0, $v0, $a0
 ```
 
-The glyph writer then computes `slot * 18` against a plane loaded at
-`0x80168000` — the same 18-byte cell the file has.
+A bank is **255** slots wide, not 256, and that is worth stating loudly because
+a 256-wide guess reads as plausible nonsense: the neighbour of the right
+character is still a real character, and the error grows by one per bank, so one
+string looks almost right while another is clearly wrong. Independently of the
+code, no argument byte ever reaches `0xFF` in either script — the highest are
+`0xFB` after `0xF7` and `0xFE` after `0xF8` — which is what a 255-wide bank
+allows and a 256-wide one cannot explain.
+
+### Control codes
 
 Codes `0x01`–`0x09` index a jump table at `0x8001017C`:
 
@@ -252,130 +236,43 @@ Codes `0x01`–`0x09` index a jump table at `0x8001017C`:
 | `0x01` | `0x80016914` | takes one byte and stores it in a global — state, not text |
 | `0x02` | `0x80016938` | prints a pair from a `u16` table, advancing its own counter |
 | `0x03` | `0x80016948` | prints a decimal number from a `u16` table |
-| `0x04` | `0x8001689C` | **takes one byte; prints string `byte` of text part 4** |
+| `0x04` | `0x8001689C` | takes one byte; prints string `byte` of part 4 |
 | `0x05` | `0x80016968` | calls the glyph writer with `-1` — a blank |
 | `0x06` | `0x80016978` | calls a hook — waits |
 | `0x07` | `0x800167A4` | calls a hook and resets the cursor — new page |
 | `0x08` | `0x800167DC` | advances Y by `0x10`, resets X — line break |
-| `0x09` | `0x80016850` | **takes one byte; prints string `byte + 2` of text part 1** |
+| `0x09` | `0x80016850` | takes one byte; prints string `byte + 2` of part 1 |
 
-`0x04` and `0x09` are the same mechanism: both call
-`0x80015C30(part, number)`, which walks `number − 1` NUL-terminated strings from
-the start of that part and returns a pointer, then run it as a nested stream and
-restore the caller's pointer. This is `l45`'s macro, written for a byte codec.
+`0x04` and `0x09` are one mechanism. Both call `0x80015C30(part, number)`, which
+walks `number − 1` NUL-terminated strings from the start of that part and
+returns a pointer; the caller then runs it as a nested stream and restores its
+own pointer. This is `l45`'s macro — `F600` with an argument word — written for
+a byte codec, and `0x09` is its `FBxx` dialog command.
 
-### There is no separate macro table — part 4 is it
+Numbers are 1-based, so the zero-based index is `byte − 1` for `0x04` and
+`byte + 1` for `0x09`.
 
-Part 4 holds 239 strings and `0x04` has 237 distinct operands, and the strings
-are what a compression table looks like: `ラングリッサー`, `レイガルド帝国`,
-`手に入れた！`, `ごめんなさい`, `そんなある日`, `ありがとう、`. Checked against
-the contexts that forced the reading:
+### Part 4 is the phrase table
+
+There is no separate macro table anywhere on the disc. Part 4 holds 239 strings,
+`0x04` has 237 distinct operands, and the strings are what a compression table
+looks like: `ラングリッサー`, `レイガルド帝国`, `手に入れた！`, `ごめんなさい`,
+`そんなある日`, `ありがとう、`. Checked against the contexts that forced the
+reading:
 
 | Operand | Part 4 string | Reads as |
 | --- | --- | --- |
 | `0xD9` | `ない！` | `今度こそ負けない！`, `いけない！`, `危ない！` |
-| `0xDA` | `のです` | `見つけたのですが`, `向かうところのです` |
+| `0xDA` | `のです` | `見つけたのですが` |
 | `0x57` | `ません。` | `召喚できません。`, `装備できません。` |
 
-So the part I had labelled "scenario and place names" is the phrase table, and
-about a third of the bytes in a line are references into it. Nothing had to be
-found elsewhere: the table was in the text section all along, under an index
-base I had guessed instead of read.
-
-Part 1 is the same story for `0x09` — the character names, indexed `byte + 2`.
-`カオス様を復活させ` comes out of it, which is the plot of Langrisser II.
-
-## What the script names, and what it does not
-
-Of the 1502 drawn slots the script names **1372**; **130** it never names.
-
-Latin is complete: all 26 capitals are present and in use, plus two lower-case
-letters (`ｍ`, `ｚ`) and the ten digits. It is not decoration — the game writes
-real Latin words with it: `ＧＡＭＥＯＶＥＲ`, `ウィンドウＯＰＥＮ`, `ＮＰＣ`,
-`ＢＧＭ`, `Ｆ．Ａ．Ｉインターナショナル`, and monster cries like
-`ＧＵＷＡＡＡＡＡ！` and `Ｚｚｚｚｚｚ`. It also carries the stat abbreviations
-`ＡＴ`, `ＤＦ`, `ＭＰ`, `ＭＶ` with `＋`, `－`, `×`, `（`, `）` —
-`ＡＴ＋８・ＤＦ－３`, `ＭＰ×２・魔法射程＋３`, `ＭＶ＋２（部下含）`.
-
-Two slots are icons rather than characters: **1502 and 1503**, the controller
-buttons. Both are drawn in a heavy stroke unlike anything else on the plane, and
-neither is named by either script even once — while the thin `×` at slot 275,
-which looks similar at a glance, is ordinary text used 375 times.
-
-They are recorded the way Langrisser V records its own icons: `group` is
-`symbol` and **`char` is empty**. An icon has no character value at all, so no
-font can be asked to draw one and no target text can name one. Reading a
-button back as `✕` and then rendering that through a font would put a
-typographic glyph where the game draws a control; the empty cell makes that
-impossible rather than merely discouraged.
-
-The other 128 unnamed slots are **not** free. Most are the surname kanji at
-1408–1471 — `澤`, `樋`, `鈴`, `薮`, `眞`, `鮎`, `鶴`, `嶋`, `篤` — which the
-staff credits draw from somewhere other than `SCEN.DAT`. Before any slot is
-treated as reusable, whatever else draws text has to be checked; `SCEN.DAT`
-silence alone does not make a slot free.
-
-### Control codes
-
-Two of them are settled, and one of those changes what the script *is*.
-
-**`0x09` takes an operand and names a character.** The operand indexes the
-character-name table in part 1, as `index = byte − 0x0A`. Checked against a
-chunk whose cast is known: the operands there resolve to exactly the people in
-that scene and nobody else. This is the same mechanism `l45` writes as
-`0xFB00`–`0xFBFF`.
-
-**`0x04` takes an operand and expands to a phrase.** The script is
-dictionary-packed. The proof is that one operand always yields the same words:
-`負け❨4❩ぶ` reads `負けない` and `邪魔はさせ❨4❩ぶ` reads `邪魔はさせない`, while
-`復活❨4❩石` and `滅ぼすことが❨4❩石` both want `できる`. With 237 distinct
-operands the dictionary holds on the order of 237 entries.
-
-**The dictionary has not been located.** It is not in the chunk's other
-sections — those carry almost no zero bytes and are code or art, not strings.
-It is not any of the nine text parts under `index = byte − 0x0A`. A scan of
-`LANG1.EXE`, `LANG2.EXE` and the loader for runs of NUL-separated codec strings
-finds only padding. Until it is found the script cannot be read in full, and
-about a third of the bytes in a line of dialogue are dictionary references.
-
-`0x08` (26,422) and `0x04` aside, `0x06` is followed by `0x07` 5,862 times out
-of 6,029, which reads as a fixed pair — a page break against `0x08`'s line
-break. Neither is proven.
-
-Frequency over both scripts, and what follows each one:
-
-| Code | Count | Distinct next bytes | Reading |
-| --- | ---: | ---: | --- |
-| `0x01` | 508 | 30 | operand |
-| `0x02` | 3,090 | 33 | operand |
-| `0x03` | 681 | 25 | operand |
-| `0x04` | 31,641 | 239 | bare; ordinary text follows |
-| `0x05` | 12,811 | 101 | bare; often doubled |
-| `0x06` | 6,029 | 22 | pairs with `0x07` 5,862 times of 6,029 |
-| `0x07` | 5,960 | 140 | bare |
-| `0x08` | 26,422 | 190 | bare |
-| `0x09` | 3,650 | 52 | operand, and a small one — the top followers are `0x01`, `0x16`, `0x0C`, `0x0B`, `0x13` |
-
-**Some of these take an operand, and that matters more than it looks.** A code
-whose next byte ranges over almost the whole alphabet is bare — real text
-follows it. One whose next byte is drawn from a couple of dozen low values is
-consuming that byte, and `0x09` is the clearest: decoded text puts it right
-before what reads as a character name, so it is almost certainly a name
-reference of the kind `l45` writes as `0xFB00`–`0xFBFF`.
-
-Which codes take an operand is not yet proven, only indicated, and it has to be
-settled before the text can be read — an operand byte decoded as a glyph is a
-character that was never on screen.
-
-Against `l45`: that engine reads `u16` tokens, treats everything below `0xE000`
-as a glyph index and ends a record with `0xFFFx`. This one is byte-oriented with
-banked escapes and a `0x00` terminator. The token layer needs its own
-implementation; only the catalog above it and the glyph geometry below it carry
-over.
+About a third of the bytes in a line of dialogue are references into it. Part 1
+is the same story for `0x09`: `カオス様を復活させ` comes out of it, which is the
+plot of Langrisser II.
 
 ### How much text there is
 
-**Confirmed**, counting each shared table once rather than once per chunk:
+Counting each shared table once rather than once per chunk:
 
 | | Strings | Glyphs |
 | --- | ---: | ---: |
@@ -384,112 +281,33 @@ over.
 | **Total** | **12,561** | **244,554** |
 
 Counting the copies instead gives 150,885 strings and 1.13 million glyphs, which
-is what a naive extractor would report. The duplication is 4.6× overall.
+is what a naive extractor reports. The duplication is 4.6× overall. For scale,
+the Langrisser V pack carries 10,244 translated script records.
 
-For scale, the Langrisser V pack carries 10,244 translated script records, so
-the two games together are somewhat larger than the project's current corpus.
-
-## Reading the plane
-
-The slot→character map is the one piece a translation cannot start without, and
-it is not finished. What is measured so far, all against the 84 kana slots whose
-characters are known from the plane itself and confirmed by the character-name
-table decoding as the cast of both games:
-
-| Method | Correct |
-| --- | --- |
-| Template match against PixelMplus, whole L5 charset as candidates | 34 / 84 |
-| Tesseract `jpn`, `--psm 10`, one tile at a time | 8 / 84 |
-| PaddleOCR `PP-OCRv5_server_rec`, one tile at a time | 23 / 84 |
-| PaddleOCR, tiles rendered as a line of 12 | 58 / 84 |
-
-Two things that read as obvious are wrong. Template matching against a modern
-12-pixel Japanese font does not work: this font draws in an 11 × 11 box at
-offset (0, 1), a modern one fills 12 × 12, and a one-pixel stroke shift is
-already a larger distance than a genuinely different character. And smoothing
-the enlarged tiles hurts rather than helps — bicubic enlargement reads 51 of 84
-where nearest reads 48, but blurring on top drops it to 36 at radius 1.5 and 12
-at radius 5.
-
-What does work is context. A tile on its own is unreadable in principle at this
-size: ア and 了, エ and 工, カ and 力, ヌ and 又 are the same drawing, and a
-per-tile recogniser answers with the wrong script about as often as the right
-one — every single-tile miss above is a homoglyph, not a failure to see the
-shape. Rendering the game's own strings back as lines and letting each position
-vote is what disambiguates them, exactly as it does for a human reader.
-
-`langrisser/recognize_glyph_plane.py` does that: it walks the script, renders
-each distinct string as a line of tiles, recognises the line, and counts a slot
-confirmed when at least three lines name it and at least four in five agree.
-
-### Where the passes got to
-
-Seeded with the 84 kana and run over both scripts. The enlargement is the whole
-difference between the two runs — same lines, same model, same thresholds:
-
-| Enlargement | Lines aligned | Slots confirmed |
-| --- | ---: | ---: |
-| Nearest-neighbour | 16,613 of 20,977 | 1,032 of 1,536 |
-| xBRZ ×6 | 19,486 of 20,977 | 1,075 of 1,536 |
-
-A line is only counted when the recogniser returns exactly as many characters
-as it was given, so the jump from 16,613 to 19,486 is the recogniser losing its
-place far less often. The two maps agree on 992 slots and disagree on 1.
-
-**The kana are right and the kanji are not**, in both. Decoding the item and
-character tables returns them cleanly — `エルウィン`, `ナイフ`,
-`ウォーハンマー`, `グレートソード`, `ラングリッサー` — and dialogue comes back
-half-readable: `ハァ、ハァ……ついに、`, `アッハハハハハハハハハハッ！` sit next
-to kanji that form no word.
-
-The cause is now visible in that same decode, and it is not the recogniser: the
-control codes above appear *inside* words, in places a character belongs. Their
-operand bytes were rendered as glyphs and fed to the model as part of the line,
-so every line carrying one taught it a character that was never there. Reading
-the plane cannot get much further until the operands are settled.
-
-### What the next pass needs
-
-- The control-code operands settled first, so no line contains a glyph that is
-  not a glyph.
-- A candidate set per slot rather than one answer, so a wrong homoglyph can be
-  overridden without re-recognising.
-- Agreement across *different* words weighted above repetition of the same one:
-  a homoglyph is wrong the same way every time, so repetition confirms it.
-- A pass that reads the decoded text as Japanese and corrects what does not form
-  words — which is what caught the Langrisser V errors, and what its map still
-  records as 87 hand-fixed variant confusions and 79 context confirmations.
-
-## The plane is fully read
-
-All 1536 slots are accounted for: 34 are blank, 2 are icons carrying no
-character, and **1500 are characters, every one of them read**. The map is `data/common/font_mapping/l1_2_font_map.csv`,
-under `common/` because the two games share the file byte for byte.
-
-It was read rather than recognised, and then each slot was checked against the
-character rendered beside it — see the sheets `recognize_glyph_plane` and the
-verification pass produce under `work/l1-2/`. Two slots were corrected
-afterwards by how the script uses them, not by how they look: 818 is `Ｘ` and
-not `×`, 781 is `Ｉ`.
-
-**Read is not the same as decoded.** The map is complete, but the control-code
-operands are not settled, so some bytes are still taken for glyphs that are not
-glyphs. Dumping the chunks and reading them back against the original is the
-check that closes this, and it needs the operands first.
+These are counts of stored bytes, so they under-count what a reader sees — every
+`0x04` expands to a phrase — and over-count what has to be translated, since the
+phrase table is written once and referenced everywhere.
 
 ## How the target text will use the plane
 
 Same two mechanisms Langrisser V already builds, and for the same reason — a
 slot is one 12 × 12 cell whatever is drawn in it:
 
-- **Menu and interface**: single letters, mostly capitals, one per slot,
-  centred in the cell. This is what the game already does with `ＡＴ`, `ＤＦ`,
-  `ＭＰ`, `ＭＶ`, and what `build_font` renders for Langrisser V.
+- **Menu and interface**: single letters, mostly capitals, one per slot, centred
+  in the cell. This is what the game already does with `ＡＴ`, `ＤＦ`, `ＭＰ`,
+  `ＭＶ`, and what `build_font` renders for Langrisser V.
 - **Everything else** — dialogue, inscriptions, monster cries: two target
   letters packed into one cell, the compact pair glyphs `build_font` already
   generates.
 
-What this costs is slots, and the plane has few to give: 34 blank ones, and the
-130 the script never names are mostly the staff-credit surnames, which
-something outside `SCEN.DAT` still draws. The budget is a question for after
-the operands, not before.
+The slot budget is tight: 34 blank slots, and the 130 the script never names are
+mostly credit surnames that something outside `SCEN.DAT` still draws.
+
+## Still open
+
+- **Chunk to scenario binding.** Which chunk is which scenario is not mapped.
+- **Codes `0x01`, `0x02`, `0x03`.** Their handlers are read but the tables they
+  index are not; `0x02` and `0x03` walk `u16` tables with their own counters.
+- **`0xF5` and `0xF6`.** Single bytes reach slot 236 and the banks start there,
+  so these two are not glyphs. What they are is unread.
+- **Writing back.** Nothing has been repacked, so no growth budget is known.
