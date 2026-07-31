@@ -336,3 +336,37 @@ the plane cannot get much further until the operands are settled.
 - A pass that reads the decoded text as Japanese and corrects what does not form
   words — which is what caught the Langrisser V errors, and what its map still
   records as 87 hand-fixed variant confusions and 79 context confirmations.
+
+## The plane is fully read
+
+All 1536 slots are accounted for: 34 are blank and **1502 carry a glyph, every
+one of them read**. The map is `data/common/font_mapping/l1_2_font_map.csv`,
+under `common/` because the two games share the file byte for byte.
+
+It was read rather than recognised, and then each slot was checked against the
+character rendered beside it — see the sheets `recognize_glyph_plane` and the
+verification pass produce under `work/l1-2/`. Two slots were corrected
+afterwards by how the script uses them, not by how they look: 818 is `Ｘ` and
+not `×`, 781 is `Ｉ`.
+
+**Read is not the same as decoded.** The map is complete, but the control-code
+operands are not settled, so some bytes are still taken for glyphs that are not
+glyphs. Dumping the chunks and reading them back against the original is the
+check that closes this, and it needs the operands first.
+
+## How the target text will use the plane
+
+Same two mechanisms Langrisser V already builds, and for the same reason — a
+slot is one 12 × 12 cell whatever is drawn in it:
+
+- **Menu and interface**: single letters, mostly capitals, one per slot,
+  centred in the cell. This is what the game already does with `ＡＴ`, `ＤＦ`,
+  `ＭＰ`, `ＭＶ`, and what `build_font` renders for Langrisser V.
+- **Everything else** — dialogue, inscriptions, monster cries: two target
+  letters packed into one cell, the compact pair glyphs `build_font` already
+  generates.
+
+What this costs is slots, and the plane has few to give: 34 blank ones, and the
+130 the script never names are mostly the staff-credit surnames, which
+something outside `SCEN.DAT` still draws. The budget is a question for after
+the operands, not before.
