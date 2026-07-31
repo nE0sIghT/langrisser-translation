@@ -177,12 +177,18 @@ of both games in order, and by every escape bank landing inside the font.
 | `0x00` | end of string |
 | `0x01`–`0x09` | control codes; some take the next byte as an operand — see below |
 | `0x0A`–`0xF6` | glyph, slot = byte − `0x0A` (slots 0–236) |
-| `0xF7`–`0xFB` | two bytes: slot = 237 + (byte − `0xF7`) × 256 + next byte (slots 237–1516) |
+| `0xF7`–`0xFB` | two bytes: slot = 235 + (byte − `0xF7`) × 256 + next byte (slots 235–1514) |
 
-The five escape banks tile the font exactly: `0xF7` reaches slots 237–492,
-`0xFB` reaches 1517 at most, and the highest slot any script actually names is
-1506 in Langrisser I and 1494 in Langrisser II. `0xFC`–`0xFF` never appear in a
-text part, which is the check that says the banks stop at `0xFB`.
+The five escape banks tile the font: the highest slot any script names is 1504,
+and `0xFC`–`0xFF` never appear in a text part, which is the check that says the
+banks stop at `0xFB`.
+
+**The base is 235, not 237, and that took a verified font map to see.** With
+237 the plane reads as plausible-looking nonsense — the two-off neighbour of the
+right character is still a real character. With 235 the same bytes read as
+Japanese: `捨てるアイテムを選んで下さい。`, `を捨てます。`. Since single bytes
+reach slot 236 and the banks start at 235, `0xF5` and `0xF6` are almost
+certainly not glyphs at all but two more control codes.
 
 Control-code frequency over both scripts, and what follows each one:
 
