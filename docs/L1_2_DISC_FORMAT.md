@@ -372,9 +372,18 @@ table comes from `scen.read_chunk_spans` and the slot map from
 
 ## Still open
 
-- **Chunk to scenario binding.** Which chunk is which scenario is not mapped.
-- **Codes `0x01`, `0x02`, `0x03`.** Their handlers are read but the tables they
-  index are not; `0x02` and `0x03` walk `u16` tables with their own counters.
-- **`0xF5` and `0xF6`.** Single bytes reach slot 236 and the banks start there,
-  so these two are not glyphs. What they are is unread.
-- **Writing back.** Nothing has been repacked, so no growth budget is known.
+- **Chunk to scenario binding is done**, but the scenario *number* the title
+  card prints comes from control `0x03`, so the card reads `SCENARIO-<number>`
+  rather than a literal.
+- **`0x02` and `0x03` need a width, not a table.** `0x02` prints the name the
+  player entered — it is what `・<pair>の死亡` shows — and `0x03` prints a
+  decimal number. Neither is text a translation writes, but both take room on
+  the line, so line wrapping needs their worst case exactly as `rewrap.py`
+  counts `NAME_CELLS` for `l45`'s `<$F600><$0000>`. `0x02` runs 2,960 times
+  (1,911 in menus, 611 in dialogue) and `0x03` 516 times (399 in menus).
+- **`0x01` never appears.** Not once in either script. Its handler stores a byte
+  in a global and prints nothing, so there is nothing to preserve and nothing to
+  measure.
+- **Writing back.** The round trip is byte-identical and the in-chunk budget is
+  measured, but no chunk has been grown past its sector, so moving the catalog
+  is untested.
