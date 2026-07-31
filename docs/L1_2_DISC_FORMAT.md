@@ -228,6 +228,95 @@ silence alone does not make a slot free.
 
 ### Control codes
 
+Settled by disassembling `LANG2.EXE`, which is how `l45`'s own opcodes were
+settled. The decoder is at `0x800164E8` and reads exactly the codec above:
+
+```mips
+lbu   $a0, ($a1)          ; byte
+sltiu $v0, $a0, 0xa       ; < 0x0A -> control
+sltiu $v0, $a0, 0xf7      ; < 0xF7 -> glyph, slot = byte - 0x0A
+addiu $v1, $a0, -0xf7     ; else bank = byte - 0xF7
+sll   $v0, $v1, 8
+subu  $v0, $v0, $v1       ; bank * 255
+addiu $a0, $a0, 0xec      ; arg + 236
+addu  $a0, $v0, $a0       ; slot = bank*255 + arg + 236
+```
+
+The glyph writer then computes `slot * 18` against a plane loaded at
+`0x80168000` — the same 18-byte cell the file has.
+
+Codes `0x01`–`0x09` index a jump table at `0x8001017C`:
+
+| Code | Handler | What it does |
+| --- | --- | --- |
+| `0x01` | `0x80016914` | takes one byte and stores it in a global — state, not text |
+| `0x02` | `0x80016938` | prints a pair from a `u16` table, advancing its own counter |
+| `0x03` | `0x80016948` | prints a decimal number from a `u16` table |
+| `0x04` | `0x8001689C` | **takes one byte; prints string `byte` of text part 4** |
+| `0x05` | `0x80016968` | calls the glyph writer with `-1` — a blank |
+| `0x06` | `0x80016978` | calls a hook — waits |
+| `0x07` | `0x800167A4` | calls a hook and resets the cursor — new page |
+| `0x08` | `0x800167DC` | advances Y by `0x10`, resets X — line break |
+| `0x09` | `0x80016850` | **takes one byte; prints string `byte + 2` of text part 1** |
+
+`0x04` and `0x09` are the same mechanism: both call
+`0x80015C30(part, number)`, which walks `number − 1` NUL-terminated strings from
+the start of that part and returns a pointer, then run it as a nested stream and
+restore the caller's pointer. This is `l45`'s macro, written for a byte codec.
+
+### There is no separate macro table — part 4 is it
+
+Part 4 holds 239 strings and `0x04` has 237 distinct operands, and the strings
+are what a compression table looks like: `ラングリッサー`, `レイガルド帝国`,
+`手に入れた！`, `ごめんなさい`, `そんなある日`, `ありがとう、`. Checked against
+the contexts that forced the reading:
+
+| Operand | Part 4 string | Reads as |
+| --- | --- | --- |
+| `0xD9` | `ない！` | `今度こそ負けない！`, `いけない！`, `危ない！` |
+| `0xDA` | `のです` | `見つけたのですが`, `向かうところのです` |
+| `0x57` | `ません。` | `召喚できません。`, `装備できません。` |
+
+So the part I had labelled "scenario and place names" is the phrase table, and
+about a third of the bytes in a line are references into it. Nothing had to be
+found elsewhere: the table was in the text section all along, under an index
+base I had guessed instead of read.
+
+Part 1 is the same story for `0x09` — the character names, indexed `byte + 2`.
+`カオス様を復活させ` comes out of it, which is the plot of Langrisser II.
+
+## What the script names, and what it does not
+
+Of the 1502 drawn slots the script names **1372**; **130** it never names.
+
+Latin is complete: all 26 capitals are present and in use, plus two lower-case
+letters (`ｍ`, `ｚ`) and the ten digits. It is not decoration — the game writes
+real Latin words with it: `ＧＡＭＥＯＶＥＲ`, `ウィンドウＯＰＥＮ`, `ＮＰＣ`,
+`ＢＧＭ`, `Ｆ．Ａ．Ｉインターナショナル`, and monster cries like
+`ＧＵＷＡＡＡＡＡ！` and `Ｚｚｚｚｚｚ`. It also carries the stat abbreviations
+`ＡＴ`, `ＤＦ`, `ＭＰ`, `ＭＶ` with `＋`, `－`, `×`, `（`, `）` —
+`ＡＴ＋８・ＤＦ－３`, `ＭＰ×２・魔法射程＋３`, `ＭＶ＋２（部下含）`.
+
+Two slots are icons rather than characters: **1502 and 1503**, the controller
+buttons. Both are drawn in a heavy stroke unlike anything else on the plane, and
+neither is named by either script even once — while the thin `×` at slot 275,
+which looks similar at a glance, is ordinary text used 375 times.
+
+They are recorded the way Langrisser V records its own icons: `group` is
+`symbol` and **`char` is empty**. An icon has no character value at all, so no
+font can be asked to draw one and no target text can name one. Reading a
+button back as `✕` and then rendering that through a font would put a
+typographic glyph where the game draws a control; the empty cell makes that
+impossible rather than merely discouraged.
+
+The other 128 unnamed slots are **not** free. Most are the surname kanji at
+1408–1471 — `澤`, `樋`, `鈴`, `薮`, `眞`, `鮎`, `鶴`, `嶋`, `篤` — which the
+staff credits draw from somewhere other than `SCEN.DAT`. Before any slot is
+treated as reusable, whatever else draws text has to be checked; `SCEN.DAT`
+silence alone does not make a slot free.
+
+### Control codes
+
 Two of them are settled, and one of those changes what the script *is*.
 
 **`0x09` takes an operand and names a character.** The operand indexes the
