@@ -208,10 +208,17 @@ real Latin words with it: `ＧＡＭＥＯＶＥＲ`, `ウィンドウＯＰＥ�
 `ＡＴ`, `ＤＦ`, `ＭＰ`, `ＭＶ` with `＋`, `－`, `×`, `（`, `）` —
 `ＡＴ＋８・ＤＦ－３`, `ＭＰ×２・魔法射程＋３`, `ＭＶ＋２（部下含）`.
 
-Two slots are icons rather than characters: **1502 `〇` and 1503 `✕`**, the
-controller buttons. Both are drawn in a heavy stroke unlike anything else on the
-plane, and neither is named by either script even once — while the thin `×` at
-slot 275, which looks similar at a glance, is ordinary text used 375 times.
+Two slots are icons rather than characters: **1502 and 1503**, the controller
+buttons. Both are drawn in a heavy stroke unlike anything else on the plane, and
+neither is named by either script even once — while the thin `×` at slot 275,
+which looks similar at a glance, is ordinary text used 375 times.
+
+They are recorded the way Langrisser V records its own icons: `group` is
+`symbol` and **`char` is empty**. An icon has no character value at all, so no
+font can be asked to draw one and no target text can name one. Reading a
+button back as `✕` and then rendering that through a font would put a
+typographic glyph where the game draws a control; the empty cell makes that
+impossible rather than merely discouraged.
 
 The other 128 unnamed slots are **not** free. Most are the surname kanji at
 1408–1471 — `澤`, `樋`, `鈴`, `薮`, `眞`, `鮎`, `鶴`, `嶋`, `篤` — which the
@@ -339,8 +346,8 @@ the plane cannot get much further until the operands are settled.
 
 ## The plane is fully read
 
-All 1536 slots are accounted for: 34 are blank and **1502 carry a glyph, every
-one of them read**. The map is `data/common/font_mapping/l1_2_font_map.csv`,
+All 1536 slots are accounted for: 34 are blank, 2 are icons carrying no
+character, and **1500 are characters, every one of them read**. The map is `data/common/font_mapping/l1_2_font_map.csv`,
 under `common/` because the two games share the file byte for byte.
 
 It was read rather than recognised, and then each slot was checked against the

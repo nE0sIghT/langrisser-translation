@@ -1501,8 +1501,8 @@ index_dec,index_hex,group,char,source
 1499,5db,confirmed,停,vision
 1500,5dc,confirmed,滞,vision
 1501,5dd,confirmed,秤,vision
-1502,5de,confirmed,〇,vision
-1503,5df,confirmed,✕,vision
+1502,5de,symbol,,manual:icon_glyph
+1503,5df,symbol,,manual:icon_glyph
 1504,5e0,confirmed,,blank
 1505,5e1,confirmed,,blank
 1506,5e2,confirmed,,blank
