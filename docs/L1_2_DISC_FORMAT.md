@@ -177,18 +177,47 @@ of both games in order, and by every escape bank landing inside the font.
 | `0x00` | end of string |
 | `0x01`–`0x09` | control codes; some take the next byte as an operand — see below |
 | `0x0A`–`0xF6` | glyph, slot = byte − `0x0A` (slots 0–236) |
-| `0xF7`–`0xFB` | two bytes: slot = 235 + (byte − `0xF7`) × 256 + next byte (slots 235–1514) |
+| `0xF7`–`0xFB` | two bytes: slot = 236 + (byte − `0xF7`) × **255** + next byte (slots 236–1510) |
 
 The five escape banks tile the font: the highest slot any script names is 1504,
 and `0xFC`–`0xFF` never appear in a text part, which is the check that says the
 banks stop at `0xFB`.
 
-**The base is 235, not 237, and that took a verified font map to see.** With
-237 the plane reads as plausible-looking nonsense — the two-off neighbour of the
-right character is still a real character. With 235 the same bytes read as
-Japanese: `捨てるアイテムを選んで下さい。`, `を捨てます。`. Since single bytes
-reach slot 236 and the banks start at 235, `0xF5` and `0xF6` are almost
-certainly not glyphs at all but two more control codes.
+**A bank is 255 slots wide, not 256, and that only became visible once the
+font map was trustworthy.** With a 256 step the plane reads as plausible
+nonsense, because the neighbour of the right character is still a real
+character; the error grows by one per bank, so one string can look almost right
+while another is clearly wrong. With 255 the same bytes read as Japanese
+throughout — the debug menu comes out `面セレクト`, `ＢＧＭ`, `効果音`,
+`戦闘テスト`, and place names as `レイガルド帝国`, `ヴェルゼリア城`.
+
+The check that settles it: no argument byte ever reaches `0xFF` in either
+script. The highest seen are `0xFB` after `0xF7`, `0xFE` after `0xF8`, `0xFD`
+after `0xFB` — exactly what a 255-wide bank allows and a 256-wide one would
+not explain.
+
+## What the script names, and what it does not
+
+Of the 1502 drawn slots the script names **1372**; **130** it never names.
+
+Latin is complete: all 26 capitals are present and in use, plus two lower-case
+letters (`ｍ`, `ｚ`) and the ten digits. It is not decoration — the game writes
+real Latin words with it: `ＧＡＭＥＯＶＥＲ`, `ウィンドウＯＰＥＮ`, `ＮＰＣ`,
+`ＢＧＭ`, `Ｆ．Ａ．Ｉインターナショナル`, and monster cries like
+`ＧＵＷＡＡＡＡＡ！` and `Ｚｚｚｚｚｚ`. It also carries the stat abbreviations
+`ＡＴ`, `ＤＦ`, `ＭＰ`, `ＭＶ` with `＋`, `－`, `×`, `（`, `）` —
+`ＡＴ＋８・ＤＦ－３`, `ＭＰ×２・魔法射程＋３`, `ＭＶ＋２（部下含）`.
+
+Two slots are icons rather than characters: **1502 `〇` and 1503 `✕`**, the
+controller buttons. Both are drawn in a heavy stroke unlike anything else on the
+plane, and neither is named by either script even once — while the thin `×` at
+slot 275, which looks similar at a glance, is ordinary text used 375 times.
+
+The other 128 unnamed slots are **not** free. Most are the surname kanji at
+1408–1471 — `澤`, `樋`, `鈴`, `薮`, `眞`, `鮎`, `鶴`, `嶋`, `篤` — which the
+staff credits draw from somewhere other than `SCEN.DAT`. Before any slot is
+treated as reusable, whatever else draws text has to be checked; `SCEN.DAT`
+silence alone does not make a slot free.
 
 Control-code frequency over both scripts, and what follows each one:
 
