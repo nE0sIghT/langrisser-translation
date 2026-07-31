@@ -14,7 +14,7 @@
     "нб"
   ],
   "glossary": "glossary.csv",
-  "max_lines": 4,
+  "max_lines": 3,
   "names": "names.csv",
   "review_status": "review_status.csv",
   "script_dir": "SCEN",
@@ -22,5 +22,20 @@
   "system_complete": false,
   "system_layout": "system_layout.json",
   "system_strings": "system_strings.json",
-  "window_width": 21
+  "window_width": 15,
+  "windows": {
+    "5": [
+      15,
+      3
+    ],
+    "6": [
+      15,
+      4
+    ],
+    "7": [
+      17,
+      7
+    ]
+  },
+  "_windows_comment": "Cells by lines, per script part. The dialogue box was measured on hardware with a ruler patch: 15 cells, three lines. The objectives panel and the briefing card are taken from the Japanese script's own maxima, which is what the original was laid out to fit."
 }

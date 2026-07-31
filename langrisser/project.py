@@ -115,6 +115,15 @@ class LanguagePack:
         return self.script_dir.name
 
     @property
+    def windows(self) -> dict:
+        """Per-part window geometry, `part -> (cells, lines)`.
+
+        Engines that draw every window the same way leave this empty and fall
+        back to `window_width` and `max_lines`.
+        """
+        return dict(self._data.get("windows") or {})
+
+    @property
     def font_assignments(self) -> Path:
         return _path(self.root, str(self._data.get("font_assignments") or "font_slot_assignments.csv"))  # type: ignore[return-value]
 

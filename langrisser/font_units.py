@@ -231,3 +231,36 @@ def needed_units(script_texts: list[str], menu_texts: list[str] | None = None,
     return singles, menu_pairs, spacing_pairs, continuity, script_pairs
 
 
+
+
+# Punctuation that must never start a line: it has to stay with the word it
+# follows. A break is never opened before a run made only of these (e.g. a word
+# and its "？", "！", "?!", "…" must wrap together, not apart). "・" is excluded:
+# it is the choice/list bullet and is meant to start a line.
+PUNCT_RUN_CHARS = set("？！?!…‥。、，．：；:;,.")
+
+
+def is_punct_run(s: str) -> bool:
+    return bool(s) and all(ch in PUNCT_RUN_CHARS for ch in s)
+
+
+def wrap_cells(text: str, width: int, measure, line_break: str) -> str:
+    """Greedy word wrap by rendered width, in cells. Words are never split.
+
+    `measure` returns the cell width of a candidate line, which is the only
+    engine-specific part: what a cell costs depends on which pairs the plane
+    carries.
+    """
+    lines: list[str] = []
+    cur = ""
+    for word in text.split():
+        cand = f"{cur} {word}".strip()
+        if measure(cand) <= width:
+            cur = cand
+        else:
+            if cur:
+                lines.append(cur)
+            cur = word
+    if cur:
+        lines.append(cur)
+    return line_break.join(lines)

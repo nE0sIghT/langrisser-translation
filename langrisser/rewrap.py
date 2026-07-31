@@ -33,6 +33,13 @@ import re
 import sys
 from pathlib import Path
 
+from langrisser.font_units import PUNCT_RUN_CHARS, is_punct_run, wrap_cells
+from langrisser.text_layout import LINE, PAGE, PRINTABLE, ZERO, Layout
+from langrisser.text_layout import page_heights_ok as _page_heights_ok
+from langrisser.text_layout import page_segments as _page_segments
+from langrisser.text_layout import structural_page_markers as _structural_page_markers
+from langrisser.text_layout import visible_cells as _visible_cells
+from langrisser.text_layout import wrap_stream as _wrap_stream
 from langrisser.project import add_language_args, language_from_args
 from langrisser.scen import FORCE_PAGE_BREAK, TAG_RE, Codec, consumes_argument, \
     find_text_block, load_charmap_tbl, read_chunk_spans, words_from_bytes
@@ -66,157 +73,46 @@ def cells(codec: Codec, text: str) -> int:
     return len(codec.encode(text))
 
 
-# Punctuation that must never start a line: it has to stay with the word it
-# follows. A break is never opened before a run made only of these (e.g. a word
-# and its "？", "！", "?!", "…" must wrap together, not apart). "・" is excluded:
-# it is the choice/list bullet and is meant to start a line.
-PUNCT_RUN_CHARS = set("？！?!…‥。、，．：；:;,.")
+def _kind(tag: str) -> str:
+    val = int(TAG_RE.match(tag).group(1), 16)
+    if val == NAME_MACRO or val < PRINTABLE_TAG_LIMIT:
+        return PRINTABLE
+    if tag == LINE_BREAK:
+        return LINE
+    if tag in PAGE_BREAKS:
+        return PAGE
+    return ZERO
 
 
-def is_punct_run(s: str) -> bool:
-    return bool(s) and all(ch in PUNCT_RUN_CHARS for ch in s)
+def _tag_cells(tag: str) -> int:
+    val = int(TAG_RE.match(tag).group(1), 16)
+    if val == NAME_MACRO:
+        return NAME_CELLS
+    return 1 if val < PRINTABLE_TAG_LIMIT else 0
+
+
+def layout_for(codec: Codec) -> Layout:
+    """Langrisser V's tag vocabulary for the shared wrapper."""
+    return Layout(
+        tag_re=TAG_RE,
+        line_break=LINE_BREAK,
+        page_break=PAGE_BREAK,
+        page_breaks=frozenset(PAGE_BREAKS),
+        cells=lambda text: cells(codec, text),
+        kind=_kind,
+        tag_cells=_tag_cells,
+        takes_argument=lambda tag: consumes_argument(int(TAG_RE.match(tag).group(1), 16)),
+        force_page_break=FORCE_PAGE_BREAK,
+    )
 
 
 def wrap(codec: Codec, text: str, width: int) -> str:
-    words = text.split()
-    lines: list[str] = []
-    cur = ""
-    for w in words:
-        cand = f"{cur} {w}".strip()
-        if cells(codec, cand) <= width:
-            cur = cand
-        else:
-            if cur:
-                lines.append(cur)
-            cur = w
-    if cur:
-        lines.append(cur)
-    return LINE_BREAK.join(lines)
+    return wrap_cells(text, width, lambda s: cells(codec, s), LINE_BREAK)
 
 
 def wrap_stream(codec: Codec, text: str, width: int, reserve: int = 0,
                 tail_reserve: int = 0) -> str:
-    """Wrap a mixed text/control stream without treating control tags as a
-    visual line reset. Zero-width control tags create safe break points
-    before the next printable word; tags glued to the tail of a word (such
-    as the highlight-off after the word) stay with that word. The name
-    macro and printable tags carry real cell widths.
-
-    `reserve` is the speaker-plate width: the engine draws the name plate
-    and its bracket inline at the start of the window, so the first line
-    of a plated record is shorter by that amount. Continuation pages after
-    <$FFFD> do not redraw the plate and therefore restart at full width."""
-    out: list[str] = []
-    line_parts: list[str] = []
-    pending_tags: list[str] = []
-    atom_parts: list[str] = []
-    line_reserve = reserve
-    line_has_text = False
-    saw_space = False
-    saw_tag_boundary = False
-    line_no = 0
-    # The yes/no box only sits on the page that shows the prompt (the last
-    # page); earlier pages of a multi-page record use the full width.
-    page_no = 0
-    last_page = sum(1 for _a, _b, t in structural_page_markers(text) if t == PAGE_BREAK)
-
-    def flush_atom() -> None:
-        nonlocal line_reserve, line_has_text, saw_space, saw_tag_boundary, line_no
-        if not atom_parts and not pending_tags:
-            return
-        if atom_parts:
-            sep = " " if saw_space and line_has_text else ""
-            can_break = line_has_text and (saw_space or saw_tag_boundary)
-            candidate = "".join(line_parts + ([sep] if sep else [])
-                                + pending_tags + atom_parts)
-            # A yes/no confirmation box sits over the right of the 3rd and 4th
-            # lines, so those lines (0-based index >= 2) lose tail_reserve cells.
-            extra = tail_reserve if (line_no >= 2 and page_no == last_page) else 0
-            if can_break and line_reserve + visible_cells(codec, candidate) + extra > width:
-                out.append(LINE_BREAK)
-                line_no += 1
-                line_parts.clear()
-                line_reserve = 0
-                sep = ""
-            elif sep:
-                out.append(sep)
-                line_parts.append(sep)
-            out.extend(pending_tags)
-            line_parts.extend(pending_tags)
-            pending_tags.clear()
-            out.extend(atom_parts)
-            line_parts.extend(atom_parts)
-            atom_parts.clear()
-            line_has_text = True
-            saw_space = False
-            saw_tag_boundary = False
-
-    tags = list(TAG_RE.finditer(text))
-    pos = 0
-    i = 0
-    while i <= len(tags):
-        raw = text[pos : tags[i].start()] if i < len(tags) else text[pos:]
-        parts = [p for p in re.split(r"(\s+)", raw) if p]
-        k = 0
-        while k < len(parts):
-            part = parts[k]
-            if part.isspace():
-                # Keep trailing punctuation with its word: if a run of pure
-                # punctuation follows this space, glue the space + punctuation
-                # into the current atom instead of opening a break here, so the
-                # word and its punctuation wrap together rather than apart.
-                nxt = parts[k + 1] if k + 1 < len(parts) else ""
-                if atom_parts and is_punct_run(nxt):
-                    atom_parts.append(part)
-                    atom_parts.append(nxt)
-                    k += 2
-                    continue
-                flush_atom()
-                saw_space = True
-            else:
-                atom_parts.append(part)
-            k += 1
-        if i == len(tags):
-            break
-        m = tags[i]
-        tag_text = m.group(0)
-        val = int(m.group(1), 16)
-        consumed = 1
-        if consumes_argument(val) and i + 1 < len(tags) and tags[i + 1].start() == m.end():
-            tag_text += tags[i + 1].group(0)
-            consumed = 2
-        if val == NAME_MACRO:
-            atom_parts.append(tag_text)
-        elif val < PRINTABLE_TAG_LIMIT:
-            atom_parts.append(tag_text)
-        elif tag_text == LINE_BREAK:
-            flush_atom()
-            saw_space = True
-        elif tag_text in PAGE_BREAKS:
-            flush_atom()
-            out.extend(pending_tags)
-            pending_tags.clear()
-            out.append(tag_text)
-            if tag_text == PAGE_BREAK:
-                page_no += 1
-            line_parts.clear()
-            line_reserve = 0
-            line_no = 0
-            line_has_text = False
-            saw_space = False
-            saw_tag_boundary = False
-        elif atom_parts:
-            # zero-width tag glued to a word tail (e.g. highlight-off):
-            # keep it inside the atom so it never drifts across a break.
-            atom_parts.append(tag_text)
-        else:
-            pending_tags.append(tag_text)
-            saw_tag_boundary = True
-        pos = m.start() + len(tag_text)
-        i += consumed
-    flush_atom()
-    out.extend(pending_tags)
-    return "".join(out)
+    return _wrap_stream(layout_for(codec), text, width, reserve, tail_reserve)
 
 
 def safe_page_continuation(text: str, start: int) -> bool:
@@ -250,45 +146,15 @@ def safe_page_continuation(text: str, start: int) -> bool:
 
 
 def structural_page_markers(text: str) -> list[tuple[int, int, str]]:
-    """Return page/end markers that are not arguments of control opcodes."""
-    out: list[tuple[int, int, str]] = []
-    tags = list(TAG_RE.finditer(text))
-    i = 0
-    while i < len(tags):
-        m = tags[i]
-        val = int(m.group(1), 16)
-        consumed = 1
-        if consumes_argument(val) and i + 1 < len(tags) \
-                and tags[i + 1].start() == m.end():
-            consumed = 2
-        if consumed == 1 and m.group(0) in PAGE_BREAKS:
-            out.append((m.start(), m.end(), m.group(0)))
-        i += consumed
-    return out
+    return _structural_page_markers(layout_for(None), text)
 
 
 def page_segments(text: str) -> list[str]:
-    """Split on structural page/end markers, ignoring control arguments.
-
-    The authoring-only forced page break is a hard page boundary too, so it
-    splits pages here even though it is not a <$XXXX> tag.
-    """
-    out: list[str] = []
-    for chunk in text.split(FORCE_PAGE_BREAK):
-        start = 0
-        for a, b, _tag in structural_page_markers(chunk):
-            out.append(chunk[start:a])
-            start = b
-        out.append(chunk[start:])
-    return out
+    return _page_segments(layout_for(None), text)
 
 
 def page_heights_ok(text: str, max_lines: int) -> bool:
-    """Check rendered page height after wrapping."""
-    for page in page_segments(text):
-        if page.strip() and page.count(LINE_BREAK) + 1 > max_lines:
-            return False
-    return True
+    return _page_heights_ok(layout_for(None), text, max_lines)
 
 
 def compact_safe_pages(codec: Codec, text: str, width: int, reserve: int,
@@ -584,29 +450,7 @@ def plate_reserve(codec: Codec, records: list[tuple[str, str]],
 
 
 def visible_cells(codec: Codec, text: str) -> int:
-    """Rendered width of a tag-bearing string in cells, with the name
-    macro at its worst-case width."""
-    n = 0
-    pos = 0
-    tags = list(TAG_RE.finditer(text))
-    i = 0
-    while i <= len(tags):
-        raw = text[pos : tags[i].start()] if i < len(tags) else text[pos:]
-        n += cells(codec, raw)
-        if i == len(tags):
-            break
-        val = int(tags[i].group(1), 16)
-        consumed = 1
-        if consumes_argument(val) and i + 1 < len(tags) \
-                and tags[i + 1].start() == tags[i].end():
-            consumed = 2
-        if val == NAME_MACRO:
-            n += NAME_CELLS
-        elif val < PRINTABLE_TAG_LIMIT:
-            n += 1
-        pos = tags[i + consumed - 1].end()
-        i += consumed
-    return n
+    return _visible_cells(layout_for(codec), text)
 
 
 def main() -> None:

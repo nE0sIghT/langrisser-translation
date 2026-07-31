@@ -5,14 +5,20 @@ Runs on the text, not on bytes, because the byte form needs slots the plane
 does not have yet while the Japanese is still in place. What it can check now
 is what actually breaks a scenario if it is wrong:
 
-* every control tag the record had is still there, the same ones and the same
-  number of them — a lost `<name:12>` prints nobody, a lost `<phrase:217>` eats
-  a clause, and a lost `<page>` runs two screens together;
-* their order is unchanged, because a name that moves past a line break lands
-  on the wrong line;
-* the record still fits the window it is drawn in, counted in cells rather than
-  characters, since a pair glyph is one cell and a single is one cell;
+* every reference the record had is still there, the same ones, the same
+  number, in the same order — `<name:12>` prints a character, `<pair>` the
+  player's own name, and losing or reordering one says something the Japanese
+  did not;
+* the record fits its window: no line wider than the window in glyph cells,
+  no page taller than the window in lines;
 * nothing is left in Japanese.
+
+Layout tags are deliberately not compared against the Japanese. Russian does
+not fit the line structure of Japanese — it is longer, and a line that held a
+clause there holds half of one here — so `<line>`, `<page>`, `<wait>` and
+`<blank>` belong to the translation, and `l12_rewrap` places them. Demanding
+the original's break sequence would be demanding the original's sentence
+lengths.
 
 What it deliberately does not check is whether the result fits the chunk in
 bytes. That answer depends on the glyph plane, which does not carry the target
@@ -33,12 +39,12 @@ from langrisser.project import add_language_args, language_from_args
 from langrisser.scen import load_charmap_csv
 
 TAG_RE = re.compile(r"<(?:\$[0-9A-Fa-f]{4}|[a-z]+(?::\d+)?)>")
-# A raw glyph tag names one character of the plane, so a translation that spells
-# the word differently loses it and nothing breaks. Every other tag either
-# substitutes something at runtime or lays the page out, and losing one of those
-# breaks the scene. Phrase references are neither: they are the script's own
-# compression, so both sides are compared with them inlined (see `tags`).
-DROPPABLE = re.compile(r"<\$[0-9A-Fa-f]{4}>")
+# What the engine substitutes at runtime, and what therefore has to survive
+# translation exactly. A raw glyph tag is not here: it names one character of
+# the plane, so a translation that spells the word differently simply loses it.
+# Nor are phrase references, which are the script's own compression — both
+# sides are compared with them inlined (see `references`).
+REFERENCE_RE = re.compile(r"<(?:name:\d+|pair|number)>")
 # The bullet, the ellipsis and the corner brackets are punctuation the plane
 # draws, not Japanese words, and the target text keeps using them.
 PUNCT = "・‥「」、。！？～ー－＋×（）／＆．＿＾"
@@ -46,34 +52,34 @@ JP_RE = re.compile(f"[぀-ヿ㐀-鿿]")
 BREAKS = ("<line>", "<page>")
 
 
-def tags(reader: Reader, text: str) -> list[str]:
-    """The tags a record lays out, with phrase references written out first.
+def references(reader: Reader, text: str) -> list[str]:
+    """The runtime substitutions a record makes, in order.
 
-    A translation is free to drop a phrase reference and spell the words, but
-    a phrase can hold layout tags of its own — `<phrase:131>` is three blanks
-    and a corner bracket — and those become the record's own once the
-    reference goes. Comparing the two sides unexpanded counts them as newly
-    invented, which is how a correct title card gets reported as broken.
+    Phrase references are inlined first: a translation may keep one or spell
+    the words out, and a phrase can hold a name reference of its own.
     """
-    inlined = reader.inline_phrases(text)
-    return [t for t in TAG_RE.findall(inlined) if not DROPPABLE.fullmatch(t)]
+    return REFERENCE_RE.findall(reader.inline_phrases(text))
+
+
+def pages(text: str) -> list[list[str]]:
+    """The record as the screen shows it: pages of lines."""
+    flat = text.replace("<blank>", " ")
+    flat = TAG_RE.sub(lambda m: {"<line>": "\n", "<page>": "\f"}.get(m.group(0), ""), flat)
+    return [page.split("\n") for page in flat.split("\f")]
 
 
 CYRILLIC = re.compile(r"[А-Яа-яЁё]")
 
 
-def cells(text: str) -> int:
-    """Width of a record's longest line, in glyph cells.
+def cells(line: str) -> int:
+    """Width of one rendered line, in glyph cells.
 
     A cell holds one Japanese glyph but two Cyrillic letters, because the
     target font packs them in pairs the way `build_font` already does for
     Langrisser V. Counting characters would reject lines that fit.
     """
-    widest = 0
-    for line in TAG_RE.sub(lambda m: "\n" if m.group(0) in BREAKS else "", text).split("\n"):
-        latin = len(CYRILLIC.findall(line))
-        widest = max(widest, (latin + 1) // 2 + (len(line) - latin))
-    return widest
+    latin = len(CYRILLIC.findall(line))
+    return (latin + 1) // 2 + (len(line) - latin)
 
 
 def main() -> None:
@@ -88,6 +94,8 @@ def main() -> None:
     ap.add_argument("--font-map", default=None)
     ap.add_argument("--width", type=int, default=None,
                     help="Cells per line (default: the pack's window_width).")
+    ap.add_argument("--height", type=int, default=None,
+                    help="Lines per page (default: the pack's max_lines).")
     args = ap.parse_args()
 
     game = game_from_args(args)
@@ -95,7 +103,12 @@ def main() -> None:
     font = load_charmap_csv(Path(args.font_map) if args.font_map else game.font_map)
     root = Path(args.translation_root) if args.translation_root else lang.script_dir
     scen = Path(args.scen) if args.scen else Path("work", game.code, "extracted", "SCEN.DAT")
-    width = args.width or lang.window_width
+    windows = {int(k): tuple(v) for k, v in (lang.windows or {}).items()}
+    default = (args.width or lang.window_width, args.height or lang.max_lines)
+
+    def window(part: int) -> tuple[int, int]:
+        w, h = windows.get(part, default)
+        return (args.width or w, args.height or h)
 
     problems = 0
     checked = 0
@@ -127,23 +140,25 @@ def main() -> None:
                 continue          # untranslated, nothing to check
             checked += 1
             where = f"chunk {chunk.index} part {pi} #{si}"
-            was, now = tags(reader, source), tags(reader, text)
+            was, now = references(reader, source), references(reader, text)
             if was != now:
-                lost = [t for t in was if now.count(t) < was.count(t)]
-                extra = [t for t in now if was.count(t) < now.count(t)]
-                if lost or extra:
-                    print(f"{where}: tags differ — lost {lost or '-'}, extra {extra or '-'}")
-                else:
-                    print(f"{where}: tag order changed\n    was {was}\n    now {now}")
+                print(f"{where}: references differ\n    was {was}\n    now {now}")
                 problems += 1
             left = [c for c in JP_RE.findall(text) if c not in PUNCT]
             if left:
                 print(f"{where}: still Japanese: {left[:6]}")
                 problems += 1
-            wide = cells(text)
-            if wide > width:
-                print(f"{where}: {wide} cells wide, window is {width}")
-                problems += 1
+            width, height = window(pi)
+            for n, page in enumerate(pages(text)):
+                widest = max(cells(line) for line in page)
+                if widest > width:
+                    print(f"{where}: page {n + 1} is {widest} cells wide, "
+                          f"window is {width}")
+                    problems += 1
+                if len(page) > height:
+                    print(f"{where}: page {n + 1} has {len(page)} lines, "
+                          f"window holds {height}")
+                    problems += 1
     print(f"{game.code}/{lang.code}: {checked} translated records checked, "
           f"{problems} problem(s)")
     sys.exit(1 if problems else 0)
