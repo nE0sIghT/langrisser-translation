@@ -5,7 +5,7 @@ The container spine is the one `scen.py` documents — a `u32` pointer table who
 last entry is the file size — but everything below it is this engine's own, so
 this module carries the parts that differ and nothing else.
 
-    catalog:  u32 chunk_pointers[], last == file size
+    catalog:  u32 chunk_pointers[], last == file size  (scen.read_chunk_spans)
     chunk:    u32 section_table[], section_table[0] == its own byte size
     section 2 is the text, itself a table of that same self-describing form
     part:     NUL-terminated strings, back to back
@@ -24,11 +24,12 @@ string could in principle nest again.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import struct
 from dataclasses import dataclass
 from pathlib import Path
+
+from langrisser.scen import load_charmap_csv, read_chunk_spans
 
 SECTOR = 0x800
 TEXT_SECTION = 2
@@ -55,11 +56,6 @@ CONTROLS = {
 }
 
 
-def load_font_map(path: Path) -> dict[int, str]:
-    return {int(r["index_dec"]): r["char"]
-            for r in csv.DictReader(path.open(encoding="utf-8")) if r["char"]}
-
-
 def offset_table(seg: bytes) -> list[int] | None:
     """A self-describing u32 table: its first entry is its own byte size."""
     if len(seg) < 4:
@@ -71,15 +67,6 @@ def offset_table(seg: bytes) -> list[int] | None:
     if table[0] != first or any(table[i] > table[i + 1] for i in range(len(table) - 1)):
         return None
     return table if table[-1] <= len(seg) else None
-
-
-def catalog(blob: bytes) -> list[tuple[int, int]]:
-    limit = min(512, SECTOR // 4)
-    words = list(struct.unpack_from(f"<{limit}I", blob, 0))
-    n = 1
-    while n < limit and words[n] > words[n - 1] and words[n] <= len(blob):
-        n += 1
-    return [(words[i], words[i + 1]) for i in range(n - 1)]
 
 
 def split_strings(part: bytes) -> list[bytes]:
@@ -155,7 +142,7 @@ def pack_chunk(original: bytes, parts) -> bytes:
 
 def read_chunks(blob: bytes) -> list[Chunk]:
     out = []
-    for index, (start, end) in enumerate(catalog(blob)):
+    for index, (start, end) in enumerate(read_chunk_spans(blob)):
         chunk = blob[start:end]
         sections = offset_table(chunk)
         if not sections or len(sections) <= TEXT_SECTION + 1:
@@ -227,7 +214,7 @@ class Reader:
 def roundtrip(blob: bytes) -> tuple[int, int, list[int]]:
     """Rebuild every chunk from what was read and compare. Returns (ok, total, bad)."""
     ok, total, bad = 0, 0, []
-    for start, end in catalog(blob):
+    for start, end in read_chunk_spans(blob):
         original = blob[start:end]
         sections = offset_table(original)
         if not sections or len(sections) <= TEXT_SECTION + 1:
@@ -268,7 +255,7 @@ def main() -> None:
         print(f"no-edit round trip: {ok}/{total} chunks byte-identical"
               + (f", first mismatch at 0x{bad[0]:X}" if bad else ""))
         raise SystemExit(0 if ok == total else 1)
-    font = load_font_map(Path(args.font_map))
+    font = load_charmap_csv(Path(args.font_map))
     chunks = read_chunks(blob)
     if not args.out_dir:
         raise SystemExit("--out-dir is required unless --roundtrip")

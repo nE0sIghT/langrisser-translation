@@ -17,9 +17,9 @@ import json
 import re
 from pathlib import Path
 
-from langrisser.l12_scen import (
-    Reader, load_font_map, read_chunks,
-)
+from langrisser.l12_scen import Reader, read_chunks
+from langrisser.review_html import CSS as BASE_CSS
+from langrisser.scen import load_charmap_csv
 
 PART_ROLES = {
     0: "menu and system wording",
@@ -34,33 +34,21 @@ PART_ROLES = {
 }
 SHARED = {0, 1, 2, 3, 4}
 
-CSS = """
-:root{--bg:#171a1d;--panel:#20252a;--line:#394149;--text:#e8e3d8;
---muted:#999b98;--jp:#f1d08a;--tag:#9cc5dd;--shared:#8d8f8c}
-*{box-sizing:border-box}
-body{font-family:"DejaVu Sans",sans-serif;background:var(--bg);color:var(--text);
-margin:0;padding:22px;line-height:1.55}
-h1{font:700 24px Georgia,serif;margin:0 0 4px}
-h2{font:600 17px Georgia,serif;margin:26px 0 6px;color:var(--jp)}
-h3{font:600 13px sans-serif;margin:14px 0 4px;color:var(--muted);
-text-transform:uppercase;letter-spacing:.06em}
-.sub{color:var(--muted);font-size:13px;margin-bottom:14px}
-.toolbar{position:sticky;top:0;z-index:2;background:rgba(23,26,29,.97);
-border-bottom:1px solid var(--line);padding:9px 0;margin-bottom:14px;font-size:13px}
-.toolbar a{color:var(--tag);margin-right:12px;text-decoration:none}
+# The Langrisser V pages already define the palette and the table styling, so
+# this only adds what a script page needs on top of them.
+CSS = BASE_CSS + """
 .index{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 20px}
 .index a{background:var(--panel);border:1px solid var(--line);border-radius:2px;
 padding:3px 8px;font-size:12px;color:var(--text);text-decoration:none}
-.index a:hover{border-color:var(--tag)}
-table{border-collapse:collapse;width:100%;margin:4px 0 10px}
-td{border-top:1px solid var(--line);padding:5px 8px;vertical-align:top}
+.index a:hover{border-color:var(--ref)}
 td.n{color:var(--muted);font-size:12px;width:52px;text-align:right;
 font-variant-numeric:tabular-nums}
 td.t{white-space:pre-wrap;font-size:15px}
-.tag{color:var(--tag);font-size:12px}
-.shared{color:var(--shared)}
-.badge{display:inline-block;border:1px solid var(--line);border-radius:2px;
-padding:2px 7px;font-size:12px;background:var(--panel);margin-right:6px}
+.tag{color:var(--ref);font-size:12px}
+.shared{color:var(--muted)}
+h2{font:600 17px Georgia,serif;margin:26px 0 6px;color:var(--jp)}
+h3{font:600 13px sans-serif;margin:14px 0 4px;color:var(--muted);
+text-transform:uppercase;letter-spacing:.06em}
 """
 
 TAG_RE = re.compile(r"<(/?)([a-z!$][^>]*)>")
@@ -150,7 +138,7 @@ def main() -> None:
     ap.add_argument("--depth", type=int, default=2)
     args = ap.parse_args()
 
-    font = load_font_map(Path(args.font_map))
+    font = load_charmap_csv(Path(args.font_map))
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     labels = {"l1": "Langrisser I", "l2": "Langrisser II"}
