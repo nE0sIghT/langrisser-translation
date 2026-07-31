@@ -78,3 +78,13 @@ these can be reopened once the repack layout is verified in an emulator.
 | CD-018 | Recap/bios, `chunk_130.txt` | all ending biography records | Closed 2026-06-14. Full JP/EN review found compressed ceremonial phrasing but preserved the branch outcomes, character epilogues, deaths, marriages, reforms, and world-state details. |
 | CD-019 | Scenario 2 battle, `chunk_002.txt` | `15,21,23,33,46,49,53,63,66,71,76,79,84,88,90,96,97,103,104,113` | Closed 2026-06-13. The fuller text was restored after the battle suffix alignment rule was confirmed: chunk `002` may shift its suffix when the new suffix start remains 4-byte aligned. In-game testing confirmed battle images/portraits stayed intact. |
 | HD-001 | SYSTEM.BIN help stat lines that decoded with an `N`/`up`/`down` placeholder | Closed 2026-06-17. Not a runtime value at all: glyph code `0x000A` is the digit `3` in this font, but the dump decoded it as a line break, so embedded `3`/`13`/`30`/`35`/`38` numbers were lost. Fixed the decoder and restored every real number from the data (e.g. "Attack cost +3", "Summon MP: 35", "Sell at 3/4 buy price", "Monster 13", "Skill: Petrify 3"). No RAM dump needed. |
+
+## Langrisser I & II
+
+Записи, где русский текст пришлось ужать против японского из-за ширины окна
+(21 ячейка, парные глифы) или из-за запаса чанка. Заносить **до** коммита
+сценария.
+
+| Сценарий | Запись | Что потеряно | Статус |
+| --- | --- | --- | --- |
+| l1 / 0 | 5/22 | `父上の事が心配だ` — «неспокойно за отца» ужато до «неспокойно»: строка не влезала в окно | открыто |
