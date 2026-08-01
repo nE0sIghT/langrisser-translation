@@ -23,9 +23,9 @@ from pathlib import Path
 
 from langrisser.game import add_game_args, game_from_args
 from langrisser.l12_phrases import rebuild as rebuild_phrases
+from langrisser.container import pad_chunk, rebuild_container_fixed_size
 from langrisser.l12_scen import (PHRASE_PART, Reader, Writer, load_assignments,
-                                 merged_plane, pack_chunk, read_chunks,
-                                 repack_file)
+                                 merged_plane, pack_chunk, read_chunks)
 from langrisser.scen import read_chunk_spans
 from langrisser.project import add_language_args, language_from_args
 from langrisser.release import add_release_args, release_from_args
@@ -141,10 +141,14 @@ def main() -> None:
                                          parts, cap=False)
         applied += touched
 
-    try:
-        rebuilt = repack_file(blob, pieces)
-    except ValueError as exc:
-        raise SystemExit(f"{scen}: {exc}")
+    # Same layout Langrisser V uses: 0x800 alignment, reclaim whole sectors of
+    # trailing padding from the back, and refuse rather than break either rule.
+    spans = read_chunk_spans(blob)
+    rebuilt = rebuild_container_fixed_size(
+        blob,
+        [pad_chunk(bytes(piece), blob[a:b])
+         for piece, (a, b) in zip(pieces, spans)],
+        spans, str(scen))
     if len(rebuilt) != len(blob):
         raise SystemExit("the container changed size, which the disc cannot take")
 

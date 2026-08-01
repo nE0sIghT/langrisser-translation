@@ -20,6 +20,9 @@ import argparse
 import struct
 from pathlib import Path
 
+from langrisser.container import (CHUNK_ALIGN, pad_chunk,
+                                  rebuild_container_fixed_size,
+                                  trim_aligned_chunk, trim_blobs_to_fit)
 from langrisser.game import add_game_args, game_from_args
 from langrisser.project import COMMON_FONT_MAP
 from langrisser.scen import (
@@ -32,7 +35,6 @@ from langrisser.scen import (
     words_to_bytes,
 )
 
-CHUNK_ALIGN = 0x800
 
 
 def align_up(value: int, align: int = CHUNK_ALIGN) -> int:
@@ -88,13 +90,6 @@ def rebuild_block(chunk: bytes, block: TextBlock, edits: dict[int, str],
     return bytes(blob)
 
 
-def trim_aligned_chunk(chunk: bytes) -> bytes:
-    """Drop whole-sector trailing zero padding from a chunk."""
-    used = len(chunk.rstrip(b"\x00"))
-    size = align_up(used)
-    return chunk[:size].ljust(size, b"\x00")
-
-
 def rebuild_chunk_fixed(chunk: bytes, block: TextBlock, edits: dict[int, str],
                         codec: Codec, label: str) -> bytes:
     """Rebuild one chunk for the fixed-size repack: the text block may grow,
@@ -102,73 +97,7 @@ def rebuild_chunk_fixed(chunk: bytes, block: TextBlock, edits: dict[int, str],
     possible, and the result is 0x800-aligned."""
     blob = rebuild_block(chunk, block, edits, codec, 0xFFFF, label)
     new_chunk = chunk[: block.base] + blob + chunk[block.base + block.size :]
-    if len(new_chunk) > len(chunk):
-        orig_tz = len(chunk) - len(chunk.rstrip(b"\x00"))
-        stripped = new_chunk.rstrip(b"\x00")
-        removable = min(orig_tz, len(new_chunk) - len(stripped))
-        if len(new_chunk) - removable <= len(chunk):
-            new_chunk = new_chunk[: len(new_chunk) - removable]
-            new_chunk += b"\x00" * (len(chunk) - len(new_chunk))
-    if len(new_chunk) % CHUNK_ALIGN:
-        new_chunk += b"\x00" * (CHUNK_ALIGN - len(new_chunk) % CHUNK_ALIGN)
-    return new_chunk
-
-
-def trim_blobs_to_fit(blobs: list[bytes], capacity: int) -> tuple[list[bytes], int]:
-    """Reclaim whole-sector trailing zero padding, from the last chunk
-    backwards, until the chunks fit the capacity (or nothing is left to
-    trim). Returns the adjusted chunk list and its total size."""
-    blobs = list(blobs)
-    total = sum(len(blob) for blob in blobs)
-    if total > capacity:
-        for i in range(len(blobs) - 1, -1, -1):
-            trimmed = trim_aligned_chunk(blobs[i])
-            saved = len(blobs[i]) - len(trimmed)
-            if saved <= 0:
-                continue
-            blobs[i] = trimmed
-            total -= saved
-            if total <= capacity:
-                break
-    return blobs, total
-
-
-def rebuild_container_fixed_size(data: bytes, chunks: list[bytes],
-                                 spans: list[tuple[int, int]],
-                                 label: str) -> bytes:
-    header_size = spans[0][0]
-    header = bytearray(data[:header_size])
-    # Reclaim whole-sector trailing padding only when the translated
-    # chunks actually need container-level space.
-    blobs, chunks_total = trim_blobs_to_fit(list(chunks), len(data) - header_size)
-    total = header_size + chunks_total
-
-    if total > len(data):
-        raise SystemExit(
-            f"{label}: fixed-size repack needs {total} bytes, source file is "
-            f"{len(data)} bytes. Shorten text or free more padding."
-        )
-
-    cur = header_size
-    ptrs: list[int] = []
-
-    for blob in blobs:
-        if cur % CHUNK_ALIGN:
-            raise SystemExit(f"{label}: chunk pointer 0x{cur:X} is not 0x800-aligned")
-        ptrs.append(cur)
-        cur += len(blob)
-
-    ptrs.append(len(data))
-    if len(ptrs) * 4 > header_size:
-        raise SystemExit(f"{label}: pointer table does not fit in original header")
-    for i, p in enumerate(ptrs):
-        struct.pack_into("<I", header, i * 4, p)
-
-    result = bytes(header) + b"".join(blobs)
-    result += b"\x00" * (len(data) - len(result))
-    if len(result) != len(data):
-        raise AssertionError("fixed-size repack changed file size")
-    return result
+    return pad_chunk(new_chunk, chunk)
 
 
 def dump_path_for(dump_root: Path, primary_stem: str,

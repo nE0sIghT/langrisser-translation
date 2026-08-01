@@ -160,28 +160,32 @@ def repack_file(blob: bytes, chunks: list[bytes]) -> bytes:
     sector can have it as long as the file-level total holds. This is the same
     move `l45` makes when a chunk outgrows its span.
 
-    Chunks stay on sector boundaries while that still fits. The pointers do not
-    require it — they are plain byte offsets, and the engine seeks with them —
-    but the disc was built that way, so the layout only tightens when keeping
-    it would mean not building at all. Falling back to word alignment recovers
-    the rounding, about a kilobyte per chunk.
+    Chunks stay on sector boundaries. The pointers are plain byte offsets and
+    look like they would allow anything, but they do not: a build whose chunks
+    were packed to word alignment hangs on a black screen after the menu, so
+    the engine reaches for a chunk by sector somewhere the catalog does not
+    show. The rounding — most of a kilobyte per chunk — is not reclaimable.
     """
     spans = read_chunk_spans(blob)
     if len(chunks) != len(spans):
         raise ValueError(f"expected {len(spans)} chunks, got {len(chunks)}")
-    for align in (SECTOR, 4):
-        out = bytearray(len(blob))
-        at = spans[0][0]                  # the catalog keeps its place
-        offsets = []
-        for data in chunks:
-            offsets.append(at)
-            out[at:at + len(data)] = data
-            at += -(-len(data) // align) * align
-        if at <= len(blob):
-            break
-    else:
+    out = bytearray(len(blob))
+    at = spans[0][0]                      # the catalog keeps its place
+    offsets = []
+    for data in chunks:
+        offsets.append(at)
+        out[at:at + len(data)] = data
+        at += -(-len(data) // SECTOR) * SECTOR
+    if at > len(blob):
+        over = -(-(at - len(blob)) // SECTOR)
+        grew = [(i, len(d), -(-len(d) // SECTOR) * SECTOR - len(d))
+                for i, d in enumerate(chunks)
+                if -(-len(d) // SECTOR) * SECTOR > spans[i][1] - spans[i][0]]
+        detail = ", ".join(f"chunk {i} needs {n} bytes, {slack} to spare in its "
+                           f"last sector" for i, n, slack in grew)
         raise ValueError(
-            f"the chunks no longer fit the container: {at} > {len(blob)}")
+            f"the chunks no longer fit the container: {at} > {len(blob)}, "
+            f"{over} sector(s) over. {detail}")
     for i, off in enumerate(offsets):
         struct.pack_into("<I", out, i * 4, off)
     struct.pack_into("<I", out, len(offsets) * 4, len(blob))
