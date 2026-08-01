@@ -74,4 +74,4 @@
 3	<blank>・разбить всех врагов
 
 # part 7  1 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「<blank>Печать тьмы<blank>」<wait><page><blank>Свалив Николиса, Ледин и прочие<line>Потомки Света дошли до самой<line>глубины храма.<wait><page><blank>Но обряд воскрешения Хаоса,<line>воплощения хаоса, уже начинался.<wait><page><blank>В подземном храме, где собралась<line>тьма, начинался последний бой<line>Потомков Света с потомками тьмы.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・разбить всех врагов<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель Ледина<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「<blank>Печать тьмы<blank>」<wait><page><blank>Свалив Николиса, Ледин и прочие<line>Потомки Света дошли до самой<line>глубины храма.<wait><page><blank>Но обряд воскрешения Хаоса,<line>воплощения хаоса, уже начинался.<wait><page><blank>В подземном храме, где<line>собралась тьма, начинался<line>последний бой Потомков Света с<line>потомками тьмы.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・разбить всех врагов<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель Ледина<wait><page>
