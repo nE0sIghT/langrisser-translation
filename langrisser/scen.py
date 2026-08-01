@@ -21,6 +21,8 @@ from __future__ import annotations
 import csv
 import re
 import struct
+
+from langrisser.font_units import tile_text
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -257,81 +259,7 @@ class Codec:
             i = j
         return out
 
-    @staticmethod
-    def _caps_run_len(text: str, i: int) -> int:
-        """Length of the maximal uppercase-letter run containing text[i]."""
-        def caps(ch: str) -> bool:
-            return ch.isalpha() and ch.isupper()
-        if not caps(text[i]):
-            return 0
-        a = i
-        while a > 0 and caps(text[a - 1]):
-            a -= 1
-        b = i
-        while b + 1 < len(text) and caps(text[b + 1]):
-            b += 1
-        return b - a + 1
-
     def _encode_plain(self, text: str, base_pos: int) -> list[int]:
-        n = len(text)
-        # dp[i] = (token_count, visual_penalty, token_list)
-        dp: list[tuple[int, int, list[int]] | None] = [None] * (n + 1)
-        dp[n] = (0, 0, [])
-        for i in range(n - 1, -1, -1):
-            best: tuple[int, int, list[int]] | None = None
-            for width in (2, 1):
-                piece = text[i : i + width]
-                if len(piece) != width:
-                    continue
-                # An all-caps word of three or more letters renders as
-                # uniform fullwidth singles; pairing part of it (e.g. a
-                # menu pair like НА inside ВНИМАНИЕ) would make it lumpy.
-                # Two-letter caps runs (АТ, DF, ДА...) still pack as pairs.
-                if (width == 2 and piece.isalpha() and piece.isupper()
-                        and self._caps_run_len(text, i) >= 3):
-                    continue
-                tok = self.char2tok.get(piece)
-                tail = dp[i + width]
-                if tok is None or tail is None:
-                    continue
-                cand = (
-                    1 + tail[0],
-                    self._visual_penalty(text, i, width) + tail[1],
-                    [tok] + tail[2],
-                )
-                if best is None or cand[:2] < best[:2]:
-                    best = cand
-            if best is not None:
-                dp[i] = best
-        if dp[0] is None:
-            for i, ch in enumerate(text):
-                if ch not in self.char2tok and text[i : i + 2] not in self.char2tok:
-                    raise ValueError(
-                        f"cannot encode character {ch!r} at position {base_pos + i}"
-                    )
-            raise ValueError(f"cannot encode text segment at position {base_pos}")
-        return dp[0][2]
-
-    @staticmethod
-    def _visual_penalty(text: str, i: int, width: int) -> int:
-        if width != 1:
-            return 0
-        ch = text[i]
-        if ch.isupper():
-            # Lone capital followed by lowercase: the centered native glyph
-            # leaves a gap before the left-aligned tail ("Y es", "Г из").
-            # All-caps words (HARD, MP) stay penalty-free.
-            nxt = text[i + 1] if i + 1 < len(text) else ""
-            return 10 if nxt.islower() else 0
-        if ch.islower():
-            # A single lowercase is seamless at the end of a word, slightly
-            # off elsewhere (half-cell gap before the next pair or hyphen).
-            nxt = text[i + 1] if i + 1 < len(text) else ""
-            return 1 if nxt.isalpha() or nxt == "-" else 0
-        if ch == "-":
-            prev = text[i - 1] if i else ""
-            nxt = text[i + 1] if i + 1 < len(text) else ""
-            # A native standalone hyphen occupies a full cell despite its
-            # narrow ink. Prefer an allocated boundary pair inside words.
-            return 2 if prev.isalpha() or nxt.isalpha() else 0
-        return 0
+        pieces = tile_text(text, lambda p: p in self.char2tok,
+                           base_pos=base_pos)
+        return [self.char2tok[piece] for piece in pieces]

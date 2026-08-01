@@ -31,6 +31,7 @@ import struct
 from dataclasses import dataclass
 from pathlib import Path
 
+from langrisser.font_units import tile_text
 from langrisser.game import add_game_args, game_from_args
 from langrisser.release import add_release_args, release_from_args
 from langrisser.scen import load_charmap_csv, read_chunk_spans
@@ -131,7 +132,7 @@ def pack_chunk(original: bytes, parts, cap: bool = True) -> bytes:
 
     `cap=False` returns the chunk at its natural length instead, for the
     caller that is going to lay every chunk out again and can spend another
-    chunk's padding here (see `repack_file`).
+    chunk's padding here (see `container.rebuild_container_fixed_size`).
     """
     sections = offset_table(original)
     if not sections:
@@ -149,47 +150,6 @@ def pack_chunk(original: bytes, parts, cap: bool = True) -> bytes:
         raise ValueError(
             f"chunk grew past its sector: {len(packed)} > {len(original)}")
     return packed + b"\x00" * (len(original) - len(packed))
-
-
-def repack_file(blob: bytes, chunks: list[bytes]) -> bytes:
-    """Lay every chunk out again inside a container of unchanged size.
-
-    A chunk's own trailing padding is about a kilobyte, which one scenario of
-    Russian can exhaust while the container as a whole still has room: the
-    catalog is nothing but absolute byte offsets, so a chunk that needs another
-    sector can have it as long as the file-level total holds. This is the same
-    move `l45` makes when a chunk outgrows its span.
-
-    Chunks stay on sector boundaries. The pointers are plain byte offsets and
-    look like they would allow anything, but they do not: a build whose chunks
-    were packed to word alignment hangs on a black screen after the menu, so
-    the engine reaches for a chunk by sector somewhere the catalog does not
-    show. The rounding — most of a kilobyte per chunk — is not reclaimable.
-    """
-    spans = read_chunk_spans(blob)
-    if len(chunks) != len(spans):
-        raise ValueError(f"expected {len(spans)} chunks, got {len(chunks)}")
-    out = bytearray(len(blob))
-    at = spans[0][0]                      # the catalog keeps its place
-    offsets = []
-    for data in chunks:
-        offsets.append(at)
-        out[at:at + len(data)] = data
-        at += -(-len(data) // SECTOR) * SECTOR
-    if at > len(blob):
-        over = -(-(at - len(blob)) // SECTOR)
-        grew = [(i, len(d), -(-len(d) // SECTOR) * SECTOR - len(d))
-                for i, d in enumerate(chunks)
-                if -(-len(d) // SECTOR) * SECTOR > spans[i][1] - spans[i][0]]
-        detail = ", ".join(f"chunk {i} needs {n} bytes, {slack} to spare in its "
-                           f"last sector" for i, n, slack in grew)
-        raise ValueError(
-            f"the chunks no longer fit the container: {at} > {len(blob)}, "
-            f"{over} sector(s) over. {detail}")
-    for i, off in enumerate(offsets):
-        struct.pack_into("<I", out, i * 4, off)
-    struct.pack_into("<I", out, len(offsets) * 4, len(blob))
-    return bytes(out)
 
 
 def read_chunks(blob: bytes) -> list[Chunk]:
@@ -373,43 +333,37 @@ class Writer:
         self.pairs = max((len(t) for t in self.slot_of), default=1)
 
     def tile_cost(self, text: str) -> int | None:
-        """Bytes a tile costs, or None if the plane cannot draw it."""
+        """Bytes a tile costs, or None if the plane cannot draw it.
+
+        A lone space is not a tile: the engine draws it with the blank
+        control, one byte. A space inside a pair is a tile like any other,
+        and that is the point — a pair that carries the space next to a
+        letter is what keeps a word edge from costing a whole cell.
+        """
+        if text == " ":
+            return 1
         slot = self.slot_of.get(text)
         return None if slot is None else len(self.slot_bytes(slot))
 
-    def tile_run(self, text: str) -> bytes:
-        """Encode a run of plain text with the fewest bytes.
+    def tile_bytes(self, text: str) -> bytes:
+        if text == " " and text not in self.slot_of:
+            return bytes((self.by_name["blank"],))
+        return self.slot_bytes(self.slot_of[text])
 
-        A tile may hold two letters, and which pairs exist is decided per
-        target language, so the split is not obvious locally: taking a pair
-        here can leave an orphan letter there. This costs the run properly
-        rather than reaching for the longest tile each time.
+    def tile_run(self, text: str) -> bytes:
+        """Encode a run of plain text, tiled the way Langrisser V tiles it.
+
+        Which units exist and what one costs is all this engine contributes:
+        a tile is one or two bytes depending on whether its slot needs a bank
+        escape, and a lone space is the blank control rather than a tile.
         """
-        n = len(text)
-        best: list[int | None] = [0] + [None] * n
-        take: list[int] = [0] * (n + 1)
-        for i in range(1, n + 1):
-            for size in range(1, min(self.pairs, i) + 1):
-                if best[i - size] is None:
-                    continue
-                cost = self.tile_cost(text[i - size:i])
-                if cost is None:
-                    continue
-                total = best[i - size] + cost
-                if best[i] is None or total < best[i]:
-                    best[i], take[i] = total, size
-        if best[n] is None:
-            missing = next(c for c in text if c not in self.slot_of)
+        pieces = tile_text(text, lambda p: self.tile_cost(p) is not None,
+                           self.tile_cost)
+        if not pieces and text:
+            missing = next(c for c in text
+                           if c != " " and c not in self.slot_of)
             raise ValueError(f"no slot for {missing!r}")
-        out = bytearray()
-        cuts: list[int] = []
-        i = n
-        while i:
-            cuts.append(i)
-            i -= take[i]
-        for end in reversed(cuts):
-            out += self.slot_bytes(self.slot_of[text[end - take[end]:end]])
-        return bytes(out)
+        return b"".join(self.tile_bytes(piece) for piece in pieces)
 
     def slot_bytes(self, slot: int) -> bytes:
         if slot < 0 or slot > BANK_BASE + (BANK_LAST - BANK_FIRST) * BANK_WIDTH + 0xFE:
@@ -435,17 +389,13 @@ class Writer:
                 out.append(self.by_name["page" if page else "line"])
                 i += 2 if page else 1
                 continue
-            if ch == " ":
-                out.append(self.by_name["blank"])
-                i += 1
-                continue
             m = TAG_RE.match(text, i)
             if m:
                 out += self.tag_bytes(m.group(1))
                 i = m.end()
                 continue
             j = i
-            while j < len(text) and text[j] not in "\n " and not TAG_RE.match(text, j):
+            while j < len(text) and text[j] != "\n" and not TAG_RE.match(text, j):
                 j += 1
             out += self.tile_run(text[i:j])
             i = j

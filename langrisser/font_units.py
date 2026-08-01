@@ -264,3 +264,97 @@ def wrap_cells(text: str, width: int, measure, line_break: str) -> str:
     if cur:
         lines.append(cur)
     return line_break.join(lines)
+
+
+
+# Tiling a line into the one- and two-character units a plane can draw. Moved
+# here from Langrisser V's codec unchanged: `has_unit` says which units exist
+# and `cost` what one is worth to the caller — a token there, a byte or two
+# here — and the rest, including the look of a lone capital or a stranded
+# lowercase, is the same problem in both engines.
+
+def caps_run_len(text: str, i: int) -> int:
+    """Length of the maximal uppercase-letter run containing text[i]."""
+    def caps(ch: str) -> bool:
+        return ch.isalpha() and ch.isupper()
+    if not caps(text[i]):
+        return 0
+    a = i
+    while a > 0 and caps(text[a - 1]):
+        a -= 1
+    b = i
+    while b + 1 < len(text) and caps(text[b + 1]):
+        b += 1
+    return b - a + 1
+
+
+
+
+
+def visual_penalty(text: str, i: int, width: int) -> int:
+    if width != 1:
+        return 0
+    ch = text[i]
+    if ch.isupper():
+        # Lone capital followed by lowercase: the centered native glyph
+        # leaves a gap before the left-aligned tail ("Y es", "Г из").
+        # All-caps words (HARD, MP) stay penalty-free.
+        nxt = text[i + 1] if i + 1 < len(text) else ""
+        return 10 if nxt.islower() else 0
+    if ch.islower():
+        # A single lowercase is seamless at the end of a word, slightly
+        # off elsewhere (half-cell gap before the next pair or hyphen).
+        nxt = text[i + 1] if i + 1 < len(text) else ""
+        return 1 if nxt.isalpha() or nxt == "-" else 0
+    if ch == "-":
+        prev = text[i - 1] if i else ""
+        nxt = text[i + 1] if i + 1 < len(text) else ""
+        # A native standalone hyphen occupies a full cell despite its
+        # narrow ink. Prefer an allocated boundary pair inside words.
+        return 2 if prev.isalpha() or nxt.isalpha() else 0
+    return 0
+
+
+def tile_text(text: str, has_unit, cost=None, base_pos: int = 0) -> list[str]:
+    n = len(text)
+    if cost is None:
+        def cost(piece):
+            return 1
+    # dp[i] = (cost, visual_penalty, piece_list)
+    dp: list[tuple[int, int, list[str]] | None] = [None] * (n + 1)
+    dp[n] = (0, 0, [])
+    for i in range(n - 1, -1, -1):
+        best: tuple[int, int, list[str]] | None = None
+        for width in (2, 1):
+            piece = text[i : i + width]
+            if len(piece) != width:
+                continue
+            # An all-caps word of three or more letters renders as
+            # uniform fullwidth singles; pairing part of it (e.g. a
+            # menu pair like НА inside ВНИМАНИЕ) would make it lumpy.
+            # Two-letter caps runs (АТ, DF, ДА...) still pack as pairs.
+            if (width == 2 and piece.isalpha() and piece.isupper()
+                    and caps_run_len(text, i) >= 3):
+                continue
+            tok = piece if has_unit(piece) else None
+            tail = dp[i + width]
+            if tok is None or tail is None:
+                continue
+            cand = (
+                cost(piece) + tail[0],
+                visual_penalty(text, i, width) + tail[1],
+                [tok] + tail[2],
+            )
+            if best is None or cand[:2] < best[:2]:
+                best = cand
+        if best is not None:
+            dp[i] = best
+    if dp[0] is None:
+        for i, ch in enumerate(text):
+            if not has_unit(ch) and not has_unit(text[i : i + 2]):
+                raise ValueError(
+                    f"cannot encode character {ch!r} at position {base_pos + i}"
+                )
+        raise ValueError(f"cannot encode text segment at position {base_pos}")
+    return dp[0][2]
+
