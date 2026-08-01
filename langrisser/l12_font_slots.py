@@ -224,10 +224,10 @@ def main() -> None:
     _, menu_pairs, spacing_pairs, continuity, script_pairs = needed_units(
         texts, forced_pairs=list(lang.forced_pairs or []),
         existing_units=set(taken),
-        # This plane leaves hundreds of slots free after every wanted pair is
-        # placed, so there is nothing to gain by guessing one boundary per
-        # hyphen and living with the gap when the guess is wrong.
-        both_hyphen_boundaries=True,
+        # This plane still has slots free after every wanted pair is placed,
+        # and LANG2/SCEN.DAT has no bytes free at all, so every pair that
+        # merges two cells into one is worth taking.
+        spare_slots=True,
         # Matches `Writer`'s tiling: capitals here are prose — a heading, a
         # shout — and pair like anything else, so the pairs have to exist.
         compact_caps_runs=True,

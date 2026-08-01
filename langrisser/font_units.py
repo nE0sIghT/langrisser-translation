@@ -28,6 +28,15 @@ SPACE_LETTER_RE = re.compile(r" ([^\W_])", re.UNICODE)
 LETTER_SPACE_RE = re.compile(r"([^\W_]) (?=[^\W_])", re.UNICODE)
 PUNCT_SPACE_RE = re.compile(r"([,\.…？！:]) ")
 LETTER_COLON_RE = re.compile(r"([^\W_]):", re.UNICODE)
+# A mark that ends a sentence leaves the same hole a colon does: on its own it
+# takes a whole cell for a stroke of ink, and the word before it ends half a
+# cell early. `SENTENCE_TAIL_RE` asks for the pair that closes both — a letter
+# or another mark, then the mark — and `SPACE_DASH_RE` for the dash's leading
+# space, which is not a word character and so is missed by `SPACE_LETTER_RE`.
+SENTENCE_TAIL_MARKS = "!?…"
+SENTENCE_TAIL_RE = re.compile(
+    rf"([^\W_]|[{SENTENCE_TAIL_MARKS}])([{SENTENCE_TAIL_MARKS}])", re.UNICODE)
+SPACE_DASH_RE = re.compile(r" (—)")
 SINGLE_PUNCTUATION = "'.,…()"
 PAIR_PUNCTUATION = "'.,"
 PUNCT_PAIRS = ("！？", "？！", " -")
@@ -155,7 +164,7 @@ def continuity_pairs(texts: list[str], known: set[str],
 def needed_units(script_texts: list[str], menu_texts: list[str] | None = None,
                  extra_singles: str = "", forced_pairs: list[str] | None = None,
                  existing_units: set[str] | None = None,
-                 both_hyphen_boundaries: bool = False,
+                 spare_slots: bool = False,
                  compact_caps_runs: bool = False):
     """Return singles and prioritized pair groups needed by target text.
 
@@ -173,9 +182,10 @@ def needed_units(script_texts: list[str], menu_texts: list[str] | None = None,
     Script dialogs have room: lowercase pairs only, prioritized by frequency,
     assigned while the sacrificial pool lasts.
 
-    `both_hyphen_boundaries` asks for both pairs around every hyphen instead
-    of the one the word's own parity wants; see `hyphen_boundary_pairs`. Worth
-    the extra slots only where the pool is not the binding constraint.
+    `spare_slots` asks for the pairs that are only worth a slot where slots
+    are not the binding constraint: both boundaries around every hyphen rather
+    than the one the word's own parity wants (see `hyphen_boundary_pairs`), and
+    the sentence-ending marks, which otherwise take a full cell each.
 
     `compact_caps_runs` asks for the capital-capital pairs a script needs when
     its capitals are prose rather than menu labels. It must match the tiler's
@@ -221,7 +231,13 @@ def needed_units(script_texts: list[str], menu_texts: list[str] | None = None,
         for match in HYPHENATED_WORD_RE.finditer(text):
             (hyphen_target if hyphen_target is not None
              else target).update(hyphen_boundary_pairs(
-                 match.group(0), both_hyphen_boundaries))
+                 match.group(0), spare_slots))
+        if not spare_slots:
+            return
+        target.update(match.group(1) + match.group(2)
+                      for match in SENTENCE_TAIL_RE.finditer(text))
+        target.update(" " + match.group(1)
+                      for match in SPACE_DASH_RE.finditer(text))
 
     # A missing boundary pair leaves a mid-word hole ("Наконец ‑то"), the
     # same artifact continuity pairs exist to prevent, so dialog hyphen
