@@ -108,6 +108,19 @@ def reflow(layout: Layout, text: str, width: int, max_lines: int,
     return split_tall_pages(PAGE_SEPARATOR.join(out), max_lines, page_prefix)
 
 
+def join_pages(pages: list[str], page_prefix: str) -> str:
+    """Put the pages back together, each one re-entering the visible window.
+
+    The prefix belongs to a page that has something on it. A record that ends
+    on `<wait><page>` splits with an empty page after the last break, and
+    prefixing that one would append a blank line the record never had.
+    """
+    out = pages[:1]
+    for page in pages[1:]:
+        out.append((page_prefix + page) if page else page)
+    return PAGE_SEPARATOR.join(out)
+
+
 def split_tall_pages(text: str, max_lines: int, page_prefix: str = "") -> str:
     """Turn the line break that would overflow a page into a page break."""
     out = []
@@ -120,7 +133,7 @@ def split_tall_pages(text: str, max_lines: int, page_prefix: str = "") -> str:
             out.append(LINE_BREAK.join(lines[:max_lines]))
             lines = lines[max_lines:]
         out.append(LINE_BREAK.join(lines))
-    return (PAGE_SEPARATOR + page_prefix).join(out)
+    return join_pages(out, page_prefix)
 
 
 def source_page_prefixes(
