@@ -108,9 +108,9 @@
 0	×Условия победы
 1	×Условия поражения
 2	<blank>・Гибель <pair>
-3	<blank>・За 23 хода победить
+3	<blank>・За ２３ хода победить
 4	<blank><blank><name:14>
 6	<blank>・Ходы закончились
 
 # part 7  3 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank><blank>「Битва за порт」<wait><page><blank>Одолев Князя Тьмы <name:22>а,<line><pair> со спутниками покинул<line>замок и устремился вслед за<line>бежавшим <name:21>ом.<wait><page><blank>Чтобы скорее достичь<line>Вельзерии, они решили не идти<line>сушей, а пересечь море и<line>потому направились в порт.<wait><page><blank>Но в порту уже торопилась<line>отплыть воевода Полка Ледяного<line>дракона <name:14>. Возможно,<line>она тоже держала путь в<line>Вельзерию.<wait><page><blank>Поняв, что до отплытия ещё<line>есть время, отряд решил<line>разбить <name:14> и захватить<line>её корабль.<wait><page>×Условия победы<line><blank>・За 23 хода победить<line><blank><blank><name:14><line><blank><line>×Условия поражения<line><blank>・Гибель <pair><line><blank>・Ходы закончились<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank><blank>「Битва за порт」<wait><page><blank>Одолев Князя Тьмы <name:22>а,<line><pair> со спутниками покинул<line>замок и устремился вслед за<line>бежавшим <name:21>ом.<wait><page><blank>Чтобы скорее достичь<line>Вельзерии, они решили не идти<line>сушей, а пересечь море и<line>потому направились в порт.<wait><page><blank>Но в порту уже торопилась<line>отплыть воевода Полка Ледяного<line>дракона <name:14>. Возможно,<line>она тоже держала путь в<line>Вельзерию.<wait><page><blank>Поняв, что до отплытия ещё<line>есть время, отряд решил<line>разбить <name:14> и захватить<line>её корабль.<wait><page>×Условия победы<line><blank>・За ２３ хода победить<line><blank><blank><name:14><line><blank><line>×Условия поражения<line><blank>・Гибель <pair><line><blank>・Ходы закончились<wait><page>
