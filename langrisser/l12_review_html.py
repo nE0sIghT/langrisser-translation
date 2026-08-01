@@ -17,7 +17,7 @@ import json
 import re
 from pathlib import Path
 
-from langrisser.l12_scen import Reader, read_chunks
+from langrisser.l12_scen import Reader, load_assignments, read_chunks
 from langrisser.review_html import CSS as BASE_CSS
 from langrisser.game import load_game
 from langrisser.scen import load_charmap_csv
@@ -63,9 +63,9 @@ def markup(text: str) -> str:
 
 def title_of(reader: Reader, chunk) -> str:
     for raw in chunk.part(7):
-        m = re.search(r"「(.+?)」", reader.decode(raw))
+        m = re.search(r"(?:「(.+?)」|«(.+?)»)", reader.decode(raw))
         if m:
-            return m.group(1).strip()
+            return (m.group(1) or m.group(2)).strip()
     return ""
 
 
@@ -141,8 +141,8 @@ def main() -> None:
     args = ap.parse_args()
 
     first_game = args.scen[0].split("=")[0]
-    font = load_charmap_csv(Path(args.font_map) if args.font_map
-                            else load_game(first_game).font_map)
+    font = (load_assignments(Path(args.font_map)) if args.font_map
+            else load_charmap_csv(load_game(first_game).font_map))
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     labels = {}

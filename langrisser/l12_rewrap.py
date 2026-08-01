@@ -83,7 +83,7 @@ def layout_for(names: dict[int, str]) -> Layout:
 
 # A page holding any of these is laid out by hand: a title in corner brackets,
 # a conditions heading, a bulleted objective.
-LAID_OUT = ("「", "×", "・")
+LAID_OUT = ("「", "«", "×", "・")
 
 
 def split_pages(text: str, page_prefix: str) -> list[str]:
