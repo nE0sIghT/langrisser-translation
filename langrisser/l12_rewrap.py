@@ -134,6 +134,27 @@ def join_pages(pages: list[str], page_prefix: str) -> str:
     return PAGE_SEPARATOR.join(out)
 
 
+# What a finished thought ends on. A page that has to be split should be split
+# after one of these, so the reader is not asked for a keypress in the middle of
+# a clause.
+SENTENCE_END = "…!?.:»」—"
+
+
+def page_cut(lines: list[str], max_lines: int) -> int:
+    """How many lines to leave on a page that does not fit.
+
+    As many as the window holds, unless one of them ends a sentence — then the
+    last such line, because a break the reader expects is worth more than a
+    full page. Never zero: a single line that ends nothing still has to go
+    somewhere.
+    """
+    for n in range(min(max_lines, len(lines) - 1), 0, -1):
+        tail = TAG_RE.sub(" ", lines[n - 1]).strip()
+        if tail and tail[-1] in SENTENCE_END:
+            return n
+    return max_lines
+
+
 def split_tall_pages(text: str, max_lines: int, page_prefix: str = "") -> str:
     """Turn the line break that would overflow a page into a page break."""
     out = []
@@ -143,8 +164,9 @@ def split_tall_pages(text: str, max_lines: int, page_prefix: str = "") -> str:
             continue
         lines = page.split(LINE_BREAK)
         while len(lines) > max_lines:
-            out.append(LINE_BREAK.join(lines[:max_lines]))
-            lines = lines[max_lines:]
+            cut = page_cut(lines, max_lines)
+            out.append(LINE_BREAK.join(lines[:cut]))
+            lines = lines[cut:]
         out.append(LINE_BREAK.join(lines))
     return join_pages(out, page_prefix)
 

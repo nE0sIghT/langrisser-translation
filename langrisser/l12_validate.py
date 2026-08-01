@@ -35,7 +35,8 @@ import sys
 from pathlib import Path
 
 from langrisser.game import add_game_args, game_from_args
-from langrisser.l12_rewrap import LINE_BREAK, layout_for, name_table
+from langrisser.l12_rewrap import (LAID_OUT, LINE_BREAK, layout_for,
+                                   name_table)
 from langrisser.l12_scen import (Reader, Writer, load_assignments, merged_plane,
                                  read_chunks, slot_table)
 from langrisser.l12_sceninsert import read_pack
@@ -44,6 +45,7 @@ from langrisser.release import add_release_args, release_from_args
 from langrisser.scen import load_charmap_csv
 from langrisser.text_layout import Layout, page_segments, visible_cells
 
+TAG_RE = re.compile(r"<[^>]*>")
 # What the engine substitutes at runtime, and what therefore has to survive
 # translation exactly. A raw glyph tag is not here: it names one character of
 # the plane, so a translation that spells the word differently simply loses it.
@@ -91,6 +93,26 @@ def pages(layout: Layout, text: str) -> list[list[str]]:
     one that drifts silently is this one.
     """
     return [page.split(LINE_BREAK) for page in page_segments(layout, text)]
+
+
+# What a finished thought ends on. A page that stops anywhere else is one the
+# wrapper had to cut: the text overran the window's three lines and the fourth
+# became a new page, so the reader gets "такой империи я" and then a keypress
+# before "не признаю никогда". The author's own page breaks fall on these.
+SENTENCE_END = "…!?.:»」,—"
+
+
+def cut_mid_sentence(layout: Layout, text: str) -> int | None:
+    """The first page whose end is not the end of anything, if there is one."""
+    pages_of = page_segments(layout, text)
+    for n, page in enumerate(pages_of[:-1]):
+        # A hand-laid page is a heading and its bullets; it has no sentences.
+        if any(mark in page for mark in LAID_OUT):
+            continue
+        bare = TAG_RE.sub(" ", page).strip()
+        if bare and bare[-1] not in SENTENCE_END:
+            return n + 1
+    return None
 
 
 def main() -> None:
@@ -184,6 +206,11 @@ def main() -> None:
                     print(f"{where}: page {n + 1} has {len(page)} lines, "
                           f"window holds {height}")
                     problems += 1
+            cut = cut_mid_sentence(layout, text)
+            if cut is not None:
+                print(f"{where}: page {cut} ends mid-sentence; the window "
+                      f"could not hold it and the wrapper split it")
+                problems += 1
     print(f"{game.code}/{lang.code}: {checked} translated records checked, "
           f"{problems} problem(s)")
     sys.exit(1 if problems else 0)
