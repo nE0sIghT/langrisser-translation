@@ -23,11 +23,9 @@ line.
 from __future__ import annotations
 
 import collections
-import re
 
 from langrisser.l12_scen import CONTROLS, PHRASE_PART, Writer
 
-TAG_RE = re.compile(r"<[^>]*>")
 PHRASE_CODE = next(c for c, (name, _) in CONTROLS.items() if name == "phrase")
 REFERENCE_COST = 2      # the control byte and its operand
 TERMINATOR_COST = 1     # the 0x00 that ends a stored string
@@ -36,6 +34,8 @@ MIN_LENGTH = 2
 # word then costs two bytes, which is where most of the saving is.
 MAX_LENGTH = 64
 ENTRIES = 239
+Unit = tuple[bytes, bool]  # encoded bytes, eligible for phrase compression
+Phrase = tuple[bytes, ...]
 
 
 def phrase_refs(raw: bytes):
@@ -68,49 +68,84 @@ def pinned_indices(chunk, records: dict[tuple[int, int], str]) -> set[int]:
     return pinned
 
 
-def segments(text: str) -> list[str]:
-    """The runs of a record a phrase may be cut from.
+def compressible_runs(units: list[Unit]):
+    """Yield contiguous printable runs; controls are hard boundaries."""
+    run: list[bytes] = []
+    for raw, compressible in units:
+        if compressible:
+            run.append(raw)
+        elif run:
+            yield run
+            run = []
+    if run:
+        yield run
 
-    Line and page breaks stay in the record: a phrase that swallowed one would
-    move the layout into the table, where the next record to reference it would
-    inherit a break it never asked for.
-    """
-    return [s for s in TAG_RE.sub("\n", text).split("\n") if s]
 
-
-def candidates(texts: dict[tuple[int, int], str]) -> collections.Counter:
+def candidates(records: dict[tuple[int, int], list[Unit]]) -> collections.Counter:
     counts: collections.Counter = collections.Counter()
-    for text in texts.values():
-        for seg in segments(text):
-            for size in range(MIN_LENGTH, MAX_LENGTH + 1):
-                for i in range(len(seg) - size + 1):
-                    counts[seg[i:i + size]] += 1
+    for units in records.values():
+        for run in compressible_runs(units):
+            for size in range(MIN_LENGTH, min(MAX_LENGTH, len(run)) + 1):
+                # Match the left-to-right, non-overlapping replacement below.
+                # Counting overlapping windows would overstate the saving for
+                # repeated one-tile patterns.
+                last_end: dict[Phrase, int] = {}
+                for i in range(len(run) - size + 1):
+                    phrase = tuple(run[i:i + size])
+                    if i >= last_end.get(phrase, -1):
+                        counts[phrase] += 1
+                        last_end[phrase] = i + size
     return counts
 
 
-def replace_outside_tags(text: str, phrase: str, tag: str) -> str:
-    """Swap `phrase` for `tag` in the words only.
+def replace_phrase(units: list[Unit], phrase: Phrase, reference: bytes) -> list[Unit]:
+    """Replace complete printable-token sequences with one phrase control."""
+    out: list[Unit] = []
+    i = 0
+    while i < len(units):
+        here = units[i:i + len(phrase)]
+        if len(here) == len(phrase) and all(
+                compressible for _raw, compressible in here) and tuple(
+                    raw for raw, _compressible in here) == phrase:
+            out.append((reference, False))
+            i += len(phrase)
+        else:
+            out.append(units[i])
+            i += 1
+    return out
 
-    A plain `str.replace` would also match inside a tag it had already
-    written — `<phrase:12>` contains `hr` like any word does — and quietly
-    produce a control nobody wrote.
-    """
-    out, last = [], 0
-    for m in TAG_RE.finditer(text):
-        out.append(text[last:m.start()].replace(phrase, tag))
-        out.append(m.group(0))
-        last = m.end()
-    out.append(text[last:].replace(phrase, tag))
-    return "".join(out)
 
-
-def saving(phrase: str, uses: int, writer: Writer) -> int:
-    """Bytes gained by storing `phrase` once and referencing it `uses` times."""
-    try:
-        inline = len(writer.encode(phrase))
-    except ValueError:
-        return 0
+def saving(phrase: Phrase, uses: int) -> int:
+    """Bytes gained by storing encoded tiles once and referencing them."""
+    inline = sum(len(unit) for unit in phrase)
     return uses * (inline - REFERENCE_COST) - (inline + TERMINATOR_COST)
+
+
+def expand_references(raw: bytes, table: list[bytes], generated: set[int]) -> bytes:
+    """Expand generated phrase controls for the post-compression invariant."""
+    out = bytearray()
+    i = 0
+    while i < len(raw):
+        value = raw[i]
+        if (value == PHRASE_CODE and i + 1 < len(raw)
+                and raw[i + 1] in generated):
+            index = raw[i + 1]
+            if not 1 <= index <= len(table):
+                raise ValueError(f"phrase reference {index} is outside the table")
+            out += table[index - 1]
+            i += 2
+        elif value in CONTROLS:
+            takes = CONTROLS[value][1]
+            size = 2 if takes else 1
+            out += raw[i:i + size]
+            i += size
+        elif value >= 0xF7 and i + 1 < len(raw):
+            out += raw[i:i + 2]
+            i += 2
+        else:
+            out.append(value)
+            i += 1
+    return bytes(out)
 
 
 def rebuild(chunk, records: dict[tuple[int, int], str], writer: Writer):
@@ -121,33 +156,46 @@ def rebuild(chunk, records: dict[tuple[int, int], str], writer: Writer):
     now behind a reference.
     """
     pinned = pinned_indices(chunk, records)
-    original = list(chunk.part(PHRASE_PART))
+    original_table = list(chunk.part(PHRASE_PART))
+    encoded = {key: writer.encoded_units(text) for key, text in records.items()}
+    original_records = {key: b"".join(raw for raw, _compressible in units)
+                        for key, units in encoded.items()}
+    # An explicitly authored <phrase:N> is a real dependency too. It belongs
+    # to a rewritten record, so pinned_indices cannot discover it in the
+    # original chunk.
+    for raw in original_records.values():
+        pinned.update(phrase_refs(raw))
     free = [n for n in range(1, ENTRIES + 1) if n not in pinned]
-    texts = dict(records)
-    chosen: dict[int, str] = {}
+    chosen: dict[int, Phrase] = {}
 
     for index in free:
-        counts = candidates(texts)
+        counts = candidates(encoded)
         best, best_gain = None, 0
         for phrase, uses in counts.items():
             if uses < 2:
                 continue
-            gain = saving(phrase, uses, writer)
+            gain = saving(phrase, uses)
             if gain > best_gain:
                 best, best_gain = phrase, gain
         if best is None:
             break
         chosen[index] = best
-        tag = f"<phrase:{index}>"
-        texts = {key: replace_outside_tags(text, best, tag)
-                 for key, text in texts.items()}
+        reference = bytes((PHRASE_CODE, index))
+        encoded = {key: replace_phrase(units, best, reference)
+                   for key, units in encoded.items()}
 
     table: list[bytes] = []
     for n in range(1, ENTRIES + 1):
         if n in chosen:
-            table.append(writer.encode(chosen[n]))
-        elif n in pinned and n - 1 < len(original):
-            table.append(original[n - 1])
+            table.append(b"".join(chosen[n]))
+        elif n in pinned and n - 1 < len(original_table):
+            table.append(original_table[n - 1])
         else:
             table.append(b"")
-    return table, texts
+    rewritten = {key: b"".join(raw for raw, _compressible in units)
+                 for key, units in encoded.items()}
+    for key, raw in rewritten.items():
+        if expand_references(raw, table, set(chosen)) != original_records[key]:
+            raise ValueError(
+                f"phrase compression changed the tiled stream for record {key}")
+    return table, rewritten

@@ -368,26 +368,44 @@ class Writer:
         return bytes((BANK_FIRST + bank, arg))
 
     def encode(self, text: str) -> bytes:
-        out = bytearray()
+        return b"".join(raw for raw, _compressible in self.encoded_units(text))
+
+    def encoded_units(self, text: str) -> list[tuple[bytes, bool]]:
+        """Encode text and retain the boundaries of printable glyph tiles.
+
+        Phrase compression must run after tiling. If it inserts a reference
+        into the Unicode text first, each side of that reference is tiled in
+        isolation and a pair glyph that crossed the boundary is lost. The
+        boolean marks units that a phrase may absorb; authored controls remain
+        hard boundaries even when they draw something visible, such as
+        ``<blank>``.
+        """
+        out: list[tuple[bytes, bool]] = []
         i = 0
         while i < len(text):
             ch = text[i]
             if ch == "\n":
                 page = text.startswith("\n\n", i)
-                out.append(self.by_name["page" if page else "line"])
+                out.append((bytes((self.by_name["page" if page else "line"],)),
+                            False))
                 i += 2 if page else 1
                 continue
             m = TAG_RE.match(text, i)
             if m:
-                out += self.tag_bytes(m.group(1))
+                out.append((self.tag_bytes(m.group(1)), False))
                 i = m.end()
                 continue
             j = i
             while j < len(text) and text[j] != "\n" and not TAG_RE.match(text, j):
                 j += 1
-            out += self.tile_run(text[i:j])
+            tiled = self.tile_run(text[i:j])
+            pos = 0
+            while pos < len(tiled):
+                size = 2 if BANK_FIRST <= tiled[pos] <= BANK_LAST else 1
+                out.append((tiled[pos:pos + size], True))
+                pos += size
             i = j
-        return bytes(out)
+        return out
 
     def tag_bytes(self, body: str) -> bytes:
         if body.startswith("$"):

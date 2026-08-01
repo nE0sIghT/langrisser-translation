@@ -272,6 +272,15 @@ About a third of the bytes in a line of dialogue are references into it. Part 1
 is the same story for `0x09`: `カオス様を復活させ` comes out of it, which is the
 plot of Langrisser II.
 
+The translated build reconstructs part 4 after the shared text codec has tiled
+each complete printable run. Repeated sequences of whole encoded tiles are
+replaced by `0x04,index`; controls remain hard boundaries. Compressing Unicode
+substrings before tiling is incorrect: a phrase boundary can split a pair glyph
+and make a word render with full-cell gaps even though decoding still returns
+the same letters. The packer expands every generated reference after rebuilding
+the table and requires byte-for-byte equality with the pre-compression tiled
+stream, so phrase compression cannot change spacing or pair alignment.
+
 ### How much text there is
 
 Counting each shared table once rather than once per chunk:
@@ -362,15 +371,16 @@ text section can eat before anything has to move:
 | `LANG1/SCEN.DAT` | 21 | 24,233 bytes | 1,203 |
 | `LANG2/SCEN.DAT` | 106 | 120,805 bytes | 1,101 |
 
-About a kilobyte per chunk, which is the first budget any translation has to
-fit. Beyond it the chunk would have to claim another sector and every later
-chunk pointer would move — possible, since the catalog is just pointers, but
-untested, and `pack_chunk` refuses rather than silently overrunning.
+About a kilobyte per chunk is the first local budget. When a chunk needs more,
+the shared fixed-size container rebuilder gives it another sector, rewrites the
+catalog and reclaims trailing sectors from later chunks. Every chunk remains
+`0x800`-aligned and the file-level size stays unchanged; the build refuses if
+the complete set no longer fits.
 
 Two things make the budget go further than it looks. The phrase table is one
 indirection the target text can use as well: a Russian ending or a recurring
-name costs one byte per use once it is in part 4. And parts 0–4 are shared, so
-translating them is paid for once per variant, not once per chunk.
+name costs a two-byte reference per use once it is in part 4. And parts 0–4 are
+shared, so translating them is paid for once per variant, not once per chunk.
 
 ## How the target text will use the plane
 

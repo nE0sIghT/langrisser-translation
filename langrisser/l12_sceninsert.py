@@ -131,8 +131,8 @@ def main() -> None:
         if touched:
             table, rewritten = rebuild_phrases(chunk, edited, writer)
             parts[PHRASE_PART] = table
-            for (pi, si), text in rewritten.items():
-                parts[pi][si] = writer.encode(text)
+            for (pi, si), raw in rewritten.items():
+                parts[pi][si] = raw
         if not touched:
             continue
         # Uncapped: a chunk may outgrow its own padding, and the layout below
