@@ -37,7 +37,7 @@ def is_pair_tail(ch: str) -> bool:
     return ch.islower() or ch.isdigit() or ch in PAIR_PUNCTUATION
 
 
-def word_pairs(w: str):
+def word_pairs(w: str, compact_caps: bool = False):
     """Every usable adjacent pair in a word.
 
     Codec.encode chooses the globally cheapest tiling. Supplying only one
@@ -45,14 +45,19 @@ def word_pairs(w: str):
     interior single glyph or to combine the preceding space with the first
     letter. A capital is still allowed only at the start of a word; all-caps
     words stay native full-width singles.
+
+    `compact_caps` drops that restriction for a script that writes prose in
+    capitals — a heading, a shouted line — where full-width singles make the
+    run twice the width of the sentence around it. The pairs have to exist
+    before the tiler can use them, so they are asked for here.
     """
     if len(w) == 2 and w.isupper():
         yield w
         return
     for i in range(len(w) - 1):
         a, b = w[i], w[i + 1]
-        ok = is_pair_tail(b) and (
-            is_pair_tail(a) or (a.isupper() and i == 0)
+        ok = (is_pair_tail(b) or (compact_caps and b.isupper())) and (
+            is_pair_tail(a) or (a.isupper() and (compact_caps or i == 0))
         )
         if ok:
             yield w[i : i + 2]
@@ -96,7 +101,8 @@ def hyphen_boundary_pairs(word: str, both: bool = False):
 
 
 def continuity_pairs(texts: list[str], known: set[str],
-                     frequency: collections.Counter) -> collections.Counter:
+                     frequency: collections.Counter,
+                     compact_caps: bool = False) -> collections.Counter:
     """Pairs needed to avoid full-cell singleton letters inside words.
 
     Odd-length words can tile from either edge, including a neighbouring
@@ -110,7 +116,7 @@ def continuity_pairs(texts: list[str], known: set[str],
             word = match.group(0)
             if len(word) < 2:
                 continue
-            valid = set(word_pairs(word))
+            valid = set(word_pairs(word, compact_caps))
             options: list[list[str]] = []
 
             even = [word[i:i + 2] for i in range(0, len(word) - 1, 2)]
@@ -149,7 +155,8 @@ def continuity_pairs(texts: list[str], known: set[str],
 def needed_units(script_texts: list[str], menu_texts: list[str] | None = None,
                  extra_singles: str = "", forced_pairs: list[str] | None = None,
                  existing_units: set[str] | None = None,
-                 both_hyphen_boundaries: bool = False):
+                 both_hyphen_boundaries: bool = False,
+                 compact_caps_runs: bool = False):
     """Return singles and prioritized pair groups needed by target text.
 
     `script_texts` are dialogue-shaped: room to breathe, lowercase pairs
@@ -169,6 +176,12 @@ def needed_units(script_texts: list[str], menu_texts: list[str] | None = None,
     `both_hyphen_boundaries` asks for both pairs around every hyphen instead
     of the one the word's own parity wants; see `hyphen_boundary_pairs`. Worth
     the extra slots only where the pool is not the binding constraint.
+
+    `compact_caps_runs` asks for the capital-capital pairs a script needs when
+    its capitals are prose rather than menu labels. It must match the tiler's
+    flag of the same name: the tiler will pair a caps run only if the pairs
+    were asked for here, and asking for them without tiling that way spends
+    slots on units nothing draws.
     """
     # Callers pass text with control tags already replaced by a space: no
     # codec forms a pair across a tag, and joining the halves would demand
@@ -183,6 +196,9 @@ def needed_units(script_texts: list[str], menu_texts: list[str] | None = None,
     singles.update(extra_singles)
     for pair in forced_pairs or []:
         menu_pairs[pair] += 1_000_000
+
+    def pairs_of(word: str):
+        return word_pairs(word, compact_caps_runs)
 
     def collect_spacing(text: str, target: collections.Counter,
                         hyphen_target: collections.Counter | None = None) -> None:
@@ -225,24 +241,27 @@ def needed_units(script_texts: list[str], menu_texts: list[str] | None = None,
         menu_pairs[p] += 1_000_000
     for t in menu_texts:
         for m in WORD_RE.finditer(t):
-            for p in word_pairs(m.group(0)):
+            for p in pairs_of(m.group(0)):
                 menu_pairs[p] += 1
     for t in script_texts:
         for m in WORD_RE.finditer(t):
-            for p in word_pairs(m.group(0)):
+            for p in pairs_of(m.group(0)):
                 script_pairs[p] += 1
     continuity = continuity_pairs(
         script_texts,
         set(existing_units or ()) | set(menu_pairs),
         script_pairs,
+        compact_caps_runs,
     )
-    # An all-caps dialog word with no pairs renders uniformly (every
-    # letter fullwidth), which reads fine; holes appear only when it is
-    # partially paired. So dialog caps-caps pairs are not demanded at
-    # all, freeing their slots for lowercase word pairs. Menu labels
-    # keep theirs: menu widths depend on packing.
-    for p in [p for p in continuity if len(p) == 2 and p[0].isupper() and p[1].isupper()]:
-        del continuity[p]
+    if not compact_caps_runs:
+        # An all-caps dialog word with no pairs renders uniformly (every
+        # letter fullwidth), which reads fine; holes appear only when it is
+        # partially paired. So dialog caps-caps pairs are not demanded at
+        # all, freeing their slots for lowercase word pairs. Menu labels
+        # keep theirs: menu widths depend on packing.
+        for p in [p for p in continuity
+                  if len(p) == 2 and p[0].isupper() and p[1].isupper()]:
+            del continuity[p]
     # Boost so even a once-used boundary outranks rare in-word pairs: a
     # split like "кое ‑как" reads worse than one thin letter elsewhere.
     for p, c in script_hyphens.items():
@@ -308,7 +327,11 @@ def caps_run_len(text: str, i: int) -> int:
 
 
 def fullwidth_cap_at(text: str, i: int, fullwidth_units: set[str]) -> bool:
-    """Whether the capital at *i* must occupy a centered full-size tile."""
+    """Whether the capital at *i* must occupy a centered full-size tile.
+
+    The unit is the whole uppercase run, so a pack names the label it means
+    (`АТ`, `СЦЕНАРИЙ`) and not a fragment of one.
+    """
     if not (0 <= i < len(text) and text[i].isalpha() and text[i].isupper()):
         return False
     run_len = caps_run_len(text, i)
@@ -353,6 +376,7 @@ def visual_penalty(text: str, i: int, width: int,
 
 def tile_text(text: str, has_unit, cost=None, base_pos: int = 0,
               compact_interword_spaces: bool = False,
+              compact_caps_runs: bool = False,
               fullwidth_units: set[str] | None = None) -> list[str]:
     n = len(text)
     fullwidth_units = fullwidth_units or set()
@@ -379,7 +403,15 @@ def tile_text(text: str, has_unit, cost=None, base_pos: int = 0,
             # fullwidth singles; pairing part of it (e.g. a menu pair like НА
             # inside ВНИМАНИЕ) would make it lumpy. Preserve the established
             # boundary-spacing behavior used by existing language packs.
-            if (width == 2 and piece.isalpha() and piece.isupper()
+            #
+            # `compact_caps_runs` turns that off for a script whose capitals
+            # are prose rather than menu labels — a shouted line, a heading
+            # written in caps — where full-size singles make the run twice the
+            # width of the sentence it belongs to. The labels that do want the
+            # full cell are then the ones the pack names in `fullwidth_units`,
+            # checked above, instead of every run of three.
+            if (width == 2 and not compact_caps_runs
+                    and piece.isalpha() and piece.isupper()
                     and caps_run_len(text, i) >= 3):
                 continue
             tok = piece if has_unit(piece) else None

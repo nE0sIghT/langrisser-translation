@@ -66,11 +66,11 @@
 64	Отойди, <name:17>!
 
 # part 6  5 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・гибель <pair>
 3	<blank>・разбить Лорда Зардафа
 6	<blank>・бегство Лорда Зардафа
 
 # part 7  1 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank>「<blank><blank>Погоня<blank><blank>」<wait><page><blank>Ледин со спутниками отбил Ланса,<line>и Анзель устоял. <blank>К ним примкнул<line>Альберт,<wait><page>и войско их окрепло.<wait><page><blank>Видя это, Зардаф, начальник<line>войска Дальсиса, начал отход на<line>соединение.<wait><page><blank>Ледин увидел в том свой час и<line>пустился в погоню.<wait><page>×Условия победы<line><blank>・разбить Лорда Зардафа<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<line><blank>・бегство Лорда Зардафа<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank>「<blank><blank>Погоня<blank><blank>」<wait><page><blank>Ледин со спутниками отбил Ланса,<line>и Анзель устоял. <blank>К ним примкнул<line>Альберт,<wait><page>и войско их окрепло.<wait><page><blank>Видя это, Зардаф, начальник<line>войска Дальсиса, начал отход на<line>соединение.<wait><page><blank>Ледин увидел в том свой час и<line>пустился в погоню.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・разбить Лорда Зардафа<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель Ледина<line><blank>・бегство Лорда Зардафа<wait><page>

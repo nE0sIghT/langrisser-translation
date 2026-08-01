@@ -218,13 +218,17 @@ class LanguagePack:
 
     @property
     def fullwidth_units(self) -> list[str]:
-        """Two-character labels that must render as two full-size glyphs."""
+        """Uppercase labels that must render one full-size glyph per letter.
+
+        A whole run, not a fragment of one: `АТ`, `СЦЕНАРИЙ`. Everything else
+        in capitals is prose and tiles like prose.
+        """
         units = self._data.get("fullwidth_units") or []
         if not isinstance(units, list) or any(
-                not isinstance(unit, str) or len(unit) != 2 for unit in units):
+                not isinstance(unit, str) or len(unit) < 2 for unit in units):
             raise SystemExit(
                 f"{self.root / 'manifest.json'}: fullwidth_units must contain "
-                "two-character strings"
+                "strings of two characters or more"
             )
         return list(units)
 

@@ -117,12 +117,12 @@
 115	Дальше вас не пущу!
 
 # part 6  9 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・гибель <pair>
 3	<blank>・за １８ ходов
 4	<blank><blank>разбить <name:28>
 6	<blank>・ходы кончились
 
 # part 7  2 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank><blank>「Мост в небе」<wait><page><blank>Недолгим оказался общий бой с<line><name:12> из Ордена Синего дракона<line>Райгардской империи: <pair><line>решил биться с империей до конца.<wait><page><blank>Спеша поскорее добыть<line>Лангриссер, они выходят к висячему<line>мосту над глубоким ущельем — и<line>попадают в засаду имперских.<wait><page><blank>Госпожа <name:14>, воевода<line>имперского Полка Ледяного дракона,<line>послала <name:28> обрушить мост и<line>задержать их.<wait><page><blank>Не перейти по мосту — потерять<line>уйму времени. <blank><pair> со<line>спутниками идёт на прорыв.<wait><page>×Условия победы<line><blank>・за １８ ходов<line><blank><blank>разбить <name:28><line><blank><line>×Условия поражения<line><blank>・гибель <pair><line><blank>・ходы кончились<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank><blank>「Мост в небе」<wait><page><blank>Недолгим оказался общий бой с<line><name:12> из Ордена Синего дракона<line>Райгардской империи: <pair><line>решил биться с империей до конца.<wait><page><blank>Спеша поскорее добыть<line>Лангриссер, они выходят к висячему<line>мосту над глубоким ущельем — и<line>попадают в засаду имперских.<wait><page><blank>Госпожа <name:14>, воевода<line>имперского Полка Ледяного дракона,<line>послала <name:28> обрушить мост и<line>задержать их.<wait><page><blank>Не перейти по мосту — потерять<line>уйму времени. <blank><pair> со<line>спутниками идёт на прорыв.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・за １８ ходов<line><blank><blank>разбить <name:28><line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель <pair><line><blank>・ходы кончились<wait><page>

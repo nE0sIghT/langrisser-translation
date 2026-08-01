@@ -58,11 +58,11 @@
 56	И ты, <name:7>.
 
 # part 6  5 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・гибель <pair>
 3	<blank>・разбить всех врагов
 6	<blank>・все командиры окаменели
 
 # part 7  1 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「<blank>Город изваяний<blank>」<wait><page><blank>Дигос был повержен, но это<line>оказалось лишь запевом новой<line>войны.<wait><page><blank>Идя по следу зла, что вышло на<line>волю со снятой печатью, Ледин со<wait><page>спутниками пришёл в город<line>окаменевших людей.<wait><page>×Условия победы<line><blank>・разбить всех врагов<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<line><blank>・все командиры окаменели<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「<blank>Город изваяний<blank>」<wait><page><blank>Дигос был повержен, но это<line>оказалось лишь запевом новой<line>войны.<wait><page><blank>Идя по следу зла, что вышло на<line>волю со снятой печатью, Ледин со<wait><page>спутниками пришёл в город<line>окаменевших людей.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・разбить всех врагов<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель Ледина<line><blank>・все командиры окаменели<wait><page>

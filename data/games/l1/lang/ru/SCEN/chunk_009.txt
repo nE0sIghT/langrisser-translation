@@ -68,10 +68,10 @@
 66	И это я…<wait><page>Оплошал!
 
 # part 6  4 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・гибель <pair>
 3	<blank>・разбить Кирхнера
 
 # part 7  1 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「<blank>Замок на озере<blank>」<wait><page><blank>Ледин со спутниками шёл вперёд и<line>обложил Валк — замок на озере,<line>что<wait><page>оборонял Кирхнер. <blank>Пади этот<line>крепкий замок — и замок Дальсис<line>был бы уже<wait><page>перед глазами.<wait><page>×Условия победы<line><blank>・разбить Кирхнера<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「<blank>Замок на озере<blank>」<wait><page><blank>Ледин со спутниками шёл вперёд и<line>обложил Валк — замок на озере,<line>что<wait><page>оборонял Кирхнер. <blank>Пади этот<line>крепкий замок — и замок Дальсис<line>был бы уже<wait><page>перед глазами.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・разбить Кирхнера<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель Ледина<wait><page>

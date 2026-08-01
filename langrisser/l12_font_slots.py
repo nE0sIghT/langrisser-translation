@@ -228,6 +228,9 @@ def main() -> None:
         # placed, so there is nothing to gain by guessing one boundary per
         # hyphen and living with the gap when the guess is wrong.
         both_hyphen_boundaries=True,
+        # Matches `Writer`'s tiling: capitals here are prose — a heading, a
+        # shout — and pair like anything else, so the pairs have to exist.
+        compact_caps_runs=True,
     )
     ranked: list[str] = []
     for group in (menu_pairs, continuity, spacing_pairs, script_pairs):

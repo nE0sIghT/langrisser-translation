@@ -70,11 +70,11 @@
 68	Д-да.
 
 # part 6  5 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・гибель <pair>
 3	<blank>・разбить Бернулли
 6	<blank>・гибель Альберта
 
 # part 7  1 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank>「<blank>Витязь крепости<blank>」<wait><page><blank>Замок отбит, Джессика и Тейлор<line>вызволены из заточения, но меч<wait><page>Лангриссер к тому часу был уже<line>похищен.<wait><page><blank>И тут же пришла весть: крепость<line>Анзель, оплот обороны Балдеи,<line>осаждена<wait><page>имперским войском.<wait><page>×Условия победы<line><blank>・разбить Бернулли<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<line><blank>・гибель Альберта<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank>「<blank>Витязь крепости<blank>」<wait><page><blank>Замок отбит, Джессика и Тейлор<line>вызволены из заточения, но меч<wait><page>Лангриссер к тому часу был уже<line>похищен.<wait><page><blank>И тут же пришла весть: крепость<line>Анзель, оплот обороны Балдеи,<line>осаждена<wait><page>имперским войском.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・разбить Бернулли<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель Ледина<line><blank>・гибель Альберта<wait><page>

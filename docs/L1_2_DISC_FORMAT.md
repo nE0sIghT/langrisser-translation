@@ -399,15 +399,25 @@ slot is one 12 × 12 cell whatever is drawn in it:
 
 - **Menu and interface**: single letters, mostly capitals, one per slot, centred
   in the cell. This is what the game already does with `ＡＴ`, `ＤＦ`, `ＭＰ`,
-  `ＭＶ`, and what `build_font` renders for Langrisser V. All-caps runs of at
-  least three letters use these full-size singles automatically. Two-letter
-  labels listed in a language pack's `fullwidth_units` (Russian `АТ`, `ЗЩ`,
-  `ОМ`) do the same; neither letter may be folded into a pair with the adjacent
-  space or punctuation. Intentionally compact controls such as `ОК` remain
-  ordinary pair glyphs.
-- **Everything else** — dialogue, inscriptions, monster cries: two target
-  letters packed into one cell, the compact pair glyphs `build_font` already
-  generates.
+  `ＭＶ`, and what `build_font` renders for Langrisser V. Which labels these are
+  is the language pack's `fullwidth_units`: an uppercase run named there (`АТ`,
+  `ЗЩ`, `ОМ`, `СЦЕНАРИЙ`, `КОНЕЦ`, `ИГРЫ`) draws one full cell per letter, and
+  no letter of it may be folded into a pair with an adjacent space or
+  punctuation.
+- **Everything else** — dialogue, inscriptions, monster cries, and capitals
+  that are prose rather than a label: two target letters packed into one cell,
+  the compact pair glyphs `build_font` already generates.
+
+Langrisser V infers the first group instead of declaring it — any run of three
+or more capitals is a menu label there — and that inference is wrong for this
+script. The objectives heading `勝利条件` is drawn at the size of the panel
+under it, so `УСЛОВИЯ ПОБЕДЫ` has to be too: as full-size singles it is
+fourteen cells against a panel of fifteen, and its `敗北条件` counterpart is
+seventeen and does not fit at all. In pairs they are eight and ten. The same
+holds for the katakana-voiced demon of Langrisser II scenario 18, whose shouted
+lines are body text in the original and would otherwise render at twice the
+width of the sentences around them. So `compact_caps_runs` turns the inference
+off for this engine and `fullwidth_units` carries the list instead.
 
 Which of the two a run of text gets is not a matter of taste, and it decides how
 wide a line is: `УСЛОВИЯ ПОБЕДЫ` is fourteen cells where `Условия победы` is

@@ -72,8 +72,8 @@
 70	Благодарю вас, князь <name:6>.
 
 # part 6  7 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・гибель <pair>
 3	<blank>・Крис уходит в ворота
 4	<blank><blank>слева вверху карты
@@ -81,4 +81,4 @@
 6	<blank>・гибель Крис
 
 # part 7  1 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank>「В Салрат」<wait><page><blank>Нарм из королевского рыцарства<line>вывел из замка принца Ледина и<line>Волкова.<wait><page><blank>По пути в союзный город Салрат<line>они встретили девушку Крис, что<line>идёт в<wait><page>служительницы веры, и взялись её<line>оберегать. <blank>Но на них уже<line>нацелились<wait><page>разбойники…<wait><page>×Условия победы<line><blank>・Крис уходит в ворота слева<line><blank>・разбить всех врагов<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<line><blank>・гибель Крис<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank>「В Салрат」<wait><page><blank>Нарм из королевского рыцарства<line>вывел из замка принца Ледина и<line>Волкова.<wait><page><blank>По пути в союзный город Салрат<line>они встретили девушку Крис, что<line>идёт в<wait><page>служительницы веры, и взялись её<line>оберегать. <blank>Но на них уже<line>нацелились<wait><page>разбойники…<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・Крис уходит в ворота слева<line><blank>・разбить всех врагов<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель Ледина<line><blank>・гибель Крис<wait><page>

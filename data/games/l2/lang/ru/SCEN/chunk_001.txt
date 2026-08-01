@@ -176,12 +176,12 @@
 174	Господин <name:18>!<wait><page>Господин <name:18>, случись с вами<line>что — господин <name:12> будет<line>горевать.<wait><page>Отходите!
 
 # part 6  5 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・гибель <pair>
 3	<blank>・<name:1> уходит вверх экрана
 4	<blank>・разбить всех врагов
 6	<blank>・гибель <name:1>
 
 # part 7  1 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank><blank><blank>「В дорогу」<wait><page><blank>Отбив <name:1> у войска<line>Райгардской империи, <pair> со<line>спутниками пришёл по приглашению<line><name:37>, владетеля Салрата, в его<line>усадьбу.<wait><page><blank>Но империя не оставит <name:1> в<line>покое, и уберечь <name:1> владетелю<line>одного захолустья не под силу.<wait><page><blank>Потолковав, <pair> и <name:37><line>порешили: жрице храма света<line>надёжнее всего укрыться в Великом<line>храме света, что в Эсторе.<wait><page><blank>Переночевав в усадьбе, отряд<line>вышел затемно и двинулся к Эстору,<line>оберегая <name:1>.<wait><page>×Условия победы<line><blank>・<name:1> уходит вверх экрана<line><blank>・разбить всех врагов<line><blank><line>×Условия поражения<line><blank>・гибель <pair><line><blank>・гибель <name:1><wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank><blank><blank>「В дорогу」<wait><page><blank>Отбив <name:1> у войска<line>Райгардской империи, <pair> со<line>спутниками пришёл по приглашению<line><name:37>, владетеля Салрата, в его<line>усадьбу.<wait><page><blank>Но империя не оставит <name:1> в<line>покое, и уберечь <name:1> владетелю<line>одного захолустья не под силу.<wait><page><blank>Потолковав, <pair> и <name:37><line>порешили: жрице храма света<line>надёжнее всего укрыться в Великом<line>храме света, что в Эсторе.<wait><page><blank>Переночевав в усадьбе, отряд<line>вышел затемно и двинулся к Эстору,<line>оберегая <name:1>.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・<name:1> уходит вверх экрана<line><blank>・разбить всех врагов<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель <pair><line><blank>・гибель <name:1><wait><page>

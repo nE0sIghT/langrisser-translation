@@ -1,9 +1,9 @@
 # part 7  3 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank><blank><blank><blank>「Тупик」<wait><page><blank>Одолжив лодки, отряд поспешил к<line>Вельзерии, но в море его настиг<line>вражеский отряд перехвата.<line><blank>Однако появление врага означало:<line>печать ещё не снята.<wait><page><blank>Пока ещё не поздно. <blank>Чтобы враг<line>больше не мог задерживать их,<line><pair> со спутниками решил<line>принять бой.<wait><page>×Условия победы<line><blank>・Уничтожить всех врагов<line><blank><line>×Условия поражения<line><blank>・Гибель <pair><wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank><blank><blank><blank>「Тупик」<wait><page><blank>Одолжив лодки, отряд поспешил к<line>Вельзерии, но в море его настиг<line>вражеский отряд перехвата.<line><blank>Однако появление врага означало:<line>печать ещё не снята.<wait><page><blank>Пока ещё не поздно. <blank>Чтобы враг<line>больше не мог задерживать их,<line><pair> со спутниками решил<line>принять бой.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・Уничтожить всех врагов<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・Гибель <pair><wait><page>
 
 # part 6  10 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・Гибель <pair>
 3	<blank>・Уничтожить всех врагов
 

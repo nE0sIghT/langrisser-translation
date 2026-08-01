@@ -50,10 +50,10 @@
 48	Получен Меч Мессии!
 
 # part 6  4 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・гибель <pair>
 3	<blank>・разбить Дигоса
 
 # part 7  1 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「Замок-Близнец」<wait><page><blank>Ворвавшись в Дальсис, Ледин<line>разделил отряд надвое и пошёл к<line>покоям Дигоса.<wait><page><blank>Последний бой был близок.<wait><page>×Условия победы<line><blank>・разбить Дигоса<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「Замок-Близнец」<wait><page><blank>Ворвавшись в Дальсис, Ледин<line>разделил отряд надвое и пошёл к<line>покоям Дигоса.<wait><page><blank>Последний бой был близок.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・разбить Дигоса<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель Ледина<wait><page>

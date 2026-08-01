@@ -371,6 +371,10 @@ class Writer:
         self.codec = Codec(
             {**font, self.BLANK: " "},
             compact_interword_spaces=True,
+            # Capitals here are prose, not a menu: a heading, a shout, a name
+            # in a card title. They pair like any other letters, and the few
+            # status labels that must keep the full cell say so in the pack.
+            compact_caps_runs=True,
             fullwidth_units=fullwidth_units,
         )
 

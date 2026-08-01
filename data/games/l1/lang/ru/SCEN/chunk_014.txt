@@ -71,11 +71,11 @@
 69	ＷＯＯＯＯＮ！
 
 # part 6  5 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・гибель <pair>
 3	<blank>・разбить дракона
 6	<blank>・гибель всех горожан
 
 # part 7  1 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「Крик злого дракона」<wait><page><blank>Зло пробудилось, и в ответ<line>нечисть полезла одна за другой.<wait><page><blank>А сильнейший из них, злой<line>дракон, вышел навстречу Ледину,<line>метя в<wait><page>Лангриссер. <blank>Обороняя горожан,<line>Ледин принял бой.<wait><page>×Условия победы<line><blank>・разбить дракона<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<line><blank>・гибель всех горожан<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「Крик злого дракона」<wait><page><blank>Зло пробудилось, и в ответ<line>нечисть полезла одна за другой.<wait><page><blank>А сильнейший из них, злой<line>дракон, вышел навстречу Ледину,<line>метя в<wait><page>Лангриссер. <blank>Обороняя горожан,<line>Ледин принял бой.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・разбить дракона<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель Ледина<line><blank>・гибель всех горожан<wait><page>

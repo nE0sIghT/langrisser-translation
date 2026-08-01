@@ -1,9 +1,9 @@
 # part 7  1 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank><blank>「Битва за порт」<wait><page><blank>Император Райгарда <name:21><line>был повержен. Но Князь Тьмы<line><name:22>, тайно управлявший им,<line>сумел бежать.<wait><page><blank>Уже много веков <name:22> вновь и<line>вновь призывает бога Хаоса, чтобы<line>погрузить весь мир во Тьму.<wait><page><blank>Преследуя бежавшего в Вельзерию<line><name:22>а, <pair> со спутниками<line>поспешил в порт.<wait><page><blank>Но чудовища уже захватили там<line>корабль. Если его упустить, погоня<line>надолго задержится.<wait><page>×Условия победы<line><blank>・Победить <name:16>, <name:17><line><blank><blank>и Лорда вампиров<line><blank><line>×Условия поражения<line><blank>・Гибель <pair><wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank><blank>「Битва за порт」<wait><page><blank>Император Райгарда <name:21><line>был повержен. Но Князь Тьмы<line><name:22>, тайно управлявший им,<line>сумел бежать.<wait><page><blank>Уже много веков <name:22> вновь и<line>вновь призывает бога Хаоса, чтобы<line>погрузить весь мир во Тьму.<wait><page><blank>Преследуя бежавшего в Вельзерию<line><name:22>а, <pair> со спутниками<line>поспешил в порт.<wait><page><blank>Но чудовища уже захватили там<line>корабль. Если его упустить, погоня<line>надолго задержится.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・Победить <name:16>, <name:17><line><blank><blank>и Лорда вампиров<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・Гибель <pair><wait><page>
 
 # part 6  9 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・Гибель <pair>
 3	<blank>・Победить <name:16>, <name:17>
 4	<blank><blank>и Лорда вампиров

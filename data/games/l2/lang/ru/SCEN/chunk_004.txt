@@ -199,11 +199,11 @@
 197	За реку огонь не пойдёт.<line>Скорее на тот берег.
 
 # part 6  5 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・гибель <pair>
 3	<blank>・разбить <name:73>
 6	<blank>・гибель <name:19>
 
 # part 7  1 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank><blank><blank><blank>「В огне」<wait><page><blank><pair> со спутниками выступил<line>из Калзаса к великому чародею<line><name:19>, что знает, где Тёмный<line>жезл.<wait><page><blank>Чародейка, прожившая, как<line>говорят, несколько сот лет,<line>занимается волшебством в глухом<line>лесу за рекой Лаар.<wait><page><blank>Но едва <pair> со спутниками<line>вышел к реке Лаар, как путь им<line>преградила шайка разбойников.<wait><page><blank>А тем часом <name:15>, чародей во<line>главе Чародеев Чёрного дракона,<line>тайком расставлял силки на Тёмный<line>жезл.<wait><page>×Условия победы<line><blank>・разбить <name:73><line><blank><line>×Условия поражения<line><blank>・гибель <pair><line><blank>・гибель <name:19><wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank><blank><blank><blank>「В огне」<wait><page><blank><pair> со спутниками выступил<line>из Калзаса к великому чародею<line><name:19>, что знает, где Тёмный<line>жезл.<wait><page><blank>Чародейка, прожившая, как<line>говорят, несколько сот лет,<line>занимается волшебством в глухом<line>лесу за рекой Лаар.<wait><page><blank>Но едва <pair> со спутниками<line>вышел к реке Лаар, как путь им<line>преградила шайка разбойников.<wait><page><blank>А тем часом <name:15>, чародей во<line>главе Чародеев Чёрного дракона,<line>тайком расставлял силки на Тёмный<line>жезл.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・разбить <name:73><line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель <pair><line><blank>・гибель <name:19><wait><page>

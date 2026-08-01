@@ -16,7 +16,10 @@
   "fullwidth_units": [
     "АТ",
     "ЗЩ",
-    "ОМ"
+    "ОМ",
+    "СЦЕНАРИЙ",
+    "КОНЕЦ",
+    "ИГРЫ"
   ],
   "glossary": "glossary.csv",
   "max_lines": 3,

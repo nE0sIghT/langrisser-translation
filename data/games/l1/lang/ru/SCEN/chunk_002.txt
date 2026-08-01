@@ -90,11 +90,11 @@
 88	Тогда, чтобы обманутьимперскую<line>армию, пойдём через Лес<wait><page>мертвецов.
 
 # part 6  5 strings
-0	×Условия победы
-1	×Условия поражения
+0	×УСЛОВИЯ ПОБЕДЫ
+1	×УСЛОВИЯ ПОРАЖЕНИЯ
 2	<blank>・гибель <pair>
 3	<blank>・разбить всех врагов
 6	<blank>・гибель всех горожан
 
 # part 7  1 strings
-0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank>「<blank><blank>Ночной<line>набег<blank><blank>」<wait><page><blank>Ледин со спутниками принят<line>Хокингом, владетелем Салрата. <blank>Но<line>передохнуть в<wait><page>мирном городе не дали: ночью<line>ударили разбойники.<wait><page><blank>Прознав о набеге, Крис бросилась<line>к Ледину, чтобы упредить его.<line><blank>Услыхав о<wait><page>набеге, Ледин вместе с Волковым<line>встал на защиту города.<wait><page>×Условия победы<line><blank>・разбить всех врагов<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<line><blank>・гибель всех горожан<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank>「<blank><blank>Ночной<line>набег<blank><blank>」<wait><page><blank>Ледин со спутниками принят<line>Хокингом, владетелем Салрата. <blank>Но<line>передохнуть в<wait><page>мирном городе не дали: ночью<line>ударили разбойники.<wait><page><blank>Прознав о набеге, Крис бросилась<line>к Ледину, чтобы упредить его.<line><blank>Услыхав о<wait><page>набеге, Ледин вместе с Волковым<line>встал на защиту города.<wait><page>×УСЛОВИЯ ПОБЕДЫ<line><blank>・разбить всех врагов<line><blank><line>×УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・гибель Ледина<line><blank>・гибель всех горожан<wait><page>
