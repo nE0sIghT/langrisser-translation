@@ -344,7 +344,24 @@ python3 -m langrisser.scenario --lang <lang> dump 1
 python3 -m langrisser.scenario --lang <lang> prefill 1
 ```
 
-`prefill` writes partial chunks to `work/<game>/wip_<lang>/SCEN/`. Move a chunk
+Langrisser I & II use one zero-based battle chunk per displayed scenario
+(`chunk 0` is scenario 1). Their adapter feeds records decoded by the `l12`
+reader into the same exact-match translation memory instead of maintaining a
+second prefill implementation:
+
+```bash
+python3 -m langrisser.tm_prefill --game l2 --lang ru 28  # scenario 29
+python3 -m langrisser.l12_rewrap --game l2 --lang ru 28
+python3 -m langrisser.l12_validate --game l2 --lang ru 28
+```
+
+For L1/L2 the generated Japanese `SCEN.DAT` decode is the sole source of
+meaning. Exact translation-memory matches are accepted only when one Japanese
+record has one unambiguous existing Russian translation; conflicting matches
+remain in the WIP file for manual translation.
+
+L4/L5 `prefill` writes partial chunks to `work/<game>/wip_<lang>/SCEN/`; the
+L1/L2 adapter writes them directly to `work/<game>/wip_<lang>/`. Move a chunk
 to `data/games/<game>/lang/<lang>/SCEN/` only after it is fully translated and
 validates.
 
