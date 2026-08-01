@@ -217,6 +217,18 @@ class LanguagePack:
         return list(pairs)
 
     @property
+    def fullwidth_units(self) -> list[str]:
+        """Two-character labels that must render as two full-size glyphs."""
+        units = self._data.get("fullwidth_units") or []
+        if not isinstance(units, list) or any(
+                not isinstance(unit, str) or len(unit) != 2 for unit in units):
+            raise SystemExit(
+                f"{self.root / 'manifest.json'}: fullwidth_units must contain "
+                "two-character strings"
+            )
+        return list(units)
+
+    @property
     def window_width(self) -> int:
         return int(self._data.get("window_width") or 21)
 

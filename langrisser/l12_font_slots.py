@@ -225,6 +225,7 @@ def main() -> None:
     seen: set[str] = set()
     want_pairs = [p for p in ranked
                   if len(p) == 2 and p not in taken and p not in seen
+                  and p not in set(lang.fullwidth_units)
                   and not seen.add(p) and packable(p)]
     added_pairs = 0
     for pair, slot in zip(want_pairs, spare):

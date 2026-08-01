@@ -74,4 +74,4 @@
 3	<blank>・разбить Кирхнера
 
 # part 7  1 strings
-0	<blank><line><blank><blank>ＳＣＥＮＡＲＩＯ－<number><line><blank><blank><blank>「<blank>Замок на озере<blank>」<wait><page><blank>Ледин со спутниками шёл<line>вперёд и обложил Валк —<line>замок на озере, что<wait><page>оборонял Кирхнер. <blank>Пади этот<line>крепкий замок — и замок<line>Дальсис был бы уже<wait><page>перед глазами.<wait><page>×Условия победы<line><blank>・разбить Кирхнера<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「<blank>Замок на озере<blank>」<wait><page><blank>Ледин со спутниками шёл<line>вперёд и обложил Валк —<line>замок на озере, что<wait><page>оборонял Кирхнер. <blank>Пади этот<line>крепкий замок — и замок<line>Дальсис был бы уже<wait><page>перед глазами.<wait><page>×Условия победы<line><blank>・разбить Кирхнера<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>

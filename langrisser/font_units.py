@@ -344,8 +344,10 @@ def visual_penalty(text: str, i: int, width: int,
 
 
 def tile_text(text: str, has_unit, cost=None, base_pos: int = 0,
-              compact_interword_spaces: bool = False) -> list[str]:
+              compact_interword_spaces: bool = False,
+              fullwidth_units: set[str] | None = None) -> list[str]:
     n = len(text)
+    fullwidth_units = fullwidth_units or set()
     if cost is None:
         def cost(piece):
             return 1
@@ -357,6 +359,8 @@ def tile_text(text: str, has_unit, cost=None, base_pos: int = 0,
         for width in (2, 1):
             piece = text[i : i + width]
             if len(piece) != width:
+                continue
+            if width == 2 and piece in fullwidth_units:
                 continue
             # An all-caps word of three or more letters renders as
             # uniform fullwidth singles; pairing part of it (e.g. a

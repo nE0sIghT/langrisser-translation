@@ -56,4 +56,4 @@
 3	<blank>・разбить Николиса
 
 # part 7  1 strings
-0	<blank><line><blank><blank>ＳＣＥＮＡＲＩＯ－<number><line><blank><blank><blank>「<blank>Подземный храм<blank>」<wait><page><blank>Чтобы задержать врага, Ланс<line>пошёл на верную гибель.<wait><page><blank>Дабы жизнь его не пропала<line>даром, Ледин ворвался в<line>подземный храм.<wait><page><blank>Но там его уже поджидал<line>Николис, посланник тьмы,<line>расставив войско так, чтобы<line>взять отряд в кольцо.<wait><page>×Условия победы<line><blank>・разбить Николиса<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「<blank>Подземный храм<blank>」<wait><page><blank>Чтобы задержать врага, Ланс<line>пошёл на верную гибель.<wait><page><blank>Дабы жизнь его не пропала<line>даром, Ледин ворвался в<line>подземный храм.<wait><page><blank>Но там его уже поджидал<line>Николис, посланник тьмы,<line>расставив войско так, чтобы<line>взять отряд в кольцо.<wait><page>×Условия победы<line><blank>・разбить Николиса<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>

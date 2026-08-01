@@ -70,4 +70,4 @@
 5	<blank>・разбить всех врагов
 
 # part 7  1 strings
-0	<blank><line><blank><blank>ＳＣＥＮＡＲＩＯ－０<number><line><blank><blank><blank>「<blank>Лес мертвецов<blank>」<wait><page><blank>Разбойники отбиты. И тут<line>перед Лединым явился рыцарь<line>Нарм — с вестью о том,<wait><page>что замок Балдея пал.<wait><page><blank>Чтобы вернуться в Балдею,<line>Ледин решил идти напрямик —<line>через Лес<wait><page>мертвецов, где бродят слизни.<wait><page>×Условия победы<line><blank>・Ледин цел １６ ходов<line><blank>・разбить всех врагов<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank>「<blank>Лес мертвецов<blank>」<wait><page><blank>Разбойники отбиты. И тут<line>перед Лединым явился рыцарь<line>Нарм — с вестью о том,<wait><page>что замок Балдея пал.<wait><page><blank>Чтобы вернуться в Балдею,<line>Ледин решил идти напрямик —<line>через Лес<wait><page>мертвецов, где бродят слизни.<wait><page>×Условия победы<line><blank>・Ледин цел １６ ходов<line><blank>・разбить всех врагов<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>

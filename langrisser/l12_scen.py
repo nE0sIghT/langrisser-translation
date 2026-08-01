@@ -331,7 +331,8 @@ class Writer:
     # instead of spelled out letter by letter.
     BLANK = 1 << 20
 
-    def __init__(self, font: dict[int, str]):
+    def __init__(self, font: dict[int, str],
+                 fullwidth_units: set[str] | None = None):
         self.slot_of: dict[str, int] = {}
         for slot, ch in sorted(font.items()):
             self.slot_of.setdefault(ch, slot)
@@ -343,6 +344,7 @@ class Writer:
         self.codec = Codec(
             {**font, self.BLANK: " "},
             compact_interword_spaces=True,
+            fullwidth_units=fullwidth_units,
         )
 
     def tile_run(self, text: str) -> bytes:

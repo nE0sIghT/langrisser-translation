@@ -13,6 +13,10 @@
     "ОК",
     "нб"
   ],
+  "fullwidth_units": [
+    "АТ",
+    "ЗЩ"
+  ],
   "glossary": "glossary.csv",
   "max_lines": 3,
   "names": "names.csv",

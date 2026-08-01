@@ -65,4 +65,4 @@
 6	<blank>・все командиры окаменели
 
 # part 7  1 strings
-0	<blank><line><blank><blank>ＳＣＥＮＡＲＩＯ－<number><line><blank><blank><blank>「<blank>Город изваяний<blank>」<wait><page><blank>Дигос был повержен, но это<line>оказалось лишь запевом новой<line>войны.<wait><page><blank>Идя по следу зла, что<line>вышло на волю со снятой<line>печатью, Ледин со<wait><page>спутниками пришёл в город<line>окаменевших людей.<wait><page>×Условия победы<line><blank>・разбить всех врагов<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<line><blank>・все командиры окаменели<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「<blank>Город изваяний<blank>」<wait><page><blank>Дигос был повержен, но это<line>оказалось лишь запевом новой<line>войны.<wait><page><blank>Идя по следу зла, что<line>вышло на волю со снятой<line>печатью, Ледин со<wait><page>спутниками пришёл в город<line>окаменевших людей.<wait><page>×Условия победы<line><blank>・разбить всех врагов<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<line><blank>・все командиры окаменели<wait><page>

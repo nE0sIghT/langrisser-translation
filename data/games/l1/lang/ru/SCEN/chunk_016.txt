@@ -68,4 +68,4 @@
 4	<blank><blank>кроме Бёзера
 
 # part 7  1 strings
-0	<blank><line><blank><blank>ＳＣＥＮＡＲＩＯ－<number><line><blank><blank><blank>「Запретная Вельзерия」<wait><page><blank>Из загадочной каменной плиты<line>Ледин со спутниками узнал,<line>что принц тьмы — в запретной<line>земле.<wait><page><blank>И, как записано в<line>летописи, они, Потомки<line>Света, хранящие Лангриссер,<line>двинулись к Вельзерии…<wait><page>×Условия победы<line><blank>・разбить всех врагов,<line><blank><blank>кроме Бёзера<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「Запретная Вельзерия」<wait><page><blank>Из загадочной каменной плиты<line>Ледин со спутниками узнал,<line>что принц тьмы — в запретной<line>земле.<wait><page><blank>И, как записано в<line>летописи, они, Потомки<line>Света, хранящие Лангриссер,<line>двинулись к Вельзерии…<wait><page>×Условия победы<line><blank>・разбить всех врагов,<line><blank><blank>кроме Бёзера<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>

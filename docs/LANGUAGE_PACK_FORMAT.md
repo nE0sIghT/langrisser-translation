@@ -109,6 +109,7 @@ Fields currently consumed by the tools:
 | `caps_font_size` | Render size for `caps_font`. |
 | `single_chars` | Characters that must receive glyph slots even before script text uses them; this includes target-specific punctuation not present in the native map. |
 | `forced_pairs` | Optional two-character glyphs that must be allocated, such as compact UI labels. |
+| `fullwidth_units` | Optional two-character labels that must encode as two centred full-size glyphs rather than one compact pair. |
 | `window_width` | Dialogue window width in cells. |
 | `choice_width` | Choice-row width in cells. |
 | `max_lines` | Safe page height for rewrap checks. |

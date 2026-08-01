@@ -85,4 +85,4 @@
 5	<blank>・разбить всех врагов
 
 # part 7  1 strings
-0	<blank><line><blank><blank>ＳＣＥＮＡＲＩＯ－０<number><line><blank><blank><blank>「Стремнины Варла」<wait><page><blank>Ледин перешёл в наступление,<line>и враг растянул оборону вдоль<line>реки<wait><page>Варл.<wait><page><blank>А ещё — не оттого ли,<line>что Лангриссер похищен, —<line>явились невиданные чудища.<wait><page><blank>Ледин решил идти напролом.<wait><page>×Условия победы<line><blank>・Ледин доходит до входа<line><blank><blank>на тракт на карте<line><blank>・разбить всех врагов<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank>「Стремнины Варла」<wait><page><blank>Ледин перешёл в наступление,<line>и враг растянул оборону вдоль<line>реки<wait><page>Варл.<wait><page><blank>А ещё — не оттого ли,<line>что Лангриссер похищен, —<line>явились невиданные чудища.<wait><page><blank>Ледин решил идти напролом.<wait><page>×Условия победы<line><blank>・Ледин доходит до входа<line><blank><blank>на тракт на карте<line><blank>・разбить всех врагов<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>

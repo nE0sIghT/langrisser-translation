@@ -63,4 +63,4 @@
 3	<blank>・разбить Ксельда
 
 # part 7  1 strings
-0	<blank><line><blank><blank>ＳＣＥＮＡＲＩＯ－０<number><line><blank><blank><blank>「Оборона замка Балдея」<wait><page><blank>Ланс отбит, но Волков<line>принял вражью отравленную<line>стрелу и не вернулся.<wait><page><blank>Одолев эту горечь, они<line>наконец дошли до замка<line>Балдея.<wait><page>Но в замке стоял, изготовив<line>войско, Ксельд — грозный<line>воевода<wait><page>Дальсийской империи.<wait><page>×Условия победы<line><blank>・разбить Ксельда<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-０<number><line><blank><blank><blank>「Оборона замка Балдея」<wait><page><blank>Ланс отбит, но Волков<line>принял вражью отравленную<line>стрелу и не вернулся.<wait><page><blank>Одолев эту горечь, они<line>наконец дошли до замка<line>Балдея.<wait><page>Но в замке стоял, изготовив<line>войско, Ксельд — грозный<line>воевода<wait><page>Дальсийской империи.<wait><page>×Условия победы<line><blank>・разбить Ксельда<line><blank><line>×Условия поражения<line><blank>・гибель Ледина<wait><page>

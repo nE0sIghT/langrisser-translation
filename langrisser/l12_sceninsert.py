@@ -79,7 +79,7 @@ def main() -> None:
     font = load_charmap_csv(Path(args.font_map) if args.font_map else game.font_map)
     table = Path(args.assignments) if args.assignments else lang.font_assignments
     plane = merged_plane(font, load_assignments(table)) if table.exists() else font
-    writer = Writer(plane)
+    writer = Writer(plane, fullwidth_units=set(lang.fullwidth_units))
     root = Path(args.translation_root) if args.translation_root else lang.script_dir
     scen = Path(args.scen) if args.scen else Path(
         "work", game.code, "extracted", "SCEN.DAT")

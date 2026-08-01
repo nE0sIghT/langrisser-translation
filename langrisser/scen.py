@@ -216,8 +216,10 @@ class Codec:
     decode->encode reproduces the original words exactly."""
 
     def __init__(self, tok2char: dict[int, str],
-                 compact_interword_spaces: bool = False):
+                 compact_interword_spaces: bool = False,
+                 fullwidth_units: set[str] | None = None):
         self.compact_interword_spaces = compact_interword_spaces
+        self.fullwidth_units = fullwidth_units or set()
         self.char2tok: dict[str, int] = {}
         for tok in sorted(tok2char):
             self.char2tok.setdefault(tok2char[tok], tok)
@@ -267,5 +269,6 @@ class Codec:
             lambda p: p in self.char2tok,
             base_pos=base_pos,
             compact_interword_spaces=self.compact_interword_spaces,
+            fullwidth_units=self.fullwidth_units,
         )
         return [self.char2tok[piece] for piece in pieces]
