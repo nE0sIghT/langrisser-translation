@@ -58,7 +58,7 @@ def word_pairs(w: str):
             yield w[i : i + 2]
 
 
-def hyphen_boundary_pairs(word: str):
+def hyphen_boundary_pairs(word: str, both: bool = False):
     """Yield the boundary pairs needed for a gap-free hyphenated word.
 
     A pair font puts two half-width characters in one native cell. Without a
@@ -67,7 +67,20 @@ def hyphen_boundary_pairs(word: str):
     ``Наконец -то``. Choose one boundary pair per hyphen according to the
     current segment parity, so the whole word tiles tightly without spending
     two scarce glyph slots on both ``letter-`` and ``-letter``.
+
+    That parity is the word's own, which holds only while the word starts on a
+    cell boundary. A pair that carries the preceding space (`` Э``) shifts the
+    word half a cell and makes the other boundary the right one, so the tiler
+    is left choosing between a stranded hyphen and a stranded letter. Where the
+    slot pool has room, `both` asks for either boundary and lets the tiler pick
+    the one the surrounding line actually needs.
     """
+    if both:
+        parts = word.split("-")
+        for i in range(len(parts) - 1):
+            yield parts[i][-1] + "-"
+            yield "-" + parts[i + 1][0]
+        return
     parts = word.split("-")
     consumed_prefix = 0
     for i in range(len(parts) - 1):
@@ -135,7 +148,8 @@ def continuity_pairs(texts: list[str], known: set[str],
 
 def needed_units(script_texts: list[str], menu_texts: list[str] | None = None,
                  extra_singles: str = "", forced_pairs: list[str] | None = None,
-                 existing_units: set[str] | None = None):
+                 existing_units: set[str] | None = None,
+                 both_hyphen_boundaries: bool = False):
     """Return singles and prioritized pair groups needed by target text.
 
     `script_texts` are dialogue-shaped: room to breathe, lowercase pairs
@@ -151,6 +165,10 @@ def needed_units(script_texts: list[str], menu_texts: list[str] | None = None,
     visible gap after narrow word tails like "Earth:".
     Script dialogs have room: lowercase pairs only, prioritized by frequency,
     assigned while the sacrificial pool lasts.
+
+    `both_hyphen_boundaries` asks for both pairs around every hyphen instead
+    of the one the word's own parity wants; see `hyphen_boundary_pairs`. Worth
+    the extra slots only where the pool is not the binding constraint.
     """
     # Callers pass text with control tags already replaced by a space: no
     # codec forms a pair across a tag, and joining the halves would demand
@@ -186,7 +204,8 @@ def needed_units(script_texts: list[str], menu_texts: list[str] | None = None,
         )
         for match in HYPHENATED_WORD_RE.finditer(text):
             (hyphen_target if hyphen_target is not None
-             else target).update(hyphen_boundary_pairs(match.group(0)))
+             else target).update(hyphen_boundary_pairs(
+                 match.group(0), both_hyphen_boundaries))
 
     # A missing boundary pair leaves a mid-word hole ("Наконец ‑то"), the
     # same artifact continuity pairs exist to prevent, so dialog hyphen
@@ -312,6 +331,14 @@ def visual_penalty(text: str, i: int, width: int) -> int:
         # A native standalone hyphen occupies a full cell despite its
         # narrow ink. Prefer an allocated boundary pair inside words.
         return 2 if prev.isalpha() or nxt.isalpha() else 0
+    if ch == " ":
+        prev = text[i - 1] if i else ""
+        nxt = text[i + 1] if i + 1 < len(text) else ""
+        # A space of its own is a whole empty cell between two words, which
+        # is the widest hole a line can have; the pairs that carry a space
+        # next to a letter exist precisely to avoid it. Worth more than a
+        # stranded hyphen, so a tie is broken towards spending the hyphen.
+        return 3 if prev.isalpha() and nxt.isalpha() else 0
     return 0
 
 

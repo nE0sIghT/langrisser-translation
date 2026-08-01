@@ -34,23 +34,23 @@
       }
     },
     "ru": {
-      "stamp": "ccbeb126",
+      "stamp": "993589dc",
       "files": {
         "/L5/IMG.DAT": {
-          "sha1": "8317b2f976b88ec7026f72582e8ac65a7a191737",
+          "sha1": "6710042a1c04d26f815c18c0fc48106e1913f572",
           "size": 3233792,
           "stamped": true
         },
         "/L5/SCEN.DAT": {
-          "sha1": "db0d6fd5b0c82973b6d32d16ee328d92e0f7106e",
+          "sha1": "74694781961190a915a1af0a03c07a1349947ea3",
           "size": 23480320
         },
         "/L5/SCEN2.DAT": {
-          "sha1": "6d045dcc4d3e3999c4c8d376c092c38403fd0a9f",
+          "sha1": "bf013151ede9c07f0d9042ff609f8f82111ae71c",
           "size": 23463936
         },
         "/L5/SYSTEM.BIN": {
-          "sha1": "e44dc429d04c417c9d9765bfe0fad1dad10e39aa",
+          "sha1": "32dace799027071c1de6118f64cb10520e7cdf58",
           "size": 98320
         },
         "/SLPS_018.19": {
@@ -58,8 +58,8 @@
           "size": 833536
         },
         "patch.ppf": {
-          "sha1": "5a67491d49634eb19fe3c580c73f2a55feffd5d8",
-          "size": 38839070,
+          "sha1": "13bdea8ebc97e55881cc78db8ece8a24bba27ed9",
+          "size": 38838975,
           "stamped": true
         }
       }

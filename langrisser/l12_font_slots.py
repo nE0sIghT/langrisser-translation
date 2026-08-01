@@ -185,6 +185,10 @@ def main() -> None:
     _, menu_pairs, spacing_pairs, continuity, script_pairs = needed_units(
         texts, forced_pairs=list(lang.forced_pairs or []),
         existing_units=set(taken),
+        # This plane leaves hundreds of slots free after every wanted pair is
+        # placed, so there is nothing to gain by guessing one boundary per
+        # hyphen and living with the gap when the guess is wrong.
+        both_hyphen_boundaries=True,
     )
     ranked: list[str] = []
     for group in (menu_pairs, continuity, spacing_pairs, script_pairs):
