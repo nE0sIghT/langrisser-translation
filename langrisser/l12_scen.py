@@ -31,10 +31,9 @@ import struct
 from dataclasses import dataclass
 from pathlib import Path
 
-from langrisser.font_units import tile_text
 from langrisser.game import add_game_args, game_from_args
 from langrisser.release import add_release_args, release_from_args
-from langrisser.scen import load_charmap_csv, read_chunk_spans
+from langrisser.scen import Codec, load_charmap_csv, read_chunk_spans
 
 SECTOR = 0x800
 TEXT_SECTION = 2
@@ -325,45 +324,31 @@ class Writer:
     draws it.
     """
 
+    # A slot number no plane has, standing in for the space while the codec
+    # tiles. The engine draws a lone space with the blank control rather than
+    # a glyph, but a space inside a pair is an ordinary tile and has to be on
+    # offer as one — those pairs are most of what keeps a line looking packed
+    # instead of spelled out letter by letter.
+    BLANK = 1 << 20
+
     def __init__(self, font: dict[int, str]):
         self.slot_of: dict[str, int] = {}
         for slot, ch in sorted(font.items()):
             self.slot_of.setdefault(ch, slot)
         self.by_name = {name: code for code, (name, _takes) in CONTROLS.items()}
-        self.pairs = max((len(t) for t in self.slot_of), default=1)
-
-    def tile_cost(self, text: str) -> int | None:
-        """Bytes a tile costs, or None if the plane cannot draw it.
-
-        A lone space is not a tile: the engine draws it with the blank
-        control, one byte. A space inside a pair is a tile like any other,
-        and that is the point — a pair that carries the space next to a
-        letter is what keeps a word edge from costing a whole cell.
-        """
-        if text == " ":
-            return 1
-        slot = self.slot_of.get(text)
-        return None if slot is None else len(self.slot_bytes(slot))
-
-    def tile_bytes(self, text: str) -> bytes:
-        if text == " " and text not in self.slot_of:
-            return bytes((self.by_name["blank"],))
-        return self.slot_bytes(self.slot_of[text])
+        # How to cut a line into tiles is Langrisser V's codec, used as it
+        # stands rather than answered a second time: fewest cells, then
+        # best-looking, so a word is never left with one full-width letter
+        # stranded among narrow ones.
+        self.codec = Codec({**font, self.BLANK: " "})
 
     def tile_run(self, text: str) -> bytes:
-        """Encode a run of plain text, tiled the way Langrisser V tiles it.
-
-        Which units exist and what one costs is all this engine contributes:
-        a tile is one or two bytes depending on whether its slot needs a bank
-        escape, and a lone space is the blank control rather than a tile.
-        """
-        pieces = tile_text(text, lambda p: self.tile_cost(p) is not None,
-                           self.tile_cost)
-        if not pieces and text:
-            missing = next(c for c in text
-                           if c != " " and c not in self.slot_of)
-            raise ValueError(f"no slot for {missing!r}")
-        return b"".join(self.tile_bytes(piece) for piece in pieces)
+        """Encode a run of plain text, tiled by Langrisser V's codec."""
+        out = bytearray()
+        for slot in self.codec.encode(text):
+            out += (bytes((self.by_name["blank"],)) if slot == self.BLANK
+                    else self.slot_bytes(slot))
+        return bytes(out)
 
     def slot_bytes(self, slot: int) -> bytes:
         if slot < 0 or slot > BANK_BASE + (BANK_LAST - BANK_FIRST) * BANK_WIDTH + 0xFE:
