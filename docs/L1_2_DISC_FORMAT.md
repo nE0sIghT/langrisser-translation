@@ -245,6 +245,16 @@ Codes `0x01`–`0x09` index a jump table at `0x8001017C`:
 | `0x08` | `0x800167DC` | advances Y by `0x10`, resets X — line break |
 | `0x09` | `0x80016850` | takes one byte; prints string `byte + 2` of part 1 |
 
+The cursor reset performed by `0x07` is caller-dependent. In the opening quiz
+(`LANG1/SCEN.DAT`, chunk 20, part 5), every original internal page continues
+with `0x05 0x08` (`<blank><line>`). Runtime verification shows why: without
+that prefix the page appears blank. Together with the original control pattern,
+this indicates that the first post-page row is outside the visible quiz window;
+the exact caller-side cursor offset has not been disassembled. Other dialogue
+callers begin drawing immediately after `0x07` and must not receive this prefix.
+`l12_rewrap` infers such a prefix from the original records for each chunk/part
+and applies it only when at least two continuations use it consistently.
+
 `0x04` and `0x09` are one mechanism. Both call `0x80015C30(part, number)`, which
 walks `number − 1` NUL-terminated strings from the start of that part and
 returns a pointer; the caller then runs it as a nested stream and restores its
