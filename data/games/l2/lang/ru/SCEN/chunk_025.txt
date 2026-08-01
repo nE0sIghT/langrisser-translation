@@ -1,9 +1,9 @@
 # part 7  2 strings
-0	<blank><line>СЦЕНАРИЙ-<number><line><blank>«Перехват: <name:14>»<wait><page><blank>Отбив корабль у чудовищ,<line><pair> со спутниками взял<line>курс прямо на Вельзерию.<line><blank>Водный путь должен был<line>вскоре привести их к цели.<line><blank>Но тут к их борту подошёл<line>другой корабль.<wait><page><blank>В море вышел Полк Ледяного<line>дракона под началом имперской<line>воеводы <name:14>. Он должен<line>был задержать <pair> и его<line>отряд.<wait><page>УСЛОВИЯ ПОБЕДЫ<line><blank>・Победить <name:14><line><blank><line>УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・Гибель <pair><wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank>「Перехват: <name:14>」<wait><page><blank>Отбив корабль у чудовищ,<line><pair> со спутниками взял<line>курс прямо на Вельзерию.<line><blank>Водный путь должен был<line>вскоре привести их к цели.<line><blank>Но тут к их борту подошёл<line>другой корабль.<wait><page><blank>В море вышел Полк Ледяного<line>дракона под началом имперской<line>воеводы <name:14>. Он должен<line>был задержать <pair> и его<line>отряд.<wait><page>×Условия победы<line><blank>・Победить <name:14><line><blank><line>×Условия поражения<line><blank>・Гибель <pair><wait><page>
 
 # part 6  11 strings
-0	УСЛОВИЯ ПОБЕДЫ
-1	УСЛОВИЯ ПОРАЖЕНИЯ
+0	×Условия победы
+1	×Условия поражения
 2	<blank>・Гибель <pair>
 3	<blank>・Победить <name:14>
 

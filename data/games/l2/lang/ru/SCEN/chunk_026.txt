@@ -1,9 +1,9 @@
 # part 7  4 strings
-0	<blank><line>СЦЕНАРИЙ-<number><line><blank>«Марионетка»<wait><page><blank>Запретная земля Вельзерия -<line>окружённый морем и горами<line>край, где сотни лет назад<line>Потомки Света одолели<line><name:22>а.<wait><page><blank>Проклятая земля, где, по<line>преданию, запечатан бог<line>Хаоса, показалась вдали из-за<line>горизонта.<wait><page><blank>Когда отряд нашёл бухту и<line>попытался высадиться, путь ему<line>преградила управляемая <name:22>ом<line><name:20>.<wait><page>УСЛОВИЯ ПОБЕДЫ<line><blank>・За 16 ходов уничтожить<line><blank><blank>всех врагов<line><blank><line>УСЛОВИЯ ПОРАЖЕНИЯ<line><blank>・Гибель <pair><line><blank>・Ходы закончились<wait><page>
+0	<blank><line><blank><blank>СЦЕНАРИЙ-<number><line><blank><blank><blank><blank><blank>「Марионетка」<wait><page><blank>Запретная земля Вельзерия -<line>окружённый морем и горами<line>край, где сотни лет назад<line>Потомки Света одолели<line><name:22>а.<wait><page><blank>Проклятая земля, где, по<line>преданию, запечатан бог<line>Хаоса, показалась вдали из-за<line>горизонта.<wait><page><blank>Когда отряд нашёл бухту и<line>попытался высадиться, путь ему<line>преградила управляемая <name:22>ом<line><name:20>.<wait><page>×Условия победы<line><blank>・За 16 ходов уничтожить<line><blank><blank>всех врагов<line><blank><line>×Условия поражения<line><blank>・Гибель <pair><line><blank>・Ходы закончились<wait><page>
 
 # part 6  9 strings
-0	УСЛОВИЯ ПОБЕДЫ
-1	УСЛОВИЯ ПОРАЖЕНИЯ
+0	×Условия победы
+1	×Условия поражения
 2	<blank>・Гибель <pair>
 3	<blank>・За 16 ходов
 4	<blank><blank>уничтожить всех врагов
