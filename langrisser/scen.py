@@ -215,7 +215,9 @@ class Codec:
     (lowest) token; all other tokens are emitted as <$XXXX> tags, so
     decode->encode reproduces the original words exactly."""
 
-    def __init__(self, tok2char: dict[int, str]):
+    def __init__(self, tok2char: dict[int, str],
+                 compact_interword_spaces: bool = False):
+        self.compact_interword_spaces = compact_interword_spaces
         self.char2tok: dict[str, int] = {}
         for tok in sorted(tok2char):
             self.char2tok.setdefault(tok2char[tok], tok)
@@ -260,6 +262,10 @@ class Codec:
         return out
 
     def _encode_plain(self, text: str, base_pos: int) -> list[int]:
-        pieces = tile_text(text, lambda p: p in self.char2tok,
-                           base_pos=base_pos)
+        pieces = tile_text(
+            text,
+            lambda p: p in self.char2tok,
+            base_pos=base_pos,
+            compact_interword_spaces=self.compact_interword_spaces,
+        )
         return [self.char2tok[piece] for piece in pieces]

@@ -310,7 +310,8 @@ def caps_run_len(text: str, i: int) -> int:
 
 
 
-def visual_penalty(text: str, i: int, width: int) -> int:
+def visual_penalty(text: str, i: int, width: int,
+                   compact_interword_spaces: bool = False) -> int:
     if width != 1:
         return 0
     ch = text[i]
@@ -331,7 +332,7 @@ def visual_penalty(text: str, i: int, width: int) -> int:
         # A native standalone hyphen occupies a full cell despite its
         # narrow ink. Prefer an allocated boundary pair inside words.
         return 2 if prev.isalpha() or nxt.isalpha() else 0
-    if ch == " ":
+    if ch == " " and compact_interword_spaces:
         prev = text[i - 1] if i else ""
         nxt = text[i + 1] if i + 1 < len(text) else ""
         # A space of its own is a whole empty cell between two words, which
@@ -342,7 +343,8 @@ def visual_penalty(text: str, i: int, width: int) -> int:
     return 0
 
 
-def tile_text(text: str, has_unit, cost=None, base_pos: int = 0) -> list[str]:
+def tile_text(text: str, has_unit, cost=None, base_pos: int = 0,
+              compact_interword_spaces: bool = False) -> list[str]:
     n = len(text)
     if cost is None:
         def cost(piece):
@@ -369,7 +371,8 @@ def tile_text(text: str, has_unit, cost=None, base_pos: int = 0) -> list[str]:
                 continue
             cand = (
                 cost(piece) + tail[0],
-                visual_penalty(text, i, width) + tail[1],
+                visual_penalty(text, i, width, compact_interword_spaces)
+                + tail[1],
                 [tok] + tail[2],
             )
             if best is None or cand[:2] < best[:2]:
@@ -384,4 +387,3 @@ def tile_text(text: str, has_unit, cost=None, base_pos: int = 0) -> list[str]:
                 )
         raise ValueError(f"cannot encode text segment at position {base_pos}")
     return dp[0][2]
-

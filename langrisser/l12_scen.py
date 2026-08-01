@@ -340,7 +340,10 @@ class Writer:
         # stands rather than answered a second time: fewest cells, then
         # best-looking, so a word is never left with one full-width letter
         # stranded among narrow ones.
-        self.codec = Codec({**font, self.BLANK: " "})
+        self.codec = Codec(
+            {**font, self.BLANK: " "},
+            compact_interword_spaces=True,
+        )
 
     def tile_run(self, text: str) -> bytes:
         """Encode a run of plain text, tiled by Langrisser V's codec."""
