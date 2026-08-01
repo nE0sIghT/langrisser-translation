@@ -19,8 +19,12 @@ Cyrillic letter in the middle of it — but those lines are going to be
 translated, and a rare kanji costs one wrong glyph in one line while the tiles
 buy the pairs that decide whether any chunk fits at all.
 
-Existing assignments are kept exactly where they are, because moving a glyph
-rewrites every record that used it.
+Which unit gets which of the chosen slots is worth as much as which slots are
+chosen at all. A slot up to `GLYPH_MAX_SLOT` costs one byte in a record; above
+it the codec opens a bank and spends two. So the table is rebuilt from scratch
+every run and the units the script draws most take the low slots — counting a
+shared-table glyph once per chunk, since that is how many times the disc stores
+it. Nothing is pinned to a slot: every record is re-encoded from this table.
 """
 from __future__ import annotations
 
@@ -30,11 +34,12 @@ import csv
 import re
 from pathlib import Path
 
-from langrisser.font_units import needed_units
+from langrisser.font_units import needed_units, tile_text
 from langrisser.build_font import pick_fonts, render_tile
 from langrisser.game import add_game_args, game_from_args, load_game
 from langrisser.l12_scen import (BANK_BASE, BANK_FIRST, BANK_WIDTH, CONTROLS,
-                                 GLYPH_FIRST, MAX_SLOT, read_chunks)
+                                 GLYPH_FIRST, GLYPH_MAX_SLOT, MAX_SLOT,
+                                 read_chunks)
 from langrisser.l12_sceninsert import read_pack
 from langrisser.project import (add_language_args, language_from_args,
                                 load_language)
@@ -59,6 +64,50 @@ def string_slots(raw: bytes):
             i += 1
         else:
             i += 1
+
+
+def weighted_texts(games: list[str], roots: dict[str, Path]) -> dict[str, list]:
+    """Every translated record and how many times the disc stores it.
+
+    The shared tables are translated once but sit in every chunk of their
+    game, so a glyph they draw is written a hundred times over. Which slot it
+    lands in is worth that much more.
+    """
+    out: dict[str, list[tuple[str, int]]] = {}
+    for game in games:
+        root = roots[game]
+        chunks = len(read_chunks(
+            Path("work", game, "extracted", "SCEN.DAT").read_bytes()))
+        rows: list[tuple[str, int]] = []
+        for pack in sorted(root.glob("*.txt")):
+            times = chunks if pack.name == "shared.txt" else 1
+            rows.extend((text, times) for text in read_pack(pack).values())
+        out[game] = rows
+    return out
+
+
+def draw_counts(units: list[str], weighted: dict[str, list],
+                fullwidth: set[str]) -> collections.Counter:
+    """How often each unit is drawn, tiled the way the writer will tile it."""
+    have = set(units)
+    counts: collections.Counter = collections.Counter()
+    for rows in weighted.values():
+        for text, times in rows:
+            for segment in TAG_RE.split(text):
+                if not segment:
+                    continue
+                try:
+                    pieces = tile_text(
+                        segment, lambda p: p in have,
+                        compact_interword_spaces=True, compact_caps_runs=True,
+                        fullwidth_units=fullwidth)
+                except ValueError:
+                    # A character with no slot yet; it is counted by `wanted`
+                    # and will get one, but this pass cannot tile around it.
+                    continue
+                for piece in pieces:
+                    counts[piece] += times
+    return counts
 
 
 def survey(games: list[str], roots: dict[str, Path]):
@@ -105,11 +154,8 @@ def main() -> None:
     add_game_args(ap, default="l1")
     add_release_args(ap, default="l1-2-ps1-jp")
     ap.add_argument("--font-map", default=None)
-    ap.add_argument("--assignments", default=None,
-                    help="Canonical assignment baseline (default: the pack's).")
     ap.add_argument("--out", default=None,
-                    help="Generated assignment table (default: update the "
-                         "canonical baseline).")
+                    help="Where to write the table (default: the pack's).")
     ap.add_argument(
         "--translation-root", action="append", default=[], metavar="GAME=DIR",
         help="Override one release game's SCEN directory. Repeat for multiple "
@@ -122,9 +168,7 @@ def main() -> None:
     release = release_from_args(args, platform="ps1")
     lang = language_from_args(args)
     font = load_charmap_csv(Path(args.font_map) if args.font_map else game.font_map)
-    assignments = (Path(args.assignments) if args.assignments
-                   else lang.font_assignments)
-    out = Path(args.out) if args.out else assignments
+    out = Path(args.out) if args.out else lang.font_assignments
 
     games = sorted(release.games) if hasattr(release, "games") else [game.code]
     roots = {
@@ -147,6 +191,7 @@ def main() -> None:
         if not root.is_dir():
             raise SystemExit(f"{code} translation root is not a directory: {root}")
     still, ever, wanted = survey(games, roots)
+    weighted = weighted_texts(games, roots)
 
     # A pair has to fit one cell at a 6px pitch. Fullwidth characters do not,
     # and the text does carry a few — the scenario number is drawn in them —
@@ -162,18 +207,6 @@ def main() -> None:
     have = {ch for ch in font.values() if ch}
     kept: dict[int, tuple[str, str]] = {}
     taken: dict[str, int] = {}
-    if assignments.exists():
-        for row in csv.DictReader(assignments.open(encoding="utf-8")):
-            slot, ch = int(row["index_dec"]), row["char"]
-            # Single characters keep their slot; the text cannot be written
-            # without them and their identity never changes. Pairs are chosen
-            # again from scratch every build, because which ones are worth a
-            # slot depends on the whole corpus and that grows with every
-            # scenario. Nothing is pinned to them: every record the pack
-            # carries is re-encoded here anyway.
-            if len(ch) == 1 and slot <= MAX_SLOT and packable(ch):
-                kept[slot] = (ch, row.get("replaced_char") or "")
-                taken[ch] = slot
 
     need = sorted(ch for ch in wanted if ch not in have and ch not in taken)
 
@@ -193,19 +226,6 @@ def main() -> None:
             f"{len(need)} characters need slots but only {len(free)} are free; "
             f"translate more chunks to release kanji, or cut characters")
 
-    for ch, slot in zip(need, free):
-        kept[slot] = (ch, font.get(slot) or "")
-
-    # A single character's slot is a promise: it is kept where the baseline put
-    # it so that no record has to be rewritten. New ones only keep that promise
-    # once they are written back, so a build that discovers them and leaves the
-    # baseline alone has to say so rather than silently pin them to whatever
-    # the next run happens to pick.
-    if need and out != assignments:
-        print(f"   note: {len(need)} character(s) took a slot for the first "
-              f"time ({''.join(need)}); re-run without --out to pin them in "
-              f"{assignments}")
-
     # Whatever is left goes to the two-letter tiles. These are not optional
     # decoration: one letter per cell makes a Russian line twice the width of
     # the Japanese it replaces, and doubles what it costs in bytes.
@@ -216,11 +236,10 @@ def main() -> None:
     # ways to tile — so a word can end up with one full-width letter stranded
     # in the middle of narrow ones. Continuity pairs are chosen to prevent
     # exactly that and therefore come first.
-    spare = free[len(need):]
     texts: list[str] = []
-    for code in games:
-        for pack in sorted(roots[code].glob("*.txt")):
-            texts.extend(TAG_RE.sub(" ", t) for t in read_pack(pack).values())
+    for code, weight in weighted.items():
+        for text, _times in weight:
+            texts.append(TAG_RE.sub(" ", text))
     _, menu_pairs, spacing_pairs, continuity, script_pairs = needed_units(
         texts, forced_pairs=list(lang.forced_pairs or []),
         existing_units=set(taken),
@@ -241,18 +260,30 @@ def main() -> None:
                   if len(p) == 2 and p not in taken and p not in seen
                   and p not in fullwidth
                   and not seen.add(p) and packable(p)]
-    added_pairs = 0
-    for pair, slot in zip(want_pairs, spare):
-        kept[slot] = (pair, font.get(slot) or "")
-        added_pairs += 1
+    # Which units get which of the chosen slots is worth as much as which
+    # slots are chosen. A slot up to `GLYPH_MAX_SLOT` is one byte in a record;
+    # above it the codec has to open a bank and spend two. So the units the
+    # script actually draws most go lowest, and a unit that appears in a shared
+    # table counts once per chunk, because that is how many times it is stored.
+    units = need + want_pairs[:len(free) - len(need)]
+    drawn = draw_counts(units, weighted, set(lang.fullwidth_units))
+    order = sorted(units, key=lambda u: (-drawn[u], u))
+    slots = sorted(free[:len(units)])
+    for unit, slot in zip(order, slots):
+        kept[slot] = (unit, font.get(slot) or "")
+    added_pairs = len(units) - len(need)
+    cost = sum(drawn[u] * (1 if s <= GLYPH_MAX_SLOT else 2)
+               for u, s in zip(order, slots))
 
     rows = [{"index_dec": slot, "char": ch, "replaced_char": was}
             for slot, (ch, was) in sorted(kept.items())]
     print(f"{game.code}+{','.join(games)}/{lang.code}: {len(rows)} slots assigned "
-          f"({len(need)} new singles, {added_pairs} pairs of {len(want_pairs)} wanted), "
-          f"{len(free) - len(need) - added_pairs} still free "
+          f"({len(need)} singles, {added_pairs} pairs of {len(want_pairs)} wanted), "
+          f"{len(free) - len(units)} still free "
           f"(ceiling {MAX_SLOT}, {len(still)} slots still Japanese, "
-          f"{sum(1 for s in kept if still[s])} of them taken)")
+          f"{sum(1 for s in kept if still[s])} of them taken); "
+          f"{sum(1 for s in slots if s <= GLYPH_MAX_SLOT)} units are one byte, "
+          f"the script draws {cost} bytes of glyphs")
     if args.dry_run:
         for row in rows if args.dry_run and False else []:
             print(f"   {row['index_dec']:5} {row['char']} <- {row['replaced_char'] or '(blank)'}")

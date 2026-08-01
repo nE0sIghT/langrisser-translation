@@ -79,13 +79,12 @@ def main() -> None:
             raise SystemExit(f"{code} translation root is not a directory: {root}")
 
     # One generated table for the disc: the plane is shared, so a slot spent on
-    # one game is spent on the other. Start from the durable baseline but never
-    # rewrite it during an ordinary build.
+    # one game is spent on the other. Written here rather than over the pack's
+    # copy, so an ordinary build leaves the tree alone.
     build_assignments = build / SLOT_TABLE.format(suffix=lang.suffix)
     slot_args: list[object] = [
         "-m", "langrisser.l12_font_slots",
         "--lang", args.lang, "--game", games[0], "--release", release.code,
-        "--assignments", lang.font_assignments,
         "--out", build_assignments,
     ]
     for code in games:

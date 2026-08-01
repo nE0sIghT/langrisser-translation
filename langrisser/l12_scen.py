@@ -326,9 +326,9 @@ def slot_table(explicit, lang, release) -> Path:
     is an error and not a default.
 
     The table the last build generated wins, because that is the plane the disc
-    draws with. The pack's own is only a baseline of pinned single characters —
-    it holds a glyph still where it was, but it lags the corpus by design, and
-    measuring against it would measure a plane nobody ships.
+    draws with. The pack's own copy is the one `l12_font_slots` leaves behind
+    when run on its own; it lags whenever the corpus has grown since, and
+    measuring against it would measure a plane nobody is shipping.
     """
     generated = release.build_root / SLOT_TABLE.format(suffix=lang.suffix)
     for candidate in (explicit, generated, lang.font_assignments):
