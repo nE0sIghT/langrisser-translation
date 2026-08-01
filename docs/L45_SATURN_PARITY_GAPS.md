@@ -21,14 +21,14 @@ release flow also patches them.
 | --- | --- | --- | --- | --- | --- |
 | Source extraction | `iso_mode2.py` extracts PS1 files to `work/l5/extracted/` | `saturn_disc.py extract` extracts Saturn files to `work/l5/build/saturn/` | Partial | Saturn extraction exists, but there is no single Saturn equivalent to the PS1 release/extract bootstrap. | Add a Saturn extraction/bootstrap command or document the required extraction set in one release/build script. |
 | No-edit roundtrip | `langrisser/verify_roundtrip.py` covers PS1 SCEN/SYSTEM no-edit paths | SCEN no-edit model is documented; SYSTEM and graphics have individual tooling | Partial | Roundtrip proofs are split across tools/docs instead of one mandatory build gate. | Add a Saturn no-edit verification driver that calls the existing per-container checks. |
-| Font slots | `langrisser/assign_font_slots.py` -> generated assignments -> `langrisser/build_font.py` | Saturn build now runs the same generated-assignment stage, then writes `SYSTEM.DAT` glyphs | Implemented | The shared assignment stage uses the PS1 common source and a Saturn build-copy table. | Keep platform-specific SYSTEM overlays sparse; extend allocator source handling only when real Saturn-only strings are added. |
-| SCEN text | `langrisser/sceninsert.py --fixed-size-repack` writes all PS1 SCEN/SCEN2 text | `langrisser/saturn_apply.py` writes Saturn `SCEN.DAT` field_3c pools through strict platform mapping | Implemented (`125/131` translated, 6 service preserved) | Saturn entry-order/content deltas are fully represented in `data/releases/l5-saturn-jp/scen_mapping.json`. | Keep future Saturn-only deltas as sparse platform overlays; strict mode must stay green. |
+| Font slots | `langrisser/assign_font_slots.py` -> generated assignments -> `langrisser/build_font.py` | Saturn runs the same stages with its own usage scan, native-glyph exclusions and build-copy table | Implemented | Common text plus Saturn SCEN/SYSTEM overlays feed the allocator; only the container write is platform-specific. | Keep future platform overlays in the same input set and strict builds green. |
+| SCEN text | `langrisser/sceninsert.py --fixed-size-repack` writes all PS1 SCEN/SCEN2 text | `langrisser/saturn_apply.py` writes Saturn `SCEN.DAT` field_3c pools through strict platform mapping | Implemented (`131/131`) | Every block is mapped; three control-only `F702` records in chunk 38 are explicitly preserved as non-text. | Keep future Saturn-only deltas as sparse platform overlays; strict mode must stay green. |
 | SYSTEM text | `langrisser/system_dump.py` -> resolver -> reflow -> strict `langrisser/system_pack.py --repack` | `langrisser/saturn_system_pack.py` packs all Saturn groups through explicit platform mapping | Implemented (`16/16`) | Saturn-only RAM/save strings and compact Saturn-only class labels are stored as sparse overlays. | Add runtime review rows if any Saturn-only SYSTEM string needs wording changes. |
 | Build-copy wrapping | PS1 build rewraps `work/l5/build/translation.<lang>/` with the exact generated `.tbl` | Saturn build rewraps `work/l5/build/translation.<lang>.saturn/` with the Saturn `.tbl` | Implemented | The tracked language pack is never rewritten. | None. |
-| Translation validation | PS1 build validates control words, encodability and budgets under exact `.tbl` | Saturn build validates the same generated translation copy under the Saturn `.tbl` | Implemented for current data | No populated sparse SCEN override chunks exist yet. | Add validation for sparse Saturn override chunks when they are populated. |
+| Translation validation | PS1 build validates control words, encodability and budgets under exact `.tbl` | Saturn normalizes common and release-specific SCEN text into one build copy, then validates it under the Saturn `.tbl` | Implemented | The populated Saturn SCEN overlays pass through the same validation copy that is inserted. | Keep future overlays on this path. |
 | SYSTEM UI validation | `langrisser/validate_system_ui.py` checks atlas rows and fixed-width fields | Saturn build runs the common PS1 SYSTEM UI validator after applying sparse Saturn overlays | Implemented for current data | No runtime-only Saturn UI geometry issue is known. | Add Saturn-specific constraints only if runtime proves a different geometry. |
 | Name-entry screen | `langrisser/patch_name_entry.py` patches SYSTEM grid and PS1 executable input table | `saturn_name_entry.py` patches two tables in `SYSTEM.DAT` | Static implemented | Display and input tables are located; runtime cursor / OK / cancel behaviour still needs confirmation. | Runtime-check only those behaviours. If it passes, treat the adapter as parity-complete. |
-| Title credits | `langrisser/imgdat.py title-credits` patches IMG.DAT title assets | `saturn_title_credits.py` patches `TITLE1.DAT` | Implemented | None known for parity; platform container differs. | Keep shared text rendering in common code; keep only detile/retile in Saturn adapter. |
+| Title credits | `langrisser/imgdat.py title-credits` patches IMG.DAT title assets | `saturn_title_credits.py` patches `TITLE1.DAT` and `TITLE2.DAT` | Implemented | None known for parity; platform container differs. | Keep shared text rendering in common code; keep only detile/retile in Saturn adapter. |
 | Prologue poem | `langrisser/poem_translate.py` patches IMG.DAT poem assets using shared renderer | `saturn_poem_translate.py` patches `OPEN.DAT[2]` using shared renderer | Implemented | None known for parity; platform container differs. | Keep shared renderer; keep run-atlas packing Saturn-specific. |
 | Scenario-clear banner | `langrisser/scenario_clear.py` patches IMG.DAT asset 9 using shared banner renderer | `saturn_scenario_clear.py` patches `CLEAR.DAT` | Implemented | None known for parity; platform container differs. | Keep shared banner renderer; keep CLUT/texture container Saturn-specific. |
 | Now Loading plate | `langrisser/now_loading.py` patches IMG.DAT asset 0 | `saturn_now_loading.py` patches a compressed `SYSTEM.DAT` stream | Static implemented, runtime pending | The codec round-trips and fits, but the edited stream has not been runtime-confirmed after the latest review. | User runtime-checks the translated plate. If it does not appear, locate the alternate source/cache path before changing docs to "done". |
@@ -37,11 +37,12 @@ release flow also patches them.
 
 ## SCEN Divergence Report
 
-The strict Saturn mapper now covers every translatable Saturn `SCEN.DAT` text
-entry. It applies 125 translated blocks, explicitly preserves the 6 known
-service/name-pool blocks, and leaves no unresolved chunks in
-`data/releases/l5-saturn-jp/scen_mapping.json`. No Japanese source text is stored in
-the mapping file.
+The strict Saturn mapper covers all 131 Saturn `SCEN.DAT` blocks and leaves no
+unresolved chunks in `data/releases/l5-saturn-jp/scen_mapping.json`. The six
+party-name pools once treated as Saturn-only service blocks are ordinary common
+chunks now that both PS1 and Saturn builds translate them. Only three non-text
+`F702` command records in chunk 38 are explicitly preserved. No Japanese source
+text is stored in the mapping file.
 
 Resolved mapping classes:
 
@@ -52,16 +53,16 @@ Resolved mapping classes:
 | PS1-only deletion deltas | `0`, `10`, `11`, `17`, `20`, `22`, `24`, `27`, `29`, `34`, `40`, `80` | Explicit range maps skip records present only in the PS1 script. |
 | Local reorder/source-revision deltas | `4`, `16`, `19`, `21`, `25`, `26`, `28`, `30`, `31`, `32`, `33`, `35`, `38` | Explicit durable `saturn -> ps1` ranges/entries, plus `preserve` for verified service entries. |
 
-Service chunks that are intentionally not language-pack chunks:
+Former service chunks, now translated through the common language pack:
 
 | Chunk | Saturn entries | PS1 records | Current state | Action |
 | ---: | ---: | ---: | --- | --- |
-| 43 | 8 | 8 | Name-pool/dummy block: Sigma, Lambda, Clarett, Alfred, Brenda, Lanford Marshal, two bullet terminators. | Listed in `empty_chunks`; preserved. |
-| 44 | 8 | 8 | Same service block. | Listed in `empty_chunks`; preserved. |
-| 81 | 8 | 8 | Same service block. | Listed in `empty_chunks`; preserved. |
-| 123 | 8 | 8 | Same service block. | Listed in `empty_chunks`; preserved. |
-| 127 | 8 | 8 | Same service block. | Listed in `empty_chunks`; preserved. |
-| 128 | 8 | 8 | Same service block. | Listed in `empty_chunks`; preserved. |
+| 43 | 8 | 8 | Name pool: Sigma, Lambda, Clarett, Alfred, Brenda, Lanford Marshal, two bullet terminators. | Proved 1:1 and translated from the common chunk. |
+| 44 | 8 | 8 | Same name-pool structure. | Proved 1:1 and translated from the common chunk. |
+| 81 | 8 | 8 | Same name-pool structure. | Proved 1:1 and translated from the common chunk. |
+| 123 | 8 | 8 | Same name-pool structure. | Proved 1:1 and translated from the common chunk. |
+| 127 | 8 | 8 | Same name-pool structure. | Proved 1:1 and translated from the common chunk. |
+| 128 | 8 | 8 | Same name-pool structure. | Proved 1:1 and translated from the common chunk. |
 
 ## SYSTEM Divergence Report
 
@@ -83,8 +84,8 @@ These are analysis findings, not implementation steps already taken.
 
 | Area | Current state | Gap | Target shape |
 | --- | --- | --- | --- |
-| Font assignment | Both PS1 and Saturn builds generate build-copy assignments. | Saturn-only overlay strings are not yet fed into assignment source. | Add platform overlay source handling when real overrides are populated. |
-| Rewrap/validate | Both PS1 and Saturn builds rewrap/validate build copies with the exact generated table. | Sparse platform override chunks are not yet validated because none are populated. | Validate platform override chunks when added. |
+| Font assignment | Both PS1 and Saturn builds generate build-copy assignments; Saturn includes release SCEN/SYSTEM overlays and release-native slot usage. | No current parity gap. | Keep platform inputs explicit when new overlays are added. |
+| Rewrap/validate | Both PS1 and Saturn builds rewrap/validate build copies with the exact generated table; Saturn applies release overrides before those stages. | No current parity gap. | Keep all release text in the normalized build copy. |
 | SYSTEM resolving | Saturn build regenerates the PS1 common SYSTEM source/resolved map before packing. | Implemented for current known Saturn SYSTEM deltas. | Extend `data/releases/l5-saturn-jp/system_mapping.json` only if new Saturn-only SYSTEM strings are identified. |
 | Graphics rendering | Title, poem, clear and Now Loading already reuse several render cores. | Container adapters still import PS1 image helpers directly in places. | Keep rendering/palette helpers common; keep only container decode/encode per platform. |
 | Release | PS1 has `release.sh`; Saturn has build-script remastered BIN/CUE output but no release package. | No reproducible xdelta artifact. | Add Saturn release mode after runtime smoke test; use xdelta as the binary patch format. |
@@ -102,8 +103,9 @@ Required analysis before changing release shape away from remastering:
    gaps are resolved.
 2. Check whether Saturn `SCEN.DAT` has enough internal padding / reallocatable
    block space for a fixed-size file-level repack.
-3. Check whether `SYSTEM.DAT`, `TITLE1.DAT`, `OPEN.DAT`, `CLEAR.DAT` and the Now
-   Loading stream stay fixed-size after final parity changes.
+3. Measure whether the currently appended TITLE cells and OPEN poem atlas can
+   be packed into original container slack; SYSTEM, CLEAR and Now Loading are
+   already fixed-size.
 4. If all edited files can stay fixed-size, emit xdelta for the `.bin` and keep
    the original `.cue`.
 5. If `SCEN.DAT` must grow, emit xdelta for the remastered `.bin` and distribute

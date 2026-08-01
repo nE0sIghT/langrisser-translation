@@ -77,16 +77,17 @@ python3 -m langrisser.saturn_build --lang ru \
 The stages, all reusing shared logic:
 
 - `langrisser.build_font` writes the Cyrillic alphabet into `SYSTEM.DAT` glyph slots
-  `0..1820` (text region untouched) and emits the `.tbl`.
+  `0..1819` (text region untouched) and emits the `.tbl`; slot 1820 crosses
+  the group-pointer directory.
 - `langrisser.saturn_system_pack` rebuilds the SYSTEM UI groups with the translated
   text via the shared group model (BE), using
   `data/releases/l5-saturn-jp/system_mapping.json` for direct PS1 ids, sparse
   platform overlays, and verified preserved entries. It packs all 16/16 groups.
 - `langrisser.saturn_apply` inserts translated scenario text through
-  `data/releases/l5-saturn-jp/scen_mapping.json`: 125/131 SCEN blocks are translated,
-  and the 6 service/name-pool blocks are explicitly preserved.
+  `data/releases/l5-saturn-jp/scen_mapping.json`: all 131 SCEN blocks are mapped
+  and applied; only three control-only `F702` records are preserved as non-text.
 - Graphic steps run when the corresponding Saturn files are extracted:
-  `CLEAR.DAT` scenario-clear banner, `TITLE1.DAT` title credits, and
+  `CLEAR.DAT` scenario-clear banner, `TITLE1.DAT`/`TITLE2.DAT` title credits, and
   `OPEN.DAT[2]` prologue poem. The `Now Loading` plate is part of
   `SYSTEM.DAT`, so it is patched immediately after the SYSTEM text packer.
 - With `--remaster-disc`, the build writes a translated mixed-mode BIN/CUE under
@@ -844,7 +845,7 @@ separate decoder; the container directory, descriptor `width x height` fields,
 two consecutive 256-colour CLUTs, and VDP2 8x8 cell images are the confirmed
 starting points.
 
-Further findings (still not a working decoder):
+Implemented format details:
 
 - The `TITLE1.DAT` pixel payload is **uncompressed** (entropy ~6.1 bits/byte,
   exactly 256 distinct byte values) — not LZH/CPK packed like
@@ -862,10 +863,12 @@ Further findings (still not a working decoder):
   `+0x00`. Entries are BE `u16`: char index in bits 0..11, flip bits 14..15
   (overlay), palette bit 12 (background). The overlay's uniform filler tile is
   its transparent pixel value (255 on `TITLE1`, 254 on `TITLE2`).
-  `saturn_title_credits.py` stamps the credit lines into background cells that
-  are referenced exactly once (the store has only 2 free cells, so nothing can
-  be allocated); staff/cast full-art screens may need different cell-column
-  counts or their own nametable handling.
+  `saturn_title_credits.py` stamps the credit lines and QR code into the
+  hi-res overlay. A changed non-filler cell referenced exactly once is edited
+  in place; each changed filler position gets a newly appended cell and an
+  updated pattern-name entry. Because the cell store is the last sub-asset,
+  the editor grows it and updates its TOC size. Staff/cast full-art screens may
+  need different cell-column counts or their own nametable handling.
 - `CLEAR.DAT` (the SCENARIO CLEAR banner) is now decoded — see below.
 
 ### Multi-asset container format (the "one file" model, like PS1 `IMG.DAT`)
@@ -954,20 +957,15 @@ verified to be the same red shades in the Saturn CLUT). This cross-validates
 that both platforms share the poem art style, although Saturn stores it as VDP1
 runs rather than a PS1 bitmap.
 
-`langrisser/saturn_poem_translate.py` re-encodes this sub-asset fixed-size. It
+`langrisser/saturn_poem_translate.py` re-encodes this sub-asset by extending the
+last `OPEN.DAT` entry. It
 uses the shared `langrisser/poem_render.py` renderer (same text loading, palette
 indices, centering, line stamps and vertical layout as PS1), then packs the
-320x768 indexed canvas as VDP1 runs, writes a new run table, and pads unused
-run-table/atlas space. The output `OPEN.<lang>.DAT` preserves the original
-`OPEN.DAT` length and the sub-asset length.
-
-The renderer is shared, but the current Saturn backend uses smaller render
-parameters (`font=10`, `line_height=14`) because PS1's `font=12`,
-`line_height=18` overflows the fixed `0x12880` run atlas with one run per line
-(RU: `0x19128`, EN: `0x17840`). Current settings fit (RU: 40 runs,
-`0x12128/0x12880`; EN: 39 runs, `0x10290/0x12880`). A future closer visual match
-can split lines into smaller fragments or otherwise improve packing, without
-changing the shared renderer.
+320x768 indexed canvas as VDP1 runs, writes a new run table and atlas, updates
+the entry header and top-level TOC size, and grows `OPEN.<lang>.DAT` as needed.
+The current build uses the PS1-parity metrics (`font=12`, `line_height=18`): EN
+uses 39 runs and a `0x17840`-byte atlas; RU uses 38 runs and a `0x19128`-byte
+atlas.
 
 ### `CLEAR.DAT` (SCENARIO CLEAR) — decoded and translated
 
@@ -1111,7 +1109,7 @@ Honest status of applying the universal language pack to Saturn, by asset:
 
 | Translation asset (README) | PS1 | Saturn |
 | --- | --- | --- |
-| SCEN scenario/dialogue text | done | done — strict pipeline translates 125/131 blocks through `data/releases/l5-saturn-jp/scen_mapping.json`; 6 service/name-pool chunks are explicitly preserved |
+| SCEN scenario/dialogue text | done | done — strict pipeline maps and applies 131/131 blocks through `data/releases/l5-saturn-jp/scen_mapping.json`; three control-only `F702` records are explicitly preserved as non-text |
 | SYSTEM UI text | done | strict pipeline — 16/16 groups pack through `data/releases/l5-saturn-jp/system_mapping.json`; Saturn-only RAM/save strings live in sparse language overlays |
 | Font glyphs | done | done — Cyrillic into `SYSTEM.DAT` slots 0..1819 (slot 1820 would cross the `0x8000` pointer directory); needed native symbols remapped onto the real Saturn slots via the glyph plan |
 | Title credits graphic | done | **done** — `saturn_title_credits.py` stamps the PS1 credit lines (same `title_text_mask`/`title_alpha_table` pipeline, masks doubled for the 640-wide hi-res plane) onto the *overlay* tilemap of `TITLE1.DAT`/`TITLE2.DAT` with a transparent background (the 40x28 background plane doubles as the menu backdrop and must stay clean); each filler position gets a new cell appended to the cell store (last sub-asset, TOC size updated) |
@@ -1128,9 +1126,10 @@ boot/playback.
 ## Insertion / Repack Model
 
 Applying the Saturn translation is a fixed-size rebuild when a structure fits,
-and a grown remaster when translated `SCEN.DAT` needs more space. SYSTEM and the
-known graphics stay fixed-size; SCEN text tables can be appended inside their
-own block and the disc can be remastered with shifted track indices.
+and a grown remaster when an edited container needs more space. SYSTEM, CLEAR
+and Now Loading stay fixed-size. SCEN can append translated text inside rebuilt
+blocks; TITLE appends overlay cells; OPEN appends the translated poem atlas.
+The disc remaster relocates every grown file and shifts track indices.
 
 ### SCEN scenario text — proven
 
@@ -1239,8 +1238,8 @@ container differ. `langrisser/saturn_apply.py` reuses the PS1 dump
 (`parse_dump_file`), codec (`Codec`) and `.tbl` unchanged. Platform is therefore
 a build-time choice, not a property of the pack. Automatic prefix/signature
 alignment covers structurally identical chunks; explicit durable mappings cover
-PS1-only deletions and Saturn local reorders. On the current packs it translates
-125/131 blocks and explicitly preserves the 6 service chunks.
+PS1-only deletions and Saturn local reorders. On the current packs it maps and
+applies all 131 blocks and explicitly preserves three control-only records.
 
 ### SYSTEM UI text — same offset-table repack
 
@@ -1254,7 +1253,7 @@ long as string indices and group layout are preserved.
 
 ### Font — slot rewrite
 
-Cyrillic glyphs are drawn into `SYSTEM.DAT` glyph slots `0..1820` (same
+Cyrillic glyphs are drawn into `SYSTEM.DAT` glyph slots `0..1819` (same
 12x12x18 format as PS1), so `langrisser/build_font.py`'s slot-rewrite ports directly;
 only the glyph-plane file offset differs.
 
@@ -1324,7 +1323,7 @@ Reusable with little conceptual risk:
   PS1 groups 1:1, so both text stores port from the existing translation.
 - The slot-rewrite font builder (`langrisser/build_font.py`): the Saturn font is the
   same 12x12x18 PS1 format in `SYSTEM.DAT`, so drawing the target alphabet into
-  slots `0..1820` ports directly.
+  writable slots `0..1819` ports directly.
 
 Partially reusable after platform adaptation:
 
@@ -1376,10 +1375,10 @@ for text.
 - [x] Confirm the Saturn dialogue/control-word grammar (matches PS1 model).
 - [x] Characterize the Saturn glyph map vs PS1 (kana identical, kanji reordered).
 - [x] Classify the Saturn font storage and renderer cell model (`SYSTEM.DAT`, 12x12x18, PS1-compatible).
-- [ ] Build the Saturn-specific kanji table (only needed to fully read JP kanji).
+- [x] Build the Saturn-specific kanji table (`kanji_map.csv`) for the reordered bank.
 - [x] Decode at least one Saturn title/bitmap container.
 - [x] Decode and translate the `CLEAR.DAT` scenario-clear banner.
-- [x] Decode and stamp the `TITLE1.DAT` title credits.
+- [x] Decode and stamp the `TITLE1.DAT` and `TITLE2.DAT` title credits.
 - [x] Decode and translate the `OPEN.DAT[2]` prologue poem run-atlas.
 - [x] Decode and translate the compressed `SYSTEM.DAT` Now Loading plate.
 - [x] Locate and patch the Saturn name-entry display grid and input table.
@@ -1426,24 +1425,21 @@ for text.
 | Saturn title/OPEN/CAST/STAFF `.DAT` files are PS1 `IMG.DAT` records. | Rejected | They use separate swapped-word/on-disc BE directory-like headers and different payload layout. |
 | Saturn title assets store a descriptor block with `width x height` fields plus a pixel payload. | Confirmed | `TITLE1.DAT` entry-0 descriptor holds `80x28`/`40x28` dims and payload sub-offsets; the top-level TOC splits descriptor sub-assets from image sub-assets. |
 | The Saturn title pixel payload is 16bpp RGB555 direct colour. | Rejected | The apparent `u16` gradients are CLUT bytes. Rendering the payload as 8bpp indices through the descriptor's image CLUT reconstructs coherent art; 16bpp direct-colour rendering is noise. |
-| Saturn title/open/cast/staff large image payloads are VDP2 8x8 cell streams. | Confirmed | `saturn_container.py` de-tiles 8bpp cells; `saturn_title_credits.py` re-tiles the modified title-credit image fixed-size. |
+| Saturn title/open/cast/staff large image payloads are VDP2 8x8 cell streams. | Confirmed | `saturn_container.py` de-tiles 8bpp cells; `saturn_title_credits.py` edits uniquely referenced cells and appends cells for changed filler positions, updating the last sub-asset size. |
 | The prologue poem `OPEN.DAT[2]` run table uses direct byte offsets and pixel widths. | Rejected | `srca` and `width` looked tiny under that reading. Re-reading them as VDP1 units (`srca * 8`, `width_units * 8`) accounts for all 50 runs and exactly consumes the `0x12880` atlas. |
-| The prologue poem `OPEN.DAT[2]` is a fixed VDP1 run-atlas image. | Confirmed | Header geometry is 320x768; run table entries are `(x, y, srca_units, width_units/height)`; all original runs are consecutive in atlas space; `saturn_poem_translate.py` re-packs translated poems fixed-size. |
+| The prologue poem `OPEN.DAT[2]` is a VDP1 run-atlas image. | Confirmed | Header geometry is 320x768; run table entries are `(x, y, srca_units, width_units/height)`; all original runs are consecutive in atlas space; `saturn_poem_translate.py` re-packs the atlas and grows the last sub-asset when needed. |
 | The Now Loading plate is only embedded in resident SH-2 code/data. | Rejected | Runtime tracing found the compressed stream in `SYSTEM.DAT+0x19E30`, loaded at `0x00219E30`; `PROG1` passes it to the decoder at `0x06082CAE`. |
 | The Saturn Now Loading plate can be decoded and re-encoded fixed-size. | Confirmed | `saturn_now_loading.py` decodes `SYSTEM.DAT+0x18000/+0x19E30` to the 120x32 VDP1 texture, redraws the visible 120x28 through the PS1 plate routine, and re-encodes the RU stream as `1928/1937` bytes. |
 | The Saturn name-entry screen uses a PS1-style executable 10x10 table. | Rejected | Full PS1 row-layout patterns do not occur in `A0LANG5.BIN`, `PROG1.BIN` or `PROG2.BIN`; only the two full tables in `SYSTEM.DAT` match. |
 | The Saturn name-entry grid and input list can be patched in `SYSTEM.DAT`. | Confirmed statically | `saturn_name_entry.py` verifies and rewrites the full display grid at `0x08CE6` and flat input table at `0x1B6E0` using target-language single glyph tokens. |
 | Saturn translated files can be remastered into a mixed-mode BIN/CUE. | Confirmed structurally | `saturn_disc.py remaster` relocates grown `SCEN.DAT`, shifts track 2+ cue times and ADPCM directory extents, rebuilds MODE1 EDC/ECC, and extracted replacements compare byte-identical to build outputs. |
 | Some Saturn/PS1 SCEN count deltas can be aligned without manual maps. | Confirmed narrowly | Three chunks have a unique exact subsequence match when comparing only platform-stable JP tokens (kana/ASCII/punctuation/control words). `langrisser/saturn_apply.py` applies only those unique matches and leaves ambiguous cases to explicit `scen_mapping.json` entries. |
-| All current Saturn/PS1 SCEN text deltas are covered by durable mapping. | Confirmed | Strict EN/RU Saturn builds translate 125/131 SCEN blocks, preserve the 6 verified service/name-pool chunks, and report `skipped(misaligned)=0`. |
+| All current Saturn/PS1 SCEN text deltas are covered by durable mapping. | Confirmed | Strict EN/RU Saturn builds map and apply 131/131 SCEN blocks; only three control-only `F702` records in chunk 38 are preserved as non-text. |
 
 ### Immediate Next Steps
 
 1. Runtime-check the Saturn name-entry screen/cursor/OK behavior.
 2. Runtime-check the remastered Saturn BIN/CUE.
-3. Build the Saturn-specific kanji table by aligning Saturn entries with matched
-   PS1 records, so JP kanji reads cleanly (optional: structural alignment already
-   works without it).
 
 ## Next Reverse-Engineering Plan
 
@@ -1475,10 +1471,10 @@ Completed:
   - fixed-size/grown `SCEN.DAT` block repack;
   - `SYSTEM.DAT` UI string packer;
   - shared font builder for Saturn glyph plane;
-  - Saturn build driver for SYSTEM/SCEN/CLEAR/TITLE1/OPEN.
+  - Saturn build driver for SYSTEM/SCEN/CLEAR/TITLE1/TITLE2/OPEN.
 - Saturn graphics:
   - `CLEAR.DAT` scenario-clear banner decoded and redrawn;
-  - `TITLE1.DAT` title-credit image decoded and stamped;
+  - `TITLE1.DAT` and `TITLE2.DAT` title-credit images decoded and stamped;
   - `OPEN.DAT[2]` prologue poem run-atlas decoded and re-packed.
   - `SYSTEM.DAT` compressed Now Loading plate decoded and re-packed.
 
@@ -1486,9 +1482,8 @@ Next:
 
 1. Runtime-check the Saturn name-entry screen and cursor/OK behavior.
 2. Runtime-check the remastered Saturn BIN/CUE.
-3. Optional cleanup:
-   - build a Saturn-specific kanji table by aligning matched PS1/Saturn records;
-   - finish staff/cast bitmap parity if needed for release polish.
+3. Optional cleanup: finish staff/cast bitmap parity if needed for release
+   polish.
 
 ## Open Questions
 
@@ -1501,17 +1496,18 @@ Resolved for the translation text path:
 
 Resolved for the font/render path:
 
-- `SYSTEM.DAT` owns the text font (12x12x18, glyph at `index*18`, PS1-compatible
-  slots `0..1820`); `WD_FONT.BIN` is dither/window pattern data. SCEN dialogue
+- `SYSTEM.DAT` owns the text font (12x12x18, glyph at `index*18`, writable
+  slots `0..1819`); `WD_FONT.BIN` is dither/window pattern data. SCEN dialogue
   and SYSTEM UI share this one plane. The slot-rewrite font builder is portable.
 - `SYSTEM.DAT` UI strings can be packed by the shared group model using the
   Saturn swapped/on-disc word order.
 
 Resolved for the current graphic path:
 
-- `CLEAR.DAT`, `TITLE1.DAT` title credits, `OPEN.DAT[2]` prologue poem, and the
-  compressed `SYSTEM.DAT` Now Loading plate are decoded and re-encodable
-  fixed-size.
+- `CLEAR.DAT`, `TITLE1.DAT`/`TITLE2.DAT` title credits, `OPEN.DAT[2]` prologue
+  poem, and the compressed `SYSTEM.DAT` Now Loading plate are decoded and
+  re-encodable. Clear and Now Loading stay fixed-size; title and poem extend
+  their final sub-assets and update their container sizes.
 - The Saturn name-entry display grid and flat input table are located and
   patchable in `SYSTEM.DAT`.
 - Translated Saturn files can be remastered into a mixed-mode BIN/CUE with
@@ -1519,7 +1515,6 @@ Resolved for the current graphic path:
 
 Unresolved lower-priority format details:
 
-- What is the exact Saturn kanji slot ordering (needed only to read JP kanji)?
 - What is the `resource_table`/record-payload grammar? (Graphics/map/event
   editing only, not text.)
 - Does the statically patched Saturn name-entry screen behave correctly at
