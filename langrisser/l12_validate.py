@@ -55,6 +55,12 @@ REFERENCE_RE = re.compile(r"<(?:name:\d+|pair|number)>")
 # Katakana letters only: the middle dot ・ lives in the same block but
 # separates names rather than continuing a word.
 KATAKANA_RE = re.compile(r"[ァ-ヶーヽヾ]")
+# What may follow a reference and still be the same word. Full-size katakana
+# only: a small vowel or a sokuon after a name is the name being drawn out in
+# a shout — 「<name:6>ゥ‥‥」 is "Keith…", not a longer word — and so is the
+# prolonged mark in 「<name:1>ーーッ！」.
+KATAKANA_TAIL_RE = re.compile(r"[ァ-ヴ]")
+SMALL_KANA = "ァィゥェォッャュョヮヵヶ"
 # The bullet, the ellipsis and the corner brackets are punctuation the plane
 # draws, not Japanese words, and the target text keeps using them.
 PUNCT = "・‥「」、。！？～ー－＋×（）／＆．＿＾"
@@ -68,18 +74,21 @@ def references(reader: Reader, text: str) -> list[str]:
     Phrase references are inlined first: a translation may keep one or spell
     the words out, and a phrase can hold a name reference of its own.
 
-    A reference that continues a katakana word is not naming anybody. The
-    script writes バランス as バ + the name Lance, because the name table
-    already holds ランス and that saves two bytes. Katakana *before* the
-    reference is what tells this apart: a real mention follows a particle,
-    punctuation or a break, never the middle of a word. Spelling the word out
-    is the only thing a translation can do with it.
+    A reference that is part of a katakana word is not naming anybody. The
+    script writes バランス — "balance" — as the name バラン plus ス, because
+    the table already holds the name and that saves two bytes; the same trick
+    writes バランス's cousin バ + ランス. Katakana on either side of the
+    reference is what tells this apart: a real mention sits between particles,
+    punctuation or breaks, never inside a word. Spelling the word out is the
+    only thing a translation can do with it.
     """
     inlined = reader.inline_phrases(text)
     out = []
     for m in REFERENCE_RE.finditer(inlined):
         before = inlined[m.start() - 1] if m.start() else ""
-        if KATAKANA_RE.match(before):
+        after = inlined[m.end():m.end() + 1]
+        if KATAKANA_RE.match(before) or (
+                KATAKANA_TAIL_RE.match(after) and after not in SMALL_KANA):
             continue
         out.append(m.group(0))
     return out
