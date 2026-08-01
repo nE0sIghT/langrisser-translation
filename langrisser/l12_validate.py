@@ -74,21 +74,27 @@ def references(reader: Reader, text: str) -> list[str]:
     Phrase references are inlined first: a translation may keep one or spell
     the words out, and a phrase can hold a name reference of its own.
 
-    A reference that is part of a katakana word is not naming anybody. The
-    script writes バランス — "balance" — as the name バラン plus ス, because
-    the table already holds the name and that saves two bytes; the same trick
-    writes バランス's cousin バ + ランス. Katakana on either side of the
-    reference is what tells this apart: a real mention sits between particles,
-    punctuation or breaks, never inside a word. Spelling the word out is the
-    only thing a translation can do with it.
+    A name reference that is part of a katakana word is not naming anybody.
+    The script writes バランス — "balance" — as the name バラン plus ス,
+    because the table already holds the name and that saves two bytes; the
+    same trick writes バランス's cousin バ + ランス. Katakana on either side
+    of the reference is what tells this apart: a real mention sits between
+    particles, punctuation or breaks, never inside a word. Spelling the word
+    out is the only thing a translation can do with it.
+
+    Only names are read that way. `<pair>` is whatever the player typed and
+    `<number>` a numeral: neither is ever half of a word, so the menus may say
+    「<pair>アイテムを持っていません」 or 「シナリオ<number>」 and mean the
+    substitution even though katakana touches it.
     """
     inlined = reader.inline_phrases(text)
     out = []
     for m in REFERENCE_RE.finditer(inlined):
         before = inlined[m.start() - 1] if m.start() else ""
         after = inlined[m.end():m.end() + 1]
-        if KATAKANA_RE.match(before) or (
-                KATAKANA_TAIL_RE.match(after) and after not in SMALL_KANA):
+        if m.group(0).startswith("<name:") and (
+                KATAKANA_RE.match(before)
+                or (KATAKANA_TAIL_RE.match(after) and after not in SMALL_KANA)):
             continue
         out.append(m.group(0))
     return out
