@@ -1,0 +1,376 @@
+# part 7  0 strings
+
+# part 6  253 strings
+0	<blank><blank>Пехота<blank>ＶＳ<blank>Копейщики<line>Пехота — обычный отряд.<line>Сильна против копейщиков,<line>слаба против конницы.
+1	<blank><blank>Копейщики<blank>ＶＳ<blank>Конница<line>У копейщиков крепкая защита и<line>длинные пики против конницы.<line>Слабы против пехоты.
+2	<blank><blank>Конница<blank>ＶＳ<blank>Пехота<line>Конница ходка и бьёт сильно,<line>но слаба в защите. Слаба<line>против копейщиков.
+3	<blank><blank>Лучники<blank>ＶＳ<blank>Летучие<line>Лучники бьют издали, но<line>слабы в ближнем бою. Сильны<line>против летучих.
+4	<blank><blank>Летучие<blank>ＶＳ<blank>Пехота<line>Летучие летают и потому ходки<line>как никто. Слабы против<line>лучников.
+5	<blank><blank>Мореходы<blank>ＶＳ<blank>Копейщики<line>Мореходы хороши на воде: и<line>ход, и выгода местности. В<line>прочем схожи с пехотой.
+6	<blank><blank>Жрецы<blank>ＶＳ<blank>Нежить Жрецы<line>сильны против слизней,<line>духов, бесов и нежити. В<line>прочем схожи с пехотой.
+7	Ху-ху-ху… Вот он,<line>Альхазард. Демонический меч<line>преданий.
+8	Вот она, безмерная сила,<line>что я жаждал…<wait><page>Меч, дай мне силу! Силу<line>покорить материк, покорить<line>весь свет!!
+9	В год, когда над Йелессом<line>взошла красная звезда беды,<line>из проклятой земли Вельзерии<line>явился муж великих замыслов.
+10	<blank>Назвался он императором,<line><blank>повёл за собою людей и<line>коней, <blank>облёкся молнией и<line>звал бурю.
+11	<blank>Чёрный великий меч искони<line><blank>правил Тьмою и был семенем<line><blank>людских распрей,
+12	<blank><blank>оттого мужи с сердцем<line><blank><blank>запечатали его глубоко в<line><blank><blank>земле, и ныне он в<line>долгом сне. <blank><blank>То —<wait><page>спящий демон…
+13	И когда тот император занесёт<line>меч, глубокая Тьма вновь<line>покроет эту землю.
+15	Там, где прошло войско<line>императора,
+16	гаснет и самое пламя<line>ненависти, а пустота<line>отчаяния
+17	стелется подолом, точно злой<line>дух.
+21	<blank>Разить врага молнией, что<line>он <blank>держит,
+22	<blank>точно злой дракон.
+23	<blank>И всё — лишь ради того,<line>чтоб <blank>добыть чёрный великий<line>меч,
+24	<blank>знак людского вожделения.
+26	<blank>Древний чёрный великий меч,
+27	<blank>сиречь «Альхазард», —
+28	<blank>он пьёт людскую кровь и лишь
+29	<blank>множит своё безумие,<line>созывает
+30	<blank>чудищ и таит силу обратить<line>сей
+31	<blank>свет в землю мертвецов.
+32	<blank><blank>То — сила. То — мир.
+33	<blank><blank>То — Тьма…
+34	<blank><blank>Оттого обретший великий<line>меч
+35	<blank><blank>покорял свет.
+36	<blank><blank>Он — властелин мира.
+40	<blank><blank><blank><phrase:4>
+44	<blank><blank><blank>キャラクターデザイン
+45	<blank><blank><blank><blank>うるし原<blank>智志
+49	<blank><blank><blank><blank><blank><blank>キャスト
+53	<blank>エルウィン
+54	<blank><blank><blank><blank><blank><blank><blank><blank><blank>草尾<blank>毅
+58	リアナ（ラーナ）
+59	<blank><blank><blank><blank><blank><blank><blank><blank><blank><$057D>府田<blank>マリ子
+63	<blank>シェリー<blank><blank><blank>横山<blank>智佐
+64	<blank>ヘイン<blank><blank><blank><blank>山口<blank>勝平
+65	<blank>ジェシカ<blank><blank><blank>潘<blank><blank>恵子
+66	<blank>レスター<blank><blank><blank>矢尾<blank>一樹
+70	<blank>キース<blank><blank><blank><blank>堀<blank><blank>秀行
+71	<blank>ローレン<blank><blank><blank>山田<blank>真一
+72	<blank>スコット<blank><blank><blank>三木<blank>眞一郎
+73	<blank>アーロン<blank><blank><blank>柴田<blank>秀勝
+77	<blank>レオン<blank><blank><blank><blank>置鮎<blank>龍太郎
+78	<blank>バルガス<blank><blank><blank>郷里<blank>大輔
+79	<blank>エリザ<blank><blank><blank><blank>小山<blank>裕香
+80	<blank>イメルダ<blank><blank><blank>鶴<blank><blank>ひろみ
+84	<blank>ボーゼル<blank><blank><blank>塩沢<blank>兼人
+85	<blank>エグベルト<blank><blank>青野<blank>武
+86	<blank>ルシリス<blank><blank><blank>平松<blank>晶子
+87	<blank>ロウガ<blank><blank><blank><blank>玄田<blank>哲章
+91	<blank>ソニア<blank><blank><blank><blank>富沢<blank>美智恵
+92	<blank>レアード<blank><blank><blank>堀川<blank>亮
+93	<blank>ベルンハルト<blank>笹岡<blank>繁蔵
+94	<blank>カオス<blank><blank><blank><blank>渡部<blank>猛
+98	<blank>バルドー<blank><blank><blank>川津<blank>泰彦
+99	<blank>ファイアス<blank><blank>沼田<blank>裕介
+100	<blank>エスト<blank><blank><blank><blank>中山<blank>真奈美
+101	<blank>オスト<blank><blank><blank><blank>稲田<blank>哲
+105	<blank>モーガン<blank><blank><blank>幸野<blank>善之
+106	<blank>カミラ<blank><blank><blank><blank>豊嶋<blank>真千子
+107	<blank>司祭<blank><blank><blank><blank><blank>麻生<blank>智久
+108	<blank><phrase:32><blank><blank>坂本<blank>正吾
+112	<blank><blank><blank>アニメーションスタッフ
+116	<blank>演出<blank><blank><blank><blank><blank>吉川<blank>浩司
+118	<blank>絵コンテ<blank><blank><blank>吉川<blank>浩司
+119	<blank><blank><blank><blank><blank><blank><blank><blank>荒木<blank>英樹
+123	<blank>作画監督<blank><blank><blank>荒木<blank>英樹
+127	<blank>原画<blank><blank><blank><blank><blank>東出<blank>太
+128	<blank><blank><blank><blank><blank><blank><blank><blank>佐藤<blank>真二
+129	<blank><blank><blank><blank><blank><blank><blank><blank>内田<blank>信也
+130	<blank><blank><blank><blank><blank><blank><blank><blank>林<blank><blank>康弘
+131	<blank><blank><blank><blank><blank><blank><blank><blank>羽山<blank>賢二
+135	動画チェック<blank><blank>市川<blank>敬三
+136	動画・仕上げ
+137	<blank>Ｆ．Ａ．Ｉインターナショナル
+138	色指定<blank><blank><blank><blank><blank>増田<blank>芳将
+142	<blank>特効<blank><blank><blank><blank><blank>西山<blank>誠
+143	<blank>美術監督<blank><blank><blank>西川<blank>淳一郎
+144	<blank>背景<blank><blank><blank><blank><blank>スタジオ<blank>ユニ
+145	<blank>撮影監督<blank><blank><blank>安原<blank>吉晃
+149	<blank>編集<blank><blank><blank><blank><blank>西山<blank>茂
+150	<blank>進行<blank><blank><blank><blank><blank>川上<blank>昌枝
+151	<blank><blank><blank><blank><blank><blank><blank><blank>小俣<blank>真一
+155	<blank>制作<blank><blank><blank><blank><blank>山田<blank>哲久
+156	<blank><blank><blank><blank><blank><blank><blank><blank>星野<blank>達矢
+157	<blank><blank><blank><blank><blank><blank><blank><blank>啓<$05A5><blank>宏之
+161	制作協力
+162	<blank>フェニックスエンタテインメント
+163	アニメーション制作
+164	<blank><blank><blank><blank><blank>アストロビジョン
+168	<blank><blank><phrase:4>
+169	<blank><blank><blank><blank><blank><blank>スタッフ
+173	メインプログラム
+174	<blank><blank><blank><blank><blank><blank><blank>三谷<blank>和久
+178	シナリオアレンジ
+179	<blank><blank><blank><blank><blank><blank><blank>堀<blank><blank>弘明
+180	<blank><blank><blank><blank><blank><blank><blank>葉月<blank>陽
+184	メイングラフィック
+185	<blank><blank><blank><blank><blank><blank><blank>古野<blank>修一
+186	<blank><blank><blank><blank><blank><blank><blank>鈴木<blank>政幸
+190	グラフィック
+191	<blank><blank><blank><blank><blank><blank><blank>大庭<blank>正弘
+192	<blank><blank><blank><blank><blank><blank><blank>赤根<blank>健良
+193	<blank><blank><blank><blank><blank><blank><blank>斎藤<blank>隆秀
+197	グラフィックサポート
+198	<blank><blank><blank><blank><blank><blank><blank>高木<blank>真吾
+202	ミュージック
+203	<blank><blank><blank><blank><blank><blank><blank>岩垂<blank>徳行
+207	サウンドエフェクト
+208	<blank><blank><blank><blank><blank><blank><blank>吉村<blank>幸二
+212	サウンドディレクション
+213	<blank><blank><blank><blank><blank><blank><blank>高野<blank>聡
+217	サウンドプロデュース
+218	<blank><blank><blank><blank><blank><blank><blank>溝口<blank>功
+222	テクニカルアドバイザー
+223	<blank><blank><blank><blank><blank><blank><blank>松田<blank>智彦
+227	スペシャルサンクス
+228	<blank><blank><blank><blank><blank><blank><blank>薮崎<blank>久也
+229	<blank><blank><blank><blank><blank><blank><blank>梁瀬<blank>洋平
+233	ディレクター（メサイヤ）
+234	<blank><blank><blank><blank><blank><blank><blank>堀<blank><blank>弘明
+238	プロデューサー（メサイヤ）
+239	<blank><blank><blank><blank><blank><blank><blank>高田<blank>慎二郎
+243	<blank><blank>（Ｃ）１９９７<blank>ＮＣＳ
+246	<blank><blank><blank><phrase:4>
+248	<blank><blank><blank><blank>Всего ходов<blank><number>
+
+# part 5  239 strings
+0	<blank><blank>ＳＣＥＮＡＲＩＯ－
+1	<blank>・ターンオーバー
+2	ツインキャッスル
+3	ラングリッサー
+4	レイガルド帝国
+5	ホーリーロッド
+6	ヴェルゼリア城
+7	負けるわけには
+8	すみません‥‥
+9	やられちゃった
+10	戻ってからは、
+11	アルハザード
+12	<blank>・敵の全滅
+13	ダークロッド
+14	ヴェルゼリア
+15	手に入れた！
+16	しましょう。
+17	ごめんなさい
+18	たのである。
+19	このままでは
+20	なんて‥‥。
+21	ようとしてい
+22	そんなある日
+23	ありがとう、
+24	光輝の末裔の
+25	<blank>・の死亡
+26	<blank>・の撃破
+27	×勝利条件
+28	×敗北条件
+29	であった。
+30	お兄ちゃん
+31	モンスター
+32	光輝の末裔
+33	青竜騎士団
+34	りません。
+35	してみせる
+36	<blank><blank><blank><blank>「
+37	なかった。
+38	てしまった
+39	レイガルド
+40	バルディア
+41	分からない
+42	ありがとう
+43	せてもらう
+44	とは‥‥。
+45	てもらおう
+46	るわけには
+47	しまった！
+48	ない‥‥。
+49	とりあえず
+50	ましょう。
+51	<blank>その後、
+52	しますか？
+53	のおかげで
+54	て下さい。
+55	ようだな。
+56	なかったの
+57	フッ‥‥。
+58	炎竜兵団の
+59	そう簡単に
+60	エストール
+61	ではない。
+62	っちまった
+63	によって、
+64	この世界を
+65	っている
+66	カルザス
+67	な‥‥。
+68	か‥‥。
+69	ここまで
+70	わけには
+71	どうやら
+72	これ以上
+73	サルラス
+74	なかった
+75	している
+76	どうして
+77	のために
+78	しかし、
+79	によって
+80	ていた。
+81	ました。
+82	はない。
+83	りません
+84	るため、
+85	ですか？
+86	ません。
+87	でしょう
+88	じゃねぇ
+89	‥‥‥‥
+90	分かった
+91	そろそろ
+92	てくれる
+93	うだな。
+94	だ‥‥。
+95	してくれ
+96	う‥‥。
+97	っていた
+98	だろう。
+99	ところで
+100	るんだ！
+101	お前たち
+102	が‥‥。
+103	このまま
+104	なければ
+105	くそっ！
+106	ったら、
+107	ません！
+108	これから
+109	とは‥‥
+110	‥‥‥。
+111	た‥‥。
+112	います。
+113	ようです
+114	ってくれ
+115	していた
+116	よ‥‥。
+117	みんな、
+118	ました！
+119	いかない
+120	ります。
+121	しっかり
+122	もう少し
+123	じゃない
+124	ね‥‥。
+125	ないわ！
+126	しょう！
+127	てしまう
+128	光の末裔
+129	あなたの
+130	<blank><blank><blank>「
+131	<blank>そして
+132	ならない
+133	手に入れ
+134	である。
+135	下さい！
+136	そうだ。
+137	はしない
+138	ではない
+139	なかなか
+140	しかない
+141	い‥‥。
+142	だって、
+143	ようやく
+144	てくれ！
+145	、みんな
+146	とともに
+147	するな！
+148	ないよう
+149	ならば、
+150	のように
+151	なさい！
+152	のです。
+153	すれば、
+154	てやろう
+155	る‥‥。
+156	のような
+157	<blank>しかし
+158	それだけ
+159	かった。
+160	あった。
+161	してやる
+162	行くぞ！
+163	あきらめ
+164	最後まで
+165	やっぱり
+166	‥‥。
+167	だが、
+168	あなた
+169	は‥‥
+170	だった
+171	帝国の
+172	だから
+173	には、
+174	という
+175	として
+176	ここは
+177	こんな
+178	帝国軍
+179	の力を
+180	なんて
+181	った。
+182	ったの
+183	ない。
+184	られる
+185	が‥‥
+186	な‥‥
+187	かった
+188	だな。
+189	‥‥‥
+190	これで
+191	です。
+192	そんな
+193	ていた
+194	ます！
+195	それは
+196	のだ。
+197	なら、
+198	‥‥、
+199	るぞ！
+200	ここで
+201	のか？
+202	あたし
+203	れない
+204	ヤツら
+205	された
+206	帝国に
+207	ること
+208	になる
+209	っても
+210	ってい
+211	そして
+212	自分の
+213	では、
+214	みんな
+215	‥‥！
+216	ない！
+217	のです
+218	てきた
+219	多くの
+220	れば、
+221	ついて
+222	する。
+223	ように
+224	ている
+225	できる
+226	られた
+227	の戦い
+228	今まで
+229	さあ、
+230	でも、
+231	なった
+232	れてい
+233	だけで
+234	なんだ
+235	るとは
+236	さすが
+237	ながら
+238	お前は
