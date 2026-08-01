@@ -11,9 +11,9 @@ at.
 Not everything may be re-flowed. The objectives panel and a briefing card's
 title and conditions are laid out, not wrapped — a heading, its bullets, a
 blank line, another heading — and a wrapper turns that into prose. Those pages
-are recognised by what they carry (the 「 of a title, the × of a heading, the
-・ of a bullet) and left exactly as written; the card's narration pages around
-them wrap like any other text.
+are recognised by what they carry (the × of a heading, the ・ of a bullet, the
+`<number>` of a scenario title) and left exactly as written; the card's
+narration pages around them wrap like any other text.
 
 Where Langrisser V compacts pages, this splits them. Russian is longer than the
 Japanese it replaces, so a record that filled three lines there needs four
@@ -81,9 +81,15 @@ def layout_for(names: dict[int, str]) -> Layout:
     )
 
 
-# A page holding any of these is laid out by hand: a title in corner brackets,
-# a conditions heading, a bulleted objective.
-LAID_OUT = ("「", "«", "×", "・")
+# A page holding any of these is laid out by hand, not wrapped: a conditions
+# heading, a bulleted objective, or the scenario number that opens a briefing
+# card above its title.
+#
+# All three are marks of the engine, not of a language. Punctuation is not:
+# the card's title sits in brackets, but `「` and `«` are also how the script
+# quotes speech, and taking either as the sign of a layout switches wrapping
+# off for the ordinary dialogue that happens to quote someone.
+LAID_OUT = ("×", "・", "<number>")
 
 
 def split_pages(text: str, page_prefix: str) -> list[str]:
