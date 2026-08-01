@@ -137,7 +137,7 @@ def join_pages(pages: list[str], page_prefix: str) -> str:
 # What a finished thought ends on. A page that has to be split should be split
 # after one of these, so the reader is not asked for a keypress in the middle of
 # a clause.
-SENTENCE_END = "…!?.:»」—"
+SENTENCE_END = "…!?.:»」—)"
 
 
 def page_cut(lines: list[str], max_lines: int) -> int:

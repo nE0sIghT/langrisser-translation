@@ -108,7 +108,7 @@ def pages(layout: Layout, text: str) -> list[list[str]]:
 # wrapper had to cut: the text overran the window's three lines and the fourth
 # became a new page, so the reader gets "такой империи я" and then a keypress
 # before "не признаю никогда". The author's own page breaks fall on these.
-SENTENCE_END = "…!?.:»」,—"
+SENTENCE_END = "…!?.:»」,—)"
 
 
 def cut_mid_sentence(layout: Layout, text: str) -> int | None:
