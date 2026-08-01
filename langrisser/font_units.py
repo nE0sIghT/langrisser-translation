@@ -307,6 +307,17 @@ def caps_run_len(text: str, i: int) -> int:
     return b - a + 1
 
 
+def fullwidth_cap_at(text: str, i: int, fullwidth_units: set[str]) -> bool:
+    """Whether the capital at *i* must occupy a centered full-size tile."""
+    if not (0 <= i < len(text) and text[i].isalpha() and text[i].isupper()):
+        return False
+    run_len = caps_run_len(text, i)
+    a = i
+    while a > 0 and text[a - 1].isalpha() and text[a - 1].isupper():
+        a -= 1
+    return text[a:a + run_len] in fullwidth_units
+
+
 
 
 
@@ -360,12 +371,17 @@ def tile_text(text: str, has_unit, cost=None, base_pos: int = 0,
             piece = text[i : i + width]
             if len(piece) != width:
                 continue
-            if width == 2 and piece in fullwidth_units:
+            # An explicitly fullwidth caps unit must consist entirely of
+            # centered singles. This also rejects a boundary pair such as
+            # "Т " in "АТ выросла", not only the "АТ" pair itself.
+            if (width == 2 and any(
+                    fullwidth_cap_at(text, pos, fullwidth_units)
+                    for pos in (i, i + 1))):
                 continue
-            # An all-caps word of three or more letters renders as
-            # uniform fullwidth singles; pairing part of it (e.g. a
-            # menu pair like НА inside ВНИМАНИЕ) would make it lumpy.
-            # Two-letter caps runs (АТ, DF, ДА...) still pack as pairs.
+            # An all-caps word of three or more letters renders as uniform
+            # fullwidth singles; pairing part of it (e.g. a menu pair like НА
+            # inside ВНИМАНИЕ) would make it lumpy. Preserve the established
+            # boundary-spacing behavior used by existing language packs.
             if (width == 2 and piece.isalpha() and piece.isupper()
                     and caps_run_len(text, i) >= 3):
                 continue

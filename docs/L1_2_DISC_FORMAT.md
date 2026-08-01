@@ -399,7 +399,12 @@ slot is one 12 × 12 cell whatever is drawn in it:
 
 - **Menu and interface**: single letters, mostly capitals, one per slot, centred
   in the cell. This is what the game already does with `ＡＴ`, `ＤＦ`, `ＭＰ`,
-  `ＭＶ`, and what `build_font` renders for Langrisser V.
+  `ＭＶ`, and what `build_font` renders for Langrisser V. All-caps runs of at
+  least three letters use these full-size singles automatically. Two-letter
+  labels listed in a language pack's `fullwidth_units` (Russian `АТ`, `ЗЩ`,
+  `MP`) do the same; neither letter may be folded into a pair with the adjacent
+  space or punctuation. Intentionally compact controls such as `ОК` remain
+  ordinary pair glyphs.
 - **Everything else** — dialogue, inscriptions, monster cries: two target
   letters packed into one cell, the compact pair glyphs `build_font` already
   generates.
