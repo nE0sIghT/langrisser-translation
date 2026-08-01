@@ -7,14 +7,21 @@ file lists the rules that must not be broken.
 
 ## Hard invariants
 
-- **File sizes never change.** The disc has CD audio right after the data
-  track. Never call `iso_mode2.py` with `--allow-grow`; never let
-  `SCEN.DAT`/`SCEN2.DAT`/`SYSTEM.BIN` grow. Text growth first uses the
-  chunk's trailing zero padding; beyond that the fixed-size repack
-  relocates chunks inside the file (validator status `REPACK` is fine as
-  long as the file-level totals stay `OK`).
-- **Font atlas ends at glyph 1820.** Tiles 1821+ in `SYSTEM.BIN` are a menu
-  offset table, not glyphs. Writing there breaks menus.
+- **Disc growth is release-specific.** PlayStation disc files never grow: the
+  disc has CD audio immediately after the data track. Never call
+  `iso_mode2.py` with `--allow-grow`; never let PS1
+  `SCEN.DAT`/`SCEN2.DAT`/`SYSTEM.BIN` grow. Text growth first uses a chunk's
+  trailing zero padding; beyond that the fixed-size repack relocates chunks
+  inside the file (validator status `REPACK` is fine while file-level totals
+  stay `OK`). Saturn files may grow only through
+  `langrisser.saturn_build --remaster-disc`: that writer relocates ISO extents,
+  shifts later tracks and emits a matching CUE with rebuilt MODE1 EDC/ECC.
+  Never pass a grown Saturn file to an in-place writer or reuse the original
+  CUE for a remastered image.
+- **Font atlas ceilings come from the release.** Langrisser V PS1 ends at glyph
+  1820; tiles 1821+ in `SYSTEM.BIN` are a menu offset table. Langrisser V
+  Saturn ends at writable slot 1819; slot 1820 crosses its group-pointer
+  directory. Never write beyond `Release.max_font_slot`.
 - **Control words are sacred.** Every `<$XXXX>` tag ≥ `0xE000` (except the
   soft breaks `FFFC`/`FFFD` and highlight toggles `FFF4`/`FFF3`) and every
   argument word of `F600`/`FBxx` must survive translation in order.
