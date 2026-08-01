@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import collections
 
-from langrisser.l12_scen import CONTROLS, PHRASE_PART, Writer
+from langrisser.l12_scen import BANK_FIRST, CONTROLS, PHRASE_PART, Writer
 
 PHRASE_CODE = next(c for c, (name, _) in CONTROLS.items() if name == "phrase")
 REFERENCE_COST = 2      # the control byte and its operand
@@ -139,7 +139,7 @@ def expand_references(raw: bytes, table: list[bytes], generated: set[int]) -> by
             size = 2 if takes else 1
             out += raw[i:i + size]
             i += size
-        elif value >= 0xF7 and i + 1 < len(raw):
+        elif value >= BANK_FIRST and i + 1 < len(raw):
             out += raw[i:i + 2]
             i += 2
         else:

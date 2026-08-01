@@ -318,9 +318,6 @@ def fullwidth_cap_at(text: str, i: int, fullwidth_units: set[str]) -> bool:
     return text[a:a + run_len] in fullwidth_units
 
 
-
-
-
 def visual_penalty(text: str, i: int, width: int,
                    compact_interword_spaces: bool = False) -> int:
     if width != 1:

@@ -223,9 +223,10 @@ def main() -> None:
     for group in (menu_pairs, continuity, spacing_pairs, script_pairs):
         ranked.extend(p for p, _ in group.most_common())
     seen: set[str] = set()
+    fullwidth = set(lang.fullwidth_units)
     want_pairs = [p for p in ranked
                   if len(p) == 2 and p not in taken and p not in seen
-                  and p not in set(lang.fullwidth_units)
+                  and p not in fullwidth
                   and not seen.add(p) and packable(p)]
     added_pairs = 0
     for pair, slot in zip(want_pairs, spare):

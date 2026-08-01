@@ -188,8 +188,9 @@ def prefill_l12(args, game, lang) -> None:
         out_fp.write_text("\n".join(lines), encoding="utf-8")
         print(f"chunk {cidx:03d}: records={len(jp)} prefilled={filled} "
               f"todo={len(todo)}")
-        print("  todo records: " + ", ".join(
-            f"{part}:{index}" for part, index in todo))
+        if todo:
+            print("  todo records: " + ", ".join(
+                f"{part}:{index}" for part, index in todo))
 
 
 def main() -> None:
