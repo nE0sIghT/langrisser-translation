@@ -15,7 +15,8 @@
   ],
   "fullwidth_units": [
     "АТ",
-    "ЗЩ"
+    "ЗЩ",
+    "MP"
   ],
   "glossary": "glossary.csv",
   "max_lines": 3,
