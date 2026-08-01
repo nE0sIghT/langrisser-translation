@@ -126,6 +126,16 @@ class ReleasePack:
         return f"{root}/{name}"
 
     @property
+    def build_root(self) -> Path:
+        """Where a build of this release leaves what it generates.
+
+        Keyed by release rather than by game: a compilation's games share one
+        disc, so they share the font plane and the tables derived from it, and
+        two directories would be two answers to one question.
+        """
+        return Path("work", "build", self.code)
+
+    @property
     def system_groups(self) -> list[int]:
         """File offset of each SYSTEM text group's offset table, in scan order.
 

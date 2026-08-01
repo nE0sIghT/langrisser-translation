@@ -196,6 +196,16 @@ def main() -> None:
     for ch, slot in zip(need, free):
         kept[slot] = (ch, font.get(slot) or "")
 
+    # A single character's slot is a promise: it is kept where the baseline put
+    # it so that no record has to be rewritten. New ones only keep that promise
+    # once they are written back, so a build that discovers them and leaves the
+    # baseline alone has to say so rather than silently pin them to whatever
+    # the next run happens to pick.
+    if need and out != assignments:
+        print(f"   note: {len(need)} character(s) took a slot for the first "
+              f"time ({''.join(need)}); re-run without --out to pin them in "
+              f"{assignments}")
+
     # Whatever is left goes to the two-letter tiles. These are not optional
     # decoration: one letter per cell makes a Russian line twice the width of
     # the Japanese it replaces, and doubles what it costs in bytes.

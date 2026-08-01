@@ -28,10 +28,11 @@ import sys
 from pathlib import Path
 
 from langrisser.game import add_game_args, game_from_args
-from langrisser.l12_scen import NAME_PART, Reader, read_chunks
+from langrisser.l12_scen import (NAME_PART, Reader, Writer, load_assignments,
+                                 merged_plane, read_chunks, slot_table)
 from langrisser.l12_sceninsert import read_pack
-from langrisser.l12_validate import cells
 from langrisser.project import add_language_args, language_from_args
+from langrisser.release import add_release_args, release_from_args
 from langrisser.scen import load_charmap_csv
 from langrisser.text_layout import LINE, PAGE, PRINTABLE, ZERO, Layout, wrap_stream
 
@@ -46,7 +47,13 @@ NAME_RE = re.compile(r"<name:(\d+)>")
 PAIR_CELLS = 4
 
 
-def layout_for(names: dict[int, str]) -> Layout:
+def layout_for(names: dict[int, str], writer: Writer) -> Layout:
+    """This engine's tag vocabulary, measured by the plane it draws with.
+
+    Widths come from `writer`, so a heading that renders as full-size capitals
+    is counted as the capitals it draws and not as the pairs a lowercase word
+    of the same length would have.
+    """
     def kind(tag: str) -> str:
         if tag == LINE_BREAK:
             return LINE
@@ -65,7 +72,7 @@ def layout_for(names: dict[int, str]) -> Layout:
             return 2
         m = NAME_RE.fullmatch(tag)
         if m:
-            return cells(names.get(int(m.group(1)), ""))
+            return writer.cells(names.get(int(m.group(1)), ""))
         if tag.startswith("<$"):
             return 1
         return 0
@@ -75,7 +82,7 @@ def layout_for(names: dict[int, str]) -> Layout:
         line_break=LINE_BREAK,
         page_break=PAGE_BREAK,
         page_breaks=frozenset({PAGE_BREAK}),
-        cells=cells,
+        cells=writer.cells,
         kind=kind,
         tag_cells=tag_cells,
     )
@@ -196,20 +203,26 @@ def main() -> None:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     add_language_args(ap)
     add_game_args(ap, default="l1")
+    add_release_args(ap, default="l1-2-ps1-jp")
     ap.add_argument("chunks", nargs="*", type=int)
     ap.add_argument("--width", type=int, default=None)
     ap.add_argument("--max-lines", type=int, default=None)
+    ap.add_argument("--assignments", default=None)
     ap.add_argument("--parts", default="5,7",
                     help="Parts to re-flow: dialogue and the briefing cards.")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
     game = game_from_args(args)
+    release = release_from_args(args, platform="ps1")
     lang = language_from_args(args)
     root = lang.script_dir
     windows = {int(k): tuple(v) for k, v in (lang.windows or {}).items()}
     font = load_charmap_csv(game.font_map)
-    layout = layout_for(name_table(game.code, root / "shared.txt"))
+    plane = merged_plane(font, load_assignments(
+        slot_table(args.assignments, lang, release)))
+    writer = Writer(plane, fullwidth_units=set(lang.fullwidth_units))
+    layout = layout_for(name_table(game.code, root / "shared.txt"), writer)
     page_prefixes = source_page_prefixes(game.code, font)
     parts = {int(p) for p in args.parts.split(",")}
 

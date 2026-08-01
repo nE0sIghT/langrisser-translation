@@ -314,6 +314,33 @@ def merged_plane(font: dict[int, str], assignments: dict[int, str]) -> dict[int,
     return plane
 
 
+SLOT_TABLE = "font_slot_assignments.{suffix}.csv"
+
+
+def slot_table(explicit, lang, release) -> Path:
+    """The slot table every tool that measures or encodes text has to read.
+
+    Without it there is no plane, and without a plane a Cyrillic letter has no
+    tile, so the tiler falls back to one cell per letter and every width it
+    reports is roughly double. That is worse than no answer, so a missing table
+    is an error and not a default.
+
+    The table the last build generated wins, because that is the plane the disc
+    draws with. The pack's own is only a baseline of pinned single characters —
+    it holds a glyph still where it was, but it lags the corpus by design, and
+    measuring against it would measure a plane nobody ships.
+    """
+    generated = release.build_root / SLOT_TABLE.format(suffix=lang.suffix)
+    for candidate in (explicit, generated, lang.font_assignments):
+        if candidate and Path(candidate).exists():
+            return Path(candidate)
+    raise SystemExit(
+        f"no glyph slot table for {lang.code}: looked at "
+        f"{lang.font_assignments} and {generated}. Run "
+        f"langrisser.l12_font_slots first — widths cannot be measured without "
+        f"knowing which pairs the plane holds.")
+
+
 class Writer:
     """Encodes a record back to the bytes the engine reads.
 
@@ -346,6 +373,20 @@ class Writer:
             compact_interword_spaces=True,
             fullwidth_units=fullwidth_units,
         )
+
+    def cells(self, text: str) -> int:
+        """How many glyph cells a run of plain text draws.
+
+        The window is measured in cells, not in letters, and how many cells a
+        word takes is decided by the tiler and nothing else: a pair the plane
+        has draws two letters in one cell, a capital in a run of three or more
+        draws one, and a character with no slot cannot be drawn at all. So the
+        count comes from the tiler itself. Guessing it from the letters —
+        "Cyrillic pairs up, so halve it" — is right for ordinary prose and
+        silently wrong for every heading, which is exactly where a line
+        overflows.
+        """
+        return len(self.codec.encode(text))
 
     def tile_run(self, text: str) -> bytes:
         """Encode a run of plain text, tiled by Langrisser V's codec."""

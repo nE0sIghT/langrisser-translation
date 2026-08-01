@@ -402,12 +402,23 @@ slot is one 12 × 12 cell whatever is drawn in it:
   `ＭＶ`, and what `build_font` renders for Langrisser V. All-caps runs of at
   least three letters use these full-size singles automatically. Two-letter
   labels listed in a language pack's `fullwidth_units` (Russian `АТ`, `ЗЩ`,
-  `MP`) do the same; neither letter may be folded into a pair with the adjacent
+  `ОМ`) do the same; neither letter may be folded into a pair with the adjacent
   space or punctuation. Intentionally compact controls such as `ОК` remain
   ordinary pair glyphs.
 - **Everything else** — dialogue, inscriptions, monster cries: two target
   letters packed into one cell, the compact pair glyphs `build_font` already
   generates.
+
+Which of the two a run of text gets is not a matter of taste, and it decides how
+wide a line is: `УСЛОВИЯ ПОБЕДЫ` is fourteen cells where `Условия победы` is
+seven. So a width may only be measured by tiling the text through the plane the
+build draws with — `Writer.cells`, which is what `l12_rewrap` lays out by and
+`l12_validate` checks against. A rule of thumb ("Cyrillic pairs up, so halve the
+letters") is right for prose and silently wrong for every heading.
+
+Digits have no narrow form here. The plane carries the Japanese full-width
+`０`–`９` and no ASCII ones, so a number written as `23` cannot be drawn at all;
+it has to be `２３`, one cell per digit, exactly as the original writes it.
 
 The slot budget is tight: 34 blank slots, and the 130 the script never names are
 mostly credit surnames that something outside `SCEN.DAT` still draws.

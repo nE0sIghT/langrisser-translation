@@ -22,6 +22,7 @@ import sys
 from pathlib import Path
 
 from langrisser.game import add_game_args, game_from_args, load_game
+from langrisser.l12_scen import SLOT_TABLE
 from langrisser.media import writer_for
 from langrisser.ppf3 import write_ppf3
 from langrisser.project import (add_language_args, language_from_args,
@@ -59,7 +60,7 @@ def main() -> None:
         raise SystemExit(f"{game.code} is not on release {release.code}")
     args.lang_root = str(game.root / "lang")
     lang = language_from_args(args)
-    build = Path(args.build_dir) if args.build_dir else Path("work", "build", release.code)
+    build = Path(args.build_dir) if args.build_dir else release.build_root
     build.mkdir(parents=True, exist_ok=True)
     orig_bin = Path(args.orig_bin) if args.orig_bin else release.image
     if orig_bin is None:
@@ -80,7 +81,7 @@ def main() -> None:
     # One generated table for the disc: the plane is shared, so a slot spent on
     # one game is spent on the other. Start from the durable baseline but never
     # rewrite it during an ordinary build.
-    build_assignments = build / f"font_slot_assignments.{lang.suffix}.csv"
+    build_assignments = build / SLOT_TABLE.format(suffix=lang.suffix)
     slot_args: list[object] = [
         "-m", "langrisser.l12_font_slots",
         "--lang", args.lang, "--game", games[0], "--release", release.code,
@@ -99,6 +100,13 @@ def main() -> None:
 
     injections = {}
     for game in games:
+        # Checked against the table this build actually drew with, because a
+        # width depends on which pairs the plane holds and a stale table would
+        # answer for a plane nobody is shipping.
+        run("-m", "langrisser.l12_validate",
+            "--lang", args.lang, "--game", game, "--release", release.code,
+            "--translation-root", roots[game],
+            "--assignments", build_assignments)
         out_scen = build / f"SCEN.{game}.{lang.suffix}.DAT"
         insert = ["-m", "langrisser.l12_sceninsert",
                   "--lang", args.lang, "--game", game, "--release", release.code,

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Check a Langrisser I & II translation against the Japanese it replaces.
 
-Runs on the text, not on bytes, because the byte form needs slots the plane
-does not have yet while the Japanese is still in place. What it can check now
-is what actually breaks a scenario if it is wrong:
+Runs on the text rather than on a built image, so a record can be checked
+before anything is packed. Widths, though, are measured through the glyph plane
+the build draws with: how many cells a line takes is the tiler's answer and
+nobody else's, and a heading in capitals takes twice what the same letters take
+in prose. What it checks:
 
 * every reference the record had is still there, the same ones, the same
   number, in the same order — `<name:12>` prints a character, `<pair>` the
@@ -33,12 +35,15 @@ import sys
 from pathlib import Path
 
 from langrisser.game import add_game_args, game_from_args
-from langrisser.l12_scen import Reader, read_chunks
+from langrisser.l12_rewrap import LINE_BREAK, layout_for, name_table
+from langrisser.l12_scen import (Reader, Writer, load_assignments, merged_plane,
+                                 read_chunks, slot_table)
 from langrisser.l12_sceninsert import read_pack
 from langrisser.project import add_language_args, language_from_args
+from langrisser.release import add_release_args, release_from_args
 from langrisser.scen import load_charmap_csv
+from langrisser.text_layout import Layout, page_segments, visible_cells
 
-TAG_RE = re.compile(r"<(?:\$[0-9A-Fa-f]{4}|[a-z]+(?::\d+)?)>")
 # What the engine substitutes at runtime, and what therefore has to survive
 # translation exactly. A raw glyph tag is not here: it names one character of
 # the plane, so a translation that spells the word differently simply loses it.
@@ -78,25 +83,14 @@ def references(reader: Reader, text: str) -> list[str]:
     return out
 
 
-def pages(text: str) -> list[list[str]]:
-    """The record as the screen shows it: pages of lines."""
-    flat = text.replace("<blank>", " ")
-    flat = TAG_RE.sub(lambda m: {"<line>": "\n", "<page>": "\f"}.get(m.group(0), ""), flat)
-    return [page.split("\n") for page in flat.split("\f")]
+def pages(layout: Layout, text: str) -> list[list[str]]:
+    """The record as the window shows it: pages of lines, still tagged.
 
-
-CYRILLIC = re.compile(r"[А-Яа-яЁё]")
-
-
-def cells(line: str) -> int:
-    """Width of one rendered line, in glyph cells.
-
-    A cell holds one Japanese glyph but two Cyrillic letters, because the
-    target font packs them in pairs the way `build_font` already does for
-    Langrisser V. Counting characters would reject lines that fit.
+    Splitting is `text_layout`'s, the same code that placed the breaks in
+    `l12_rewrap`. A second opinion here would only let the two drift, and the
+    one that drifts silently is this one.
     """
-    latin = len(CYRILLIC.findall(line))
-    return (latin + 1) // 2 + (len(line) - latin)
+    return [page.split(LINE_BREAK) for page in page_segments(layout, text)]
 
 
 def main() -> None:
@@ -104,11 +98,13 @@ def main() -> None:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     add_language_args(ap)
     add_game_args(ap, default="l2")
+    add_release_args(ap, default="l1-2-ps1-jp")
     ap.add_argument("chunks", nargs="*", type=int,
                     help="Chunks to check; default is every chunk the pack has.")
     ap.add_argument("--scen", default=None)
     ap.add_argument("--translation-root", default=None)
     ap.add_argument("--font-map", default=None)
+    ap.add_argument("--assignments", default=None)
     ap.add_argument("--width", type=int, default=None,
                     help="Cells per line (default: the pack's window_width).")
     ap.add_argument("--height", type=int, default=None,
@@ -116,9 +112,14 @@ def main() -> None:
     args = ap.parse_args()
 
     game = game_from_args(args)
+    release = release_from_args(args, platform="ps1")
     lang = language_from_args(args)
     font = load_charmap_csv(Path(args.font_map) if args.font_map else game.font_map)
     root = Path(args.translation_root) if args.translation_root else lang.script_dir
+    plane = merged_plane(font, load_assignments(
+        slot_table(args.assignments, lang, release)))
+    writer = Writer(plane, fullwidth_units=set(lang.fullwidth_units))
+    layout = layout_for(name_table(game.code, root / "shared.txt"), writer)
     scen = Path(args.scen) if args.scen else Path("work", game.code, "extracted", "SCEN.DAT")
     windows = {int(k): tuple(v) for k, v in (lang.windows or {}).items()}
     default = (args.width or lang.window_width, args.height or lang.max_lines)
@@ -166,8 +167,15 @@ def main() -> None:
                 print(f"{where}: still Japanese: {left[:6]}")
                 problems += 1
             width, height = window(pi)
-            for n, page in enumerate(pages(text)):
-                widest = max(cells(line) for line in page)
+            for n, page in enumerate(pages(layout, text)):
+                try:
+                    widest = max(visible_cells(layout, line) for line in page)
+                except ValueError as exc:
+                    # A character with no slot in the plane. It has no width
+                    # because the disc cannot draw it at all.
+                    print(f"{where}: page {n + 1} cannot be drawn: {exc}")
+                    problems += 1
+                    continue
                 if widest > width:
                     print(f"{where}: page {n + 1} is {widest} cells wide, "
                           f"window is {width}")
