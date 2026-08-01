@@ -21,10 +21,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from langrisser.game import add_game_args, game_from_args
+from langrisser.game import add_game_args, game_from_args, load_game
 from langrisser.media import writer_for
 from langrisser.ppf3 import write_ppf3
-from langrisser.project import add_language_args, language_from_args
+from langrisser.project import (add_language_args, language_from_args,
+                                load_language)
 from langrisser.release import add_release_args, release_from_args
 
 
@@ -43,9 +44,9 @@ def main() -> None:
     ap.add_argument("--out-ppf", default=None)
     ap.add_argument("--build-dir", default=None)
     ap.add_argument("--translation-root", default=None,
-                    help="Use these packs instead of the language pack's. For "
-                         "throwaway builds — a ruler patch for measuring a "
-                         "window, say — that must not touch tracked text.")
+                    help="Override the selected --game's SCEN directory. The "
+                         "other game on the disc keeps its language pack; useful "
+                         "for throwaway builds that must not touch tracked text.")
     args = ap.parse_args()
 
     release = release_from_args(args, platform="ps1")
@@ -64,14 +65,36 @@ def main() -> None:
     if orig_bin is None:
         raise SystemExit(f"release {release.code} declares no source image")
 
-    # One table for the disc: the plane is shared, so a slot spent on one game
-    # is spent on the other.
-    run("-m", "langrisser.l12_font_slots",
-        "--lang", args.lang, "--game", games[0], "--release", release.code)
+    roots = {
+        code: load_language(
+            args.lang, load_game(code, args.game_root).lang_root, code
+        ).script_dir
+        for code in games
+    }
+    if args.translation_root:
+        roots[game.code] = Path(args.translation_root)
+    for code, root in roots.items():
+        if not root.is_dir():
+            raise SystemExit(f"{code} translation root is not a directory: {root}")
+
+    # One generated table for the disc: the plane is shared, so a slot spent on
+    # one game is spent on the other. Start from the durable baseline but never
+    # rewrite it during an ordinary build.
+    build_assignments = build / f"font_slot_assignments.{lang.suffix}.csv"
+    slot_args: list[object] = [
+        "-m", "langrisser.l12_font_slots",
+        "--lang", args.lang, "--game", games[0], "--release", release.code,
+        "--assignments", lang.font_assignments,
+        "--out", build_assignments,
+    ]
+    for code in games:
+        slot_args.extend(["--translation-root", f"{code}={roots[code]}"])
+    run(*slot_args)
 
     font_dat = build / f"FONT.{lang.suffix}.DAT"
     run("-m", "langrisser.l12_build_font",
         "--lang", args.lang, "--game", games[0],
+        "--assignments", build_assignments,
         "--out-font-dat", font_dat)
 
     injections = {}
@@ -79,9 +102,9 @@ def main() -> None:
         out_scen = build / f"SCEN.{game}.{lang.suffix}.DAT"
         insert = ["-m", "langrisser.l12_sceninsert",
                   "--lang", args.lang, "--game", game, "--release", release.code,
+                  "--translation-root", roots[game],
+                  "--assignments", build_assignments,
                   "--out-scen", out_scen]
-        if args.translation_root:
-            insert += ["--translation-root", args.translation_root]
         run(*insert)
         injections[release.media_path("SCEN.DAT", game)] = out_scen
         # Both game directories hold their own copy of the same plane.

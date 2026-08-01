@@ -32,11 +32,12 @@ from pathlib import Path
 
 from langrisser.font_units import needed_units
 from langrisser.build_font import pick_fonts, render_tile
-from langrisser.game import add_game_args, game_from_args
+from langrisser.game import add_game_args, game_from_args, load_game
 from langrisser.l12_scen import (BANK_BASE, BANK_FIRST, BANK_WIDTH, CONTROLS,
                                  GLYPH_FIRST, MAX_SLOT, read_chunks)
 from langrisser.l12_sceninsert import read_pack
-from langrisser.project import add_language_args, language_from_args
+from langrisser.project import (add_language_args, language_from_args,
+                                load_language)
 from langrisser.release import add_release_args, release_from_args
 from langrisser.scen import load_charmap_csv
 
@@ -60,7 +61,7 @@ def string_slots(raw: bytes):
             i += 1
 
 
-def survey(games: list[str], lang: str):
+def survey(games: list[str], roots: dict[str, Path]):
     """Slots still needed by Japanese, slots ever used, and single-char demand.
 
     Which pairs to cut is a separate question and a harder one; it is
@@ -70,7 +71,7 @@ def survey(games: list[str], lang: str):
     ever: set[int] = set()
     wanted: collections.Counter = collections.Counter()
     for game in games:
-        root = Path("data", "games", game, "lang", lang, "SCEN")
+        root = roots[game]
         scen = Path("work", game, "extracted", "SCEN.DAT")
         # The shared tables live in one file but sit in every chunk, so they
         # count as translated everywhere: their kanji are free and their
@@ -104,8 +105,16 @@ def main() -> None:
     add_game_args(ap, default="l1")
     add_release_args(ap, default="l1-2-ps1-jp")
     ap.add_argument("--font-map", default=None)
+    ap.add_argument("--assignments", default=None,
+                    help="Canonical assignment baseline (default: the pack's).")
     ap.add_argument("--out", default=None,
-                    help="Assignment table (default: the pack's font_assignments).")
+                    help="Generated assignment table (default: update the "
+                         "canonical baseline).")
+    ap.add_argument(
+        "--translation-root", action="append", default=[], metavar="GAME=DIR",
+        help="Override one release game's SCEN directory. Repeat for multiple "
+             "games; unspecified games use their language packs.",
+    )
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -113,10 +122,31 @@ def main() -> None:
     release = release_from_args(args, platform="ps1")
     lang = language_from_args(args)
     font = load_charmap_csv(Path(args.font_map) if args.font_map else game.font_map)
-    out = Path(args.out) if args.out else lang.font_assignments
+    assignments = (Path(args.assignments) if args.assignments
+                   else lang.font_assignments)
+    out = Path(args.out) if args.out else assignments
 
     games = sorted(release.games) if hasattr(release, "games") else [game.code]
-    still, ever, wanted = survey(games, lang.code)
+    roots = {
+        code: load_language(
+            args.lang, load_game(code, args.game_root).lang_root, code
+        ).script_dir
+        for code in games
+    }
+    for value in args.translation_root:
+        code, sep, root = value.partition("=")
+        if not sep or not code or not root:
+            raise SystemExit(
+                f"--translation-root expects GAME=DIR, got {value!r}")
+        if code not in roots:
+            raise SystemExit(
+                f"--translation-root names {code!r}, not a game in "
+                f"{release.code}: {', '.join(games)}")
+        roots[code] = Path(root)
+    for code, root in roots.items():
+        if not root.is_dir():
+            raise SystemExit(f"{code} translation root is not a directory: {root}")
+    still, ever, wanted = survey(games, roots)
 
     # A pair has to fit one cell at a 6px pitch. Fullwidth characters do not,
     # and the text does carry a few — the scenario number is drawn in them —
@@ -132,8 +162,8 @@ def main() -> None:
     have = {ch for ch in font.values() if ch}
     kept: dict[int, tuple[str, str]] = {}
     taken: dict[str, int] = {}
-    if out.exists():
-        for row in csv.DictReader(out.open(encoding="utf-8")):
+    if assignments.exists():
+        for row in csv.DictReader(assignments.open(encoding="utf-8")):
             slot, ch = int(row["index_dec"]), row["char"]
             # Single characters keep their slot; the text cannot be written
             # without them and their identity never changes. Pairs are chosen
@@ -179,8 +209,7 @@ def main() -> None:
     spare = free[len(need):]
     texts: list[str] = []
     for code in games:
-        for pack in sorted(Path("data", "games", code, "lang",
-                                lang.code, "SCEN").glob("*.txt")):
+        for pack in sorted(roots[code].glob("*.txt")):
             texts.extend(TAG_RE.sub(" ", t) for t in read_pack(pack).values())
     _, menu_pairs, spacing_pairs, continuity, script_pairs = needed_units(
         texts, forced_pairs=list(lang.forced_pairs or []),
