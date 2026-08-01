@@ -24,7 +24,7 @@ from pathlib import Path
 from langrisser.game import add_game_args, game_from_args
 from langrisser.l12_phrases import rebuild as rebuild_phrases
 from langrisser.container import pad_chunk, rebuild_container_fixed_size
-from langrisser.l12_scen import (PHRASE_PART, Reader, Writer, load_assignments,
+from langrisser.l12_scen import (Reader, Writer, load_assignments,
                                  merged_plane, pack_chunk, read_chunks)
 from langrisser.scen import read_chunk_spans
 from langrisser.project import add_language_args, language_from_args
@@ -130,7 +130,7 @@ def main() -> None:
         touched = len(edited)
         if touched:
             table, rewritten = rebuild_phrases(chunk, edited, writer)
-            parts[PHRASE_PART] = table
+            parts[chunk.phrase_part] = table
             for (pi, si), raw in rewritten.items():
                 parts[pi][si] = raw
         if not touched:

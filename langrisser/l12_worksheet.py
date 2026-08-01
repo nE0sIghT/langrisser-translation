@@ -18,7 +18,7 @@ import re
 from pathlib import Path
 
 from langrisser.game import add_game_args, game_from_args
-from langrisser.l12_scen import NAME_PART, PHRASE_PART, Reader, read_chunks
+from langrisser.l12_scen import Reader, read_chunks
 from langrisser.scen import load_charmap_csv
 
 REF_RE = re.compile(r"<(phrase|name):(\d+)>")
@@ -98,8 +98,8 @@ def main() -> None:
             print(f"  {editable}")
             print(f"  {reader.decode(raw).replace(chr(10), ' ⏎ ')}")
 
-    names = [reader.decode(s) for s in chunk.part(NAME_PART)]
-    phrases = [reader.decode(s) for s in chunk.part(PHRASE_PART)]
+    names = [reader.decode(s) for s in chunk.part(chunk.name_part)]
+    phrases = [reader.decode(s) for s in chunk.part(chunk.phrase_part)]
     print("\n===== references used =====")
     for kind, n in sorted(refs):
         if kind == "name":

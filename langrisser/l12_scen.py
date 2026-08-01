@@ -37,8 +37,15 @@ from langrisser.scen import Codec, load_charmap_csv, read_chunk_spans
 
 SECTOR = 0x800
 TEXT_SECTION = 2
+# Where the phrase table and the character names usually sit. The ending
+# chunks carry a ninth part and everything after the menus shifts along, so
+# these are the starting guess and not the answer; `Chunk.phrase_part` and
+# `Chunk.name_part` find the real one by its entry count, which the format
+# fixes.
 PHRASE_PART = 4
 NAME_PART = 1
+PHRASE_ENTRIES = 239
+NAME_ENTRIES = 79
 BANK_FIRST = 0xF7
 BANK_LAST = 0xFB
 BANK_WIDTH = 255
@@ -120,6 +127,26 @@ class Chunk:
 
     def part(self, number: int) -> tuple[bytes, ...]:
         return self.parts[number] if number < len(self.parts) else ()
+
+    def part_sized(self, entries: int, default: int) -> int:
+        """The part with exactly `entries` strings, if there is just one.
+
+        Both tables the script indexes into — the phrase table and the
+        character names — have a fixed number of entries, and no chunk in
+        either game has two parts of that size. The ending chunks put them at
+        other indices, so counting is what finds them; the usual index is the
+        fallback for a chunk that does not carry the table at all.
+        """
+        found = [i for i, part in enumerate(self.parts) if len(part) == entries]
+        return found[0] if len(found) == 1 else default
+
+    @property
+    def phrase_part(self) -> int:
+        return self.part_sized(PHRASE_ENTRIES, PHRASE_PART)
+
+    @property
+    def name_part(self) -> int:
+        return self.part_sized(NAME_ENTRIES, NAME_PART)
 
 
 def pack_chunk(original: bytes, parts, cap: bool = True) -> bytes:
@@ -234,7 +261,7 @@ class Reader:
             kind, _, arg = m.group(1).partition(":")
             if kind != "phrase" or not arg or depth <= 0:
                 return m.group(0)
-            strings = self.chunk.part(PHRASE_PART)
+            strings = self.chunk.part(self.chunk.phrase_part)
             if not 1 <= int(arg) <= len(strings):
                 return m.group(0)
             inner = self.decode(strings[int(arg) - 1], expand=False)
@@ -250,7 +277,8 @@ class Reader:
         if name in ("phrase", "name") and arg is not None and depth <= 0:  # noqa: E501
             return f"<{name}:{arg}>"
         if name in ("phrase", "name") and arg is not None:
-            part = PHRASE_PART if name == "phrase" else NAME_PART
+            part = (self.chunk.phrase_part if name == "phrase"
+                    else self.chunk.name_part)
             # Numbers are 1-based over the strings of that part.
             number = arg if name == "phrase" else arg + 2
             strings = self.chunk.part(part)

@@ -214,7 +214,7 @@ def name_table(game: str, lang_names: Path | None = None) -> dict[int, str]:
     reader = Reader(font, chunk)
     out = {}
     shared = read_pack(lang_names) if lang_names and lang_names.exists() else {}
-    for si, raw in enumerate(chunk.part(NAME_PART)):
+    for si, raw in enumerate(chunk.part(chunk.name_part)):
         text = shared.get((NAME_PART, si)) or (reader.decode(raw) if raw else "")
         out[si - 1] = text
     return out

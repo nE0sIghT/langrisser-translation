@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import collections
 
-from langrisser.l12_scen import BANK_FIRST, CONTROLS, PHRASE_PART, Writer
+from langrisser.l12_scen import BANK_FIRST, CONTROLS, Writer
 
 PHRASE_CODE = next(c for c, (name, _) in CONTROLS.items() if name == "phrase")
 REFERENCE_COST = 2      # the control byte and its operand
@@ -57,13 +57,14 @@ def phrase_refs(raw: bytes):
 def pinned_indices(chunk, records: dict[tuple[int, int], str]) -> set[int]:
     """Indices a string we are not rewriting still points at."""
     pinned: set[int] = set()
+    table = chunk.phrase_part
     for pi, part in enumerate(chunk.parts):
-        if pi == PHRASE_PART:
+        if pi == table:
             continue
         for si, raw in enumerate(part):
             if raw and (pi, si) not in records:
                 pinned.update(phrase_refs(raw))
-    for raw in chunk.part(PHRASE_PART):
+    for raw in chunk.part(table):
         pinned.update(phrase_refs(raw))
     return pinned
 
@@ -156,7 +157,7 @@ def rebuild(chunk, records: dict[tuple[int, int], str], writer: Writer):
     now behind a reference.
     """
     pinned = pinned_indices(chunk, records)
-    original_table = list(chunk.part(PHRASE_PART))
+    original_table = list(chunk.part(chunk.phrase_part))
     encoded = {key: writer.encoded_units(text) for key, text in records.items()}
     original_records = {key: b"".join(raw for raw, _compressible in units)
                         for key, units in encoded.items()}
