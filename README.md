@@ -193,8 +193,8 @@ partial translated chunks.
 ## Translation Model
 
 Every target language is a language pack under its game's pack root
-(`data/lang/<lang>/` for Langrisser V, `data/games/l4/lang/<lang>/` for
-Langrisser IV; the root is a field of the game manifest). A pack contains
+(`data/games/<game>/lang/<lang>/`; the root is a field of the game manifest).
+A pack contains
 durable translation/editorial data only:
 
 - completed SCEN chunks;
@@ -286,26 +286,27 @@ python3 -m langrisser.derive_font_map --game l4 \
 Create a new language scaffold:
 
 ```bash
-python3 -m langrisser.init_lang <lang> --label "Language Name"
+python3 -m langrisser.init_lang <lang> --game <game> --label "Language Name"
 ```
 
 By default this copies source structure while clearing target-language fields
 and does not copy script chunks. Use `--copy-script` only for explicit
 experiments.
 
-Review or edit these files for the target language:
+Every pack lives at `data/games/<game>/lang/<lang>/`. Its durable core is:
 
-- `data/lang/<lang>/manifest.json`
-- `data/lang/<lang>/font_slot_assignments.csv`
-- `data/lang/<lang>/system_strings.json`
-- `data/lang/<lang>/system_layout.json`
-- `data/lang/<lang>/title_credits.json`
-- `data/lang/<lang>/names.csv`
-- `data/lang/<lang>/glossary.csv`
-- `data/lang/<lang>/name_entry_grid.json`
-- `data/lang/<lang>/manual_record_overrides.json`
-- `data/lang/<lang>/poem_prologue.txt`
-- `data/lang/<lang>/virash_monologue.json`
+- `manifest.json`
+- `SCEN/`
+- `font_slot_assignments.csv`
+- `names.csv`
+- `glossary.csv`
+- `review_status.csv`
+
+The manifest declares the files that game and engine additionally use. For
+example, the L4/L5 packs have `system_strings.json` and `system_layout.json`;
+L5 also has title credits, the name-entry grid, the prologue poem and the
+Virash transcript. A pack does not need placeholder files for assets its game
+does not contain.
 
 `system_strings.json` is a target-only `stable id -> translated text` overlay.
 Offsets, budgets and Japanese source come from the generated
@@ -319,11 +320,13 @@ passes; later builds then reject any unresolved Japanese SYSTEM entry.
 exceptions required by longer target-language strings. Add exceptions only after
 confirming that the affected UI field can display them.
 
-The full patch build derives any missing target-language pairs into
-`work/l5/build/font_slot_assignments.<lang>.csv`, rebuilds the font, rewraps a copy
-under `work/l5/build/translation.<lang>/` with that exact table and validates it
-before insertion. It never rewrites tracked translation sources. To persist a
-new assignment baseline for review, run:
+The L4/L5 patch build derives any missing target-language pairs into
+`work/<game>/build/font_slot_assignments.<lang>.csv`, rebuilds the font,
+rewraps a copy under `work/<game>/build/translation.<lang>/` with that exact
+table and validates it before insertion. The L1/L2 build likewise generates
+the shared disc table under `work/build/l1-2-ps1-jp/`. Neither build rewrites
+tracked translation sources. To persist a new L4/L5 assignment baseline for
+review, run:
 
 ```bash
 python3 -m langrisser.assign_font_slots --lang <lang>
@@ -341,8 +344,9 @@ python3 -m langrisser.scenario --lang <lang> dump 1
 python3 -m langrisser.scenario --lang <lang> prefill 1
 ```
 
-`prefill` writes partial chunks to `work/l5/wip_<lang>/SCEN/`. Move a chunk to
-`data/lang/<lang>/SCEN/` only after it is fully translated and validates.
+`prefill` writes partial chunks to `work/<game>/wip_<lang>/SCEN/`. Move a chunk
+to `data/games/<game>/lang/<lang>/SCEN/` only after it is fully translated and
+validates.
 
 Source priority for translation and review:
 
@@ -380,10 +384,10 @@ plates, controls and page boundaries. Use `--scenario quiz`, `--scenario 1`, or
 non-empty script.
 
 Review decisions are durable language-pack data in
-`data/lang/<lang>/review_status.csv`. Set `target_done=1` only after the target
-record is complete and `reference_checked=1` only after checking the reference
-English record against JP. Generated review pages separately flag missing
-records, control mismatches and residual Japanese.
+`data/games/l5/lang/<lang>/review_status.csv`. Set `target_done=1` only after
+the target record is complete and `reference_checked=1` only after checking
+the reference English record against JP. Generated review pages separately
+flag missing records, control mismatches and residual Japanese.
 
 Editing rules:
 
