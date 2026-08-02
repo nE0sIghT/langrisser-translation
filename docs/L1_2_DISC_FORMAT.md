@@ -343,24 +343,29 @@ over the commander list) draw text none of the pools above contains.
 What the dumps of the four screens (`work/ram{1..4}.bin`,
 `work/vram{1..4}.bin`) establish:
 
-- Whether they are drawn from `FONT.DAT` is **not settled**. The dumps to hand
-  were taken with DuckStation at 7× internal resolution with filtering on, so
-  the framebuffer in them is upscaled, filtered and resampled back down: the
-  menu window holds 226 distinct colours over 7200 pixels and a row through the
-  `兵` runs `0x3907 0x28a4 0x30c5 0x14a5 …` rather than two values. A glyph that
-  measures fourteen rows there, or fails to match its plane tile, proves
-  nothing. Settling this needs a dump at 1× native with filtering off.
-- The words are **not in RAM as glyph indices**, in any width: single byte,
-  banked, or 16-bit, and not as a run whose *differences* match the slot
-  numbers, which would have found them under any base offset.
-- Their bitmaps are **not a texture in VRAM**: the on-screen `兵` appears only
-  in the two framebuffers, and nowhere as 4bpp, 8bpp or 16bpp source data.
+- They **are drawn from `FONT.DAT`**, at 4/3 scale. On a clean dump — 1×
+  native, nearest neighbour, 48 distinct colours in the menu window — the
+  glyphs stretch twelve source rows over sixteen screen rows, with rows
+  duplicated in the pattern that scaling gives. Sampling the framebuffer back
+  at 12 × 12 and matching against all 1536 tiles identifies them outright:
+  `兵` of `兵士配属` is slot 327, and the `指揮官` heading is slots 219 and
+  334. So these screens need no new glyph work; whatever the plane holds is
+  what they draw.
+- The tile numbers are **not in any string table**. Not in `SCEN.DAT` (every
+  chunk, every part), not in the executables, not in `IMG.DAT`, `CLASS.DAT`,
+  `FIGHT.DAT` or `MAP.DAT`, and not in RAM while the screen is up — searched as
+  the script's own encoding (`E5 E6 F7 62` for `指揮官`), as raw bytes, as
+  16-bit little- and big-endian, as 32-bit, as slot+0x0A, and as a run whose
+  *differences* match the slots, which would have found them under any base.
+- Their bitmaps are **not a texture in VRAM** either: the on-screen `兵` appears
+  only in the two framebuffers, nowhere as 4bpp, 8bpp or 16bpp source data.
 
-So the strings are in neither `SCEN.DAT` nor the executables in any encoding
-tried, and their bitmaps are in no VRAM texture page. Where the text does live
-is still open. Two claims made earlier are withdrawn: that these screens are
-`IMG.DAT` artwork (reached by elimination, no asset shown), and that a second
-font is at work (read off a filtered, upscaled framebuffer).
+So the glyphs are the plane's, but the sequence that names them is produced by
+code rather than read from a table. Translating these screens is therefore a
+code patch, not a data edit — a different class of work from everything else
+here. Two earlier claims are withdrawn: that the screens are `IMG.DAT` artwork
+(reached by elimination, no asset shown), and that a second font is at work
+(read off a filtered, upscaled framebuffer).
 
 `langrisser/imgdat.py` now opens these files: the offset table ends where the
 first asset begins rather than at a fixed 0x800 sector, which is 0x568 here, and
