@@ -311,14 +311,41 @@ phrase table is written once and referenced everywhere.
 
 ## Writing it back
 
-### There is no SYSTEM file
+### There is no SYSTEM file, but SCEN.DAT is not the only text pool
 
-This engine has no counterpart to `l45`'s `SYSTEM.BIN`. The UI text lives in
+This engine has no counterpart to `l45`'s `SYSTEM.BIN`. Most UI text lives in
 `SCEN.DAT` like everything else, as parts 0–4 of each chunk's text section:
 menu wording, character names, item names, spell and skill names, and the
 phrase table. So "system" and "script" are one packing problem here, not two —
 and a change to a shared part has to be written into every chunk that carries
 that variant.
+
+Two pools sit outside it, though, and neither is reachable through the pack
+files.
+
+**Half-width katakana in the executables.** `LANG1.EXE` and `LANG2.EXE` carry
+their own string tables in JIS X 0201 half-width katakana, twelve bytes to an
+entry, NUL-padded. In `LANG1.EXE` the run at `0x6ab34`–`0x6accc` is the class
+roster — `ｸﾞﾗﾃﾞｨｴｰﾀｰ`, `ｼﾙﾊﾞｰﾅｲﾄ`, `ﾃﾞｰﾓﾝﾛｰﾄﾞ` — and a second at `0x6b0c8`
+starts `ﾃｲｺｸｼｷｶﾝ` (帝国指揮官). `LANG2.EXE` has the same tables around
+`0x6aec0`. These names also exist in `SCEN.DAT` part 3 as fullwidth text, so
+which copy a given screen reads has to be established before either is
+translated. An `.EXE` string costs no plane slot at all — it is drawn from a
+separate small font — so if a screen reads this copy, translating it is free of
+the pair-slot pressure that governs everything in `SCEN.DAT`.
+
+**Screens with no string anywhere.** The title menu (`ｽﾀｰﾄ` / `▶ﾛｰﾄﾞ`), the
+load screen, the world-map header `シナリオ　１`, the status bar
+`SCENARIO 1 TURN 0` and the pre-battle menu (`兵士配属`, `アイテム装備`,
+`指揮官配置`, `出撃`, and the `指揮官` heading over the commander list) draw
+text that is in none of these pools. Checked against RAM and VRAM dumps of all
+four screens (`work/ram{1..4}.bin`, `work/vram{1..4}.bin`): the words appear in
+the framebuffer but not in RAM as glyph-slot bytes — single-byte, banked, or
+16-bit — nor in `SCEN.DAT`, the executables or the side files as half-width
+katakana or Shift-JIS. They are therefore baked into `IMG.DAT` artwork. The
+`l45` archive reader does not open these files (`first asset offset 0x568
+overlaps the TOC`), so translating those screens means working out the
+`LANG1/2.IMG.DAT` table of contents first.
 
 ### The round trips
 
