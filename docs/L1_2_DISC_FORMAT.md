@@ -334,18 +334,37 @@ translated. An `.EXE` string costs no plane slot at all — it is drawn from a
 separate small font — so if a screen reads this copy, translating it is free of
 the pair-slot pressure that governs everything in `SCEN.DAT`.
 
-**Screens with no string anywhere.** The title menu (`ｽﾀｰﾄ` / `▶ﾛｰﾄﾞ`), the
-load screen, the world-map header `シナリオ　１`, the status bar
-`SCENARIO 1 TURN 0` and the pre-battle menu (`兵士配属`, `アイテム装備`,
-`指揮官配置`, `出撃`, and the `指揮官` heading over the commander list) draw
-text that is in none of these pools. Checked against RAM and VRAM dumps of all
-four screens (`work/ram{1..4}.bin`, `work/vram{1..4}.bin`): the words appear in
-the framebuffer but not in RAM as glyph-slot bytes — single-byte, banked, or
-16-bit — nor in `SCEN.DAT`, the executables or the side files as half-width
-katakana or Shift-JIS. They are therefore baked into `IMG.DAT` artwork. The
-`l45` archive reader does not open these files (`first asset offset 0x568
-overlaps the TOC`), so translating those screens means working out the
-`LANG1/2.IMG.DAT` table of contents first.
+**Screens whose text is not in any string pool, and not in the plane either.**
+The title menu (`ｽﾀｰﾄ` / `▶ﾛｰﾄﾞ`), the load screen, the world-map header
+`シナリオ　１`, the status bar `SCENARIO 1 TURN 0` and the pre-battle menu
+(`兵士配属`, `アイテム装備`, `指揮官配置`, `出撃`, and the `指揮官` heading
+over the commander list) draw text none of the pools above contains.
+
+What the dumps of the four screens (`work/ram{1..4}.bin`,
+`work/vram{1..4}.bin`) establish:
+
+- The words are **not drawn from `FONT.DAT`**. Compared pixel for pixel, the
+  `兵` of `兵士配属` in the framebuffer is fourteen rows tall and carries a
+  stroke the plane's twelve-row tile does not have; matching that glyph against
+  all 1536 tiles tops out at 132/144 against an unrelated `ニ`. The Cyrillic in
+  the same window — `Денег`, `Ледин`, `Волков`, which do come from the plane —
+  is visibly smaller. Two different fonts are on that screen at once.
+- The words are **not in RAM as glyph indices**, in any width: single byte,
+  banked, or 16-bit, and not as a run whose *differences* match the slot
+  numbers, which would have found them under any base offset.
+- Their bitmaps are **not a texture in VRAM**: the on-screen `兵` appears only
+  in the two framebuffers, and nowhere as 4bpp, 8bpp or 16bpp source data.
+
+So a second font exists whose glyph data is neither the plane nor a VRAM sprite
+sheet, and whose strings are neither in `SCEN.DAT` nor in the executables in any
+encoding tried. Where it does live is still open — the claim that it is `IMG.DAT`
+artwork is not proven and should not be repeated until an asset is shown.
+
+`langrisser/imgdat.py` now opens these files: the offset table ends where the
+first asset begins rather than at a fixed 0x800 sector, which is 0x568 here, and
+`LANG1.IMG.DAT` lists 37 assets. Their payloads are not the type-8 layout `l45`
+decodes — the header reads `01c0` where Langrisser V has the packet magic
+`0160` — so the codec is still unknown.
 
 ### The round trips
 

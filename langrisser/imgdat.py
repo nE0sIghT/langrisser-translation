@@ -490,11 +490,21 @@ def read_img(path: str | Path) -> bytearray:
 
 
 def parse_toc(data: bytes) -> list[AssetEntry]:
-    if len(data) < TOC_SIZE:
-        raise ValueError("IMG.DAT is smaller than the 0x800-byte TOC area")
+    """The offset table, however long this file's happens to be.
+
+    Langrisser V pads the table to a 0x800 sector; Langrisser I & II do not —
+    `LANG1.IMG.DAT` starts its first asset at 0x568. The table ends where the
+    first asset begins either way, so read that from the first entry instead
+    of assuming a size.
+    """
+    if len(data) < 8:
+        raise ValueError("IMG.DAT is too small to hold an offset table")
+    toc_size = struct.unpack_from("<I", data, 0)[0]
+    if not 8 <= toc_size <= min(len(data), TOC_SIZE):
+        raise ValueError(f"first asset offset 0x{toc_size:x} is not a table size")
 
     offsets: list[int] = []
-    for pos in range(0, TOC_SIZE, 4):
+    for pos in range(0, toc_size, 4):
         value = struct.unpack_from("<I", data, pos)[0]
         if value == 0 and pos > 0:
             break
@@ -502,8 +512,6 @@ def parse_toc(data: bytes) -> list[AssetEntry]:
 
     if len(offsets) < 2:
         raise ValueError("IMG.DAT TOC has fewer than two offsets")
-    if offsets[0] < TOC_SIZE:
-        raise ValueError(f"first asset offset 0x{offsets[0]:x} overlaps the TOC")
     if offsets != sorted(offsets):
         raise ValueError("IMG.DAT TOC offsets are not sorted")
     if offsets[-1] > len(data):
