@@ -343,22 +343,24 @@ over the commander list) draw text none of the pools above contains.
 What the dumps of the four screens (`work/ram{1..4}.bin`,
 `work/vram{1..4}.bin`) establish:
 
-- The words are **not drawn from `FONT.DAT`**. Compared pixel for pixel, the
-  `兵` of `兵士配属` in the framebuffer is fourteen rows tall and carries a
-  stroke the plane's twelve-row tile does not have; matching that glyph against
-  all 1536 tiles tops out at 132/144 against an unrelated `ニ`. The Cyrillic in
-  the same window — `Денег`, `Ледин`, `Волков`, which do come from the plane —
-  is visibly smaller. Two different fonts are on that screen at once.
+- Whether they are drawn from `FONT.DAT` is **not settled**. The dumps to hand
+  were taken with DuckStation at 7× internal resolution with filtering on, so
+  the framebuffer in them is upscaled, filtered and resampled back down: the
+  menu window holds 226 distinct colours over 7200 pixels and a row through the
+  `兵` runs `0x3907 0x28a4 0x30c5 0x14a5 …` rather than two values. A glyph that
+  measures fourteen rows there, or fails to match its plane tile, proves
+  nothing. Settling this needs a dump at 1× native with filtering off.
 - The words are **not in RAM as glyph indices**, in any width: single byte,
   banked, or 16-bit, and not as a run whose *differences* match the slot
   numbers, which would have found them under any base offset.
 - Their bitmaps are **not a texture in VRAM**: the on-screen `兵` appears only
   in the two framebuffers, and nowhere as 4bpp, 8bpp or 16bpp source data.
 
-So a second font exists whose glyph data is neither the plane nor a VRAM sprite
-sheet, and whose strings are neither in `SCEN.DAT` nor in the executables in any
-encoding tried. Where it does live is still open — the claim that it is `IMG.DAT`
-artwork is not proven and should not be repeated until an asset is shown.
+So the strings are in neither `SCEN.DAT` nor the executables in any encoding
+tried, and their bitmaps are in no VRAM texture page. Where the text does live
+is still open. Two claims made earlier are withdrawn: that these screens are
+`IMG.DAT` artwork (reached by elimination, no asset shown), and that a second
+font is at work (read off a filtered, upscaled framebuffer).
 
 `langrisser/imgdat.py` now opens these files: the offset table ends where the
 first asset begins rather than at a fixed 0x800 sector, which is 0x568 here, and
