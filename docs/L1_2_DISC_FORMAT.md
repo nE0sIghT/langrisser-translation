@@ -355,8 +355,15 @@ What the dumps of the four screens (`work/ram{1..4}.bin`,
   chunk, every part), not in the executables, not in `IMG.DAT`, `CLASS.DAT`,
   `FIGHT.DAT` or `MAP.DAT`, and not in RAM while the screen is up — searched as
   the script's own encoding (`E5 E6 F7 62` for `指揮官`), as raw bytes, as
-  16-bit little- and big-endian, as 32-bit, as slot+0x0A, and as a run whose
-  *differences* match the slots, which would have found them under any base.
+  16-bit little- and big-endian, as 32-bit, as slot+0x0A, as `slot*18` (the
+  form Langrisser V stores), and as a run whose *differences* match the slots,
+  which would have found them under any base.
+- Langrisser V's own group scanner finds nothing either. `offsetgroups.find_groups`
+  — the `[u16 offset table][0xFFFF-terminated glyph runs]` model behind
+  `system_dump.py` — was run over both executables, every side file, `FONT.DAT`
+  and a RAM dump taken while the screen was up, relaxed to three-entry tables:
+  no group anywhere decodes as text. This engine does not store UI text the way
+  `SYSTEM.BIN` does.
 - Their bitmaps are **not a texture in VRAM** either: the on-screen `兵` appears
   only in the two framebuffers, nowhere as 4bpp, 8bpp or 16bpp source data.
 
@@ -368,10 +375,14 @@ here. Two earlier claims are withdrawn: that the screens are `IMG.DAT` artwork
 (read off a filtered, upscaled framebuffer).
 
 `langrisser/imgdat.py` now opens these files: the offset table ends where the
-first asset begins rather than at a fixed 0x800 sector, which is 0x568 here, and
-`LANG1.IMG.DAT` lists 37 assets. Their payloads are not the type-8 layout `l45`
-decodes — the header reads `01c0` where Langrisser V has the packet magic
-`0160` — so the codec is still unknown.
+first asset begins rather than at a fixed 0x800 sector, which is 0x568 here, so
+`LANG1.IMG.DAT` lists 345 assets against Langrisser V's 16.
+
+Their payloads are **compressed**, which Langrisser V's are not. Every asset
+runs at 7.0–7.8 bits of entropy per byte over 200–256 distinct values, and every
+one opens with `c0 01 45` or `c0 70 00`; sizes are 76 bytes to 4 KB, far below
+what a raw 8bpp screen would need. So the type-8 scanline decoder has nothing to
+work on here and the codec has to be reversed before any asset can be seen.
 
 ### The round trips
 
