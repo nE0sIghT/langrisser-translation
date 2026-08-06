@@ -96,7 +96,7 @@ def write_glyph(pixels: bytearray, width: int, code: int, glyph: Image.Image) ->
 
 
 def plan_codes(pack: dict[str, str], charmap: dict[int, str],
-               strings) -> tuple[dict[str, int], list[str]]:
+               strings, candidates) -> tuple[dict[str, int], list[str]]:
     """Assign a character code to every cell of Russian the pack asks for."""
     wanted: list[str] = []
     for source in strings:
@@ -107,7 +107,11 @@ def plan_codes(pack: dict[str, str], charmap: dict[int, str],
             if cell.strip() and cell not in wanted:
                 wanted.append(cell)
 
-    kept = {c for s in strings if decode(s.codes, charmap) not in pack for c in s.codes}
+    # Every candidate string keeps its codes, not just the ones a drawing
+    # function was proved to reach: a glyph reused under a code some other
+    # screen still writes turns that screen into nonsense.
+    kept = {c for s in candidates if decode(s.codes, charmap) not in pack
+            for c in s.codes}
     kept.add(SPACE_CODE)
     # Latin, digits and punctuation are also written by code that formats
     # numbers and names, which this pass cannot see, so they are never reused.
@@ -142,7 +146,8 @@ def main() -> None:
         print(f"{game.code}: no UI strings translated")
         pack = {}
 
-    assignment, wanted = plan_codes(pack, charmap, strings)
+    assignment, wanted = plan_codes(pack, charmap, strings,
+                                    harvest(exe_path, drawn_only=False))
     data, t_addr, _ = load_exe(exe_path)
     out = bytearray(data)
     written = 0
