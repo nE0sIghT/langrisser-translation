@@ -522,6 +522,157 @@ def parse_toc(data: bytes) -> list[AssetEntry]:
     return [AssetEntry(i, offsets[i], offsets[i + 1]) for i in range(len(offsets) - 1)]
 
 
+# --- Langrisser I & II bit-coded LZ payloads --------------------------------
+# Every /LANG?/IMG.DAT asset is a bitstream, read MSB first, decoded by the
+# routine at 0x80011ba4 in LANG1.EXE. The alphabet is a fixed prefix code:
+#
+#   1 1                literal, next 8 bits
+#   1 0 0              literal, next 4 bits (values 0x00..0x0f)
+#   1 0 1 0 0          literal 0x10        1 0 1 0 1  literal 0x30
+#   1 0 1 1 0          literal 0x80        1 0 1 1 1  literal 0xff
+#   0 0                copy 1 byte, 4-bit distance
+#   0 1 0              copy 2 bytes, 4-bit distance
+#   0 1 1 0            copy 3 bytes, 4-bit distance
+#   0 1 1 1 0          copy 2 bytes, 8-bit distance
+#   0 1 1 1 1 0        copy 3 bytes, 8-bit distance
+#   0 1 1 1 1 1 0      copy 4 bytes, 8-bit distance
+#   0 1 1 1 1 1 1 0    copy (4-bit + 5) bytes, 8-bit distance
+#   0 1 1 1 1 1 1 1    end of stream
+#
+# A distance of zero means the maximum (0x10 for the 4-bit form, 0x100 for the
+# 8-bit one); copies run forward one byte at a time, so they may overlap.
+LZ_SHORT_DIST_MAX = 0x10
+LZ_LONG_DIST_MAX = 0x100
+LZ_SHORT_LITERALS = (0x10, 0x30, 0x80, 0xFF)
+
+
+class _BitReader:
+    def __init__(self, data: bytes):
+        self.data = data
+        self.pos = 0
+        self.buf = 0
+        self.used = 8
+
+    def _next_byte(self) -> int:
+        if self.pos >= len(self.data):
+            raise ValueError("IMG.DAT bitstream ran out before its end marker")
+        value = self.data[self.pos]
+        self.pos += 1
+        return value
+
+    def bit(self) -> int:
+        if self.used == 8:
+            self.buf = self._next_byte()
+            self.used = 0
+        self.used += 1
+        value = (self.buf >> 7) & 1
+        self.buf = (self.buf << 1) & 0xFF
+        return value
+
+    def bits(self, count: int) -> int:
+        value = 0
+        for _ in range(count):
+            value = (value << 1) | self.bit()
+        return value
+
+
+def lz_decompress(payload: bytes) -> bytes:
+    """Expand one Langrisser I & II IMG.DAT asset."""
+    reader = _BitReader(payload)
+    out = bytearray()
+    while True:
+        if reader.bit():
+            if reader.bit():
+                out.append(reader.bits(8))
+            elif not reader.bit():
+                out.append(reader.bits(4))
+            elif not reader.bit():
+                out.append(LZ_SHORT_LITERALS[reader.bit()])
+            else:
+                out.append(LZ_SHORT_LITERALS[2 + reader.bit()])
+            continue
+
+        if not reader.bit():
+            length, dist = 1, reader.bits(4) or LZ_SHORT_DIST_MAX
+        elif not reader.bit():
+            length, dist = 2, reader.bits(4) or LZ_SHORT_DIST_MAX
+        elif not reader.bit():
+            length, dist = 3, reader.bits(4) or LZ_SHORT_DIST_MAX
+        elif not reader.bit():
+            length, dist = 2, reader.bits(8) or LZ_LONG_DIST_MAX
+        elif not reader.bit():
+            length, dist = 3, reader.bits(8) or LZ_LONG_DIST_MAX
+        elif not reader.bit():
+            length, dist = 4, reader.bits(8) or LZ_LONG_DIST_MAX
+        elif not reader.bit():
+            length = reader.bits(4) + 5
+            dist = reader.bits(8) or LZ_LONG_DIST_MAX
+        else:
+            return bytes(out)
+
+        src = len(out) - dist
+        for _ in range(length):
+            out.append(out[src] if src >= 0 else 0)
+            src += 1
+
+
+LZ_BITMAP_KIND = 0
+LZ_CLUT_KIND = 1
+LZ_CLUT_ENTRIES = 16
+
+
+def lz_bitmap(expanded: bytes):
+    """`(width, height, 4bpp rows, palette)` for an expanded asset.
+
+    Both kinds are 4bpp bitmaps sized in eight-pixel blocks. Kind 0 is
+    `u16 kind, u16 unused, u16 width/8, u16 height/8` and takes its colours
+    from a CLUT uploaded elsewhere; kind 1 carries its own sixteen-entry
+    RGB555 CLUT between the kind word and the size words.
+    """
+    if len(expanded) < 8:
+        return None
+    kind = struct.unpack_from("<H", expanded, 0)[0]
+    if kind == LZ_BITMAP_KIND:
+        head, palette = 8, None
+    elif kind == LZ_CLUT_KIND:
+        head = 4 + 2 * LZ_CLUT_ENTRIES + 4
+        if len(expanded) < head:
+            return None
+        palette = [
+            rgb555_to_rgb888(word)
+            for word in struct.unpack_from(f"<{LZ_CLUT_ENTRIES}H", expanded, 4)
+        ]
+    else:
+        return None
+    wide, high = struct.unpack_from("<2H", expanded, head - 4)
+    width, height = wide * 8, high * 8
+    if width <= 0 or height <= 0 or len(expanded) - head < width * height // 2:
+        return None
+    return width, height, expanded[head : head + width * height // 2], palette
+
+
+def lz_bitmap_image(expanded: bytes, palette: list[tuple[int, int, int]] | None = None):
+    """Render an expanded asset; with no CLUT, index 0 is dark and the rest ramp."""
+    decoded = lz_bitmap(expanded)
+    if decoded is None:
+        return None
+    width, height, pixels, own_palette = decoded
+    palette = palette or own_palette
+    if palette is None:
+        palette = [(24, 24, 32)] + [
+            (17 * i, min(255, 40 + 14 * i), min(255, 96 + 10 * i)) for i in range(1, 16)
+        ]
+    img = Image.new("RGB", (width, height))
+    put = img.putpixel
+    stride = width // 2
+    for y in range(height):
+        row = pixels[y * stride : (y + 1) * stride]
+        for x, byte in enumerate(row):
+            put((x * 2, y), palette[byte & 0xF])
+            put((x * 2 + 1, y), palette[byte >> 4])
+    return img
+
+
 def get_asset(data: bytes, index: int) -> tuple[AssetEntry, bytes]:
     entries = parse_toc(data)
     if index < 0 or index >= len(entries):
@@ -949,6 +1100,40 @@ def cmd_dump_all(args: argparse.Namespace) -> None:
     print(f"dumped {count} images to {out_dir}")
 
 
+def cmd_dump_lz(args: argparse.Namespace) -> None:
+    """Expand every Langrisser I & II asset and write one PNG per bitmap."""
+    data = read_img(args.imgdat)
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    thumbs: list[tuple[int, Image.Image]] = []
+    other = 0
+    for ent in parse_toc(data):
+        payload = bytes(data[ent.offset : ent.end])
+        if not payload:
+            continue
+        img = lz_bitmap_image(lz_decompress(payload))
+        if img is None:
+            other += 1
+            continue
+        img.save(out_dir / f"{ent.index:03d}_{img.width}x{img.height}.png")
+        thumbs.append((ent.index, img))
+
+    cell, per_row, per_sheet = args.cell, args.columns, args.columns * args.rows
+    for page in range(0, len(thumbs), per_sheet):
+        chunk = thumbs[page : page + per_sheet]
+        rows = (len(chunk) + per_row - 1) // per_row
+        sheet = Image.new("RGB", (per_row * cell, rows * cell), (12, 12, 16))
+        draw = ImageDraw.Draw(sheet)
+        for k, (index, img) in enumerate(chunk):
+            thumb = img.copy()
+            thumb.thumbnail((cell - 8, cell - 20), Image.Resampling.NEAREST)
+            x, y = (k % per_row) * cell, (k // per_row) * cell
+            sheet.paste(thumb, (x + 4, y + 16))
+            draw.text((x + 4, y + 3), f"#{index}", fill=(210, 210, 210))
+        sheet.save(out_dir / f"sheet_{page // per_sheet:02d}.png")
+    print(f"{len(thumbs)} bitmaps and {other} non-bitmap assets -> {out_dir}")
+
+
 def cmd_title_credits_preview(args: argparse.Namespace) -> None:
     data = read_img(args.imgdat)
     commit_hash = args.commit_hash or git_short_hash()
@@ -1044,6 +1229,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--out-dir", default="work/img_dump")
     p.add_argument("--scale", type=int, default=1)
     p.set_defaults(func=cmd_dump_all)
+
+    p = sub.add_parser("dump-lz", help="expand Langrisser I & II assets to PNG plus contact sheets")
+    p.add_argument("imgdat")
+    p.add_argument("--out-dir", default="work/img_dump")
+    p.add_argument("--cell", type=int, default=200)
+    p.add_argument("--columns", type=int, default=6)
+    p.add_argument("--rows", type=int, default=8)
+    p.set_defaults(func=cmd_dump_lz)
 
     p = sub.add_parser("decode-gap-bitmap", help="decode a known gap-bitmap profile to PNG")
     p.add_argument("imgdat")

@@ -378,11 +378,61 @@ here. Two earlier claims are withdrawn: that the screens are `IMG.DAT` artwork
 first asset begins rather than at a fixed 0x800 sector, which is 0x568 here, so
 `LANG1.IMG.DAT` lists 345 assets against Langrisser V's 16.
 
-Their payloads are **compressed**, which Langrisser V's are not. Every asset
-runs at 7.0–7.8 bits of entropy per byte over 200–256 distinct values, and every
-one opens with `c0 01 45` or `c0 70 00`; sizes are 76 bytes to 4 KB, far below
-what a raw 8bpp screen would need. So the type-8 scanline decoder has nothing to
-work on here and the codec has to be reversed before any asset can be seen.
+Their payloads are **compressed**, which Langrisser V's are not, so the type-8
+scanline decoder has nothing to work on here.
+
+### The IMG.DAT payload codec
+
+Reversed from `LANG1.EXE`. The unpacker is `unpack(dst, src)` at `0x80011ba4`,
+with `get_bit` at `0x80011990`, `read8` at `0x800119ec`, `read4` at
+`0x80011a54` and the copy loop at `0x80011acc`; the caller at `0x80011de4`
+expands into a fixed scratch buffer at `0x801cfc00`. It is a bitstream read
+MSB first over a fixed prefix code — no table in the file, no window
+pre-fill:
+
+| Code | Meaning |
+| --- | --- |
+| `11` | literal, next 8 bits |
+| `100` | literal, next 4 bits (`0x00`–`0x0f`) |
+| `10100` / `10101` | literal `0x10` / `0x30` |
+| `10110` / `10111` | literal `0x80` / `0xff` |
+| `00` | copy 1 byte, 4-bit distance |
+| `010` / `0110` | copy 2 / 3 bytes, 4-bit distance |
+| `01110` / `011110` / `0111110` | copy 2 / 3 / 4 bytes, 8-bit distance |
+| `01111110` | copy (4-bit + 5) bytes, 8-bit distance |
+| `01111111` | end of stream |
+
+A zero distance means the maximum — `0x10` for the 4-bit form, `0x100` for the
+8-bit one — and copies run forward one byte at a time, so they may overlap.
+Singling out `0x10`, `0x30`, `0x80` and `0xff` is what the artwork wants: they
+are the flat 4bpp byte pairs.
+
+Expanded assets are 4bpp bitmaps sized in eight-pixel blocks, in two kinds:
+
+| Kind | Header | Colours |
+| --- | --- | --- |
+| 0 | `u16 0, u16 0, u16 width/8, u16 height/8` | CLUT uploaded separately |
+| 1 | `u16 1, u16 0`, 16 × RGB555, `u16 width/8, u16 height/8` | own CLUT |
+
+`langrisser.imgdat.lz_decompress` reimplements the routine and reproduces the
+emulated original byte-for-byte on all 284 `LANG1` and 336 `LANG2` non-empty
+assets. `python3 -m langrisser.imgdat dump-lz <IMG.DAT> --out-dir <dir>` writes
+one PNG per asset plus contact sheets.
+
+### What the assets hold
+
+- **`#36` is the title/load menu.** 88 × 64, kind 1, and it carries
+  `PUSH START`, `©NCS corp.` and the framed box reading `スタート` /
+  `ロード` as **drawn artwork**, not as glyph runs. Both discs have it at the
+  same index. This restores — with the asset shown this time — the claim that
+  was withdrawn above for these two screens.
+- **`#0` and `#37`, `#38`, `#63`** are a second glyph sheet used by the UI:
+  `#0` carries `AT DF MP MV HP LV`, `TURN`, `SCENARIO`, two digit rows, hiragana
+  and katakana; the other three carry kanji. `#3` is a large `SCENARIO`
+  wordmark. These are separate from `FONT.DAT`.
+- The load screen resolves to `#0`, `#1`, `#2`, `#5`, `#6`, `#36`, `#37`, `#38`,
+  `#63` and `#343` — every asset whose pixels are resident in VRAM while it is
+  on screen.
 
 ### The round trips
 
