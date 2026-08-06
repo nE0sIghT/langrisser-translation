@@ -96,7 +96,7 @@ def write_glyph(pixels: bytearray, width: int, code: int, glyph: Image.Image) ->
 
 
 def plan_codes(pack: dict[str, str], charmap: dict[int, str],
-               strings, candidates) -> tuple[dict[str, int], list[str]]:
+               strings) -> tuple[dict[str, int], list[str]]:
     """Assign a character code to every cell of Russian the pack asks for."""
     wanted: list[str] = []
     for source in strings:
@@ -107,22 +107,19 @@ def plan_codes(pack: dict[str, str], charmap: dict[int, str],
             if cell.strip() and cell not in wanted:
                 wanted.append(cell)
 
-    # Every candidate string keeps its codes, not just the ones a drawing
-    # function was proved to reach: a glyph reused under a code some other
-    # screen still writes turns that screen into nonsense.
-    kept = {c for s in candidates if decode(s.codes, charmap) not in pack
-            for c in s.codes}
-    kept.add(SPACE_CODE)
-    # Latin, digits and punctuation are also written by code that formats
-    # numbers and names, which this pass cannot see, so they are never reused.
-    kept.update(c for c, ch in charmap.items() if ch.isascii())
-    highest = max(FONT_ASSETS) + CODES_PER_ASSET
-    free = [c for c in range(highest) if c not in charmap and c not in kept]
-    recycled = [c for c in sorted(charmap) if c not in kept]
-    pool = free + recycled
-    if len(wanted) > len(pool):
-        raise SystemExit(f"{len(wanted)} cells need codes, only {len(pool)} available")
-    return {cell: pool[i] for i, cell in enumerate(wanted)}, wanted
+    # Only codes the font leaves blank are used. Reusing a drawn glyph needs
+    # proof that nothing writes its code, and there is none to be had: the
+    # pre-battle menu names its characters from a table read with a stride,
+    # which no scan for strings finds, so a "free" kanji turned up on screen
+    # as half a Russian word. A blank cell cannot be in use - drawing it
+    # would show nothing - so blanks are the only safe pool.
+    free = [c for c in range(max(FONT_ASSETS) + CODES_PER_ASSET)
+            if c not in charmap and c != SPACE_CODE]
+    if len(wanted) > len(free):
+        raise SystemExit(
+            f"{len(wanted)} cells need a character code and the font has "
+            f"{len(free)} blank ones; shorten or drop strings in ui_strings.tsv")
+    return {cell: free[i] for i, cell in enumerate(wanted)}, wanted
 
 
 def main() -> None:
@@ -146,8 +143,7 @@ def main() -> None:
         print(f"{game.code}: no UI strings translated")
         pack = {}
 
-    assignment, wanted = plan_codes(pack, charmap, strings,
-                                    harvest(exe_path, drawn_only=False))
+    assignment, wanted = plan_codes(pack, charmap, strings)
     data, t_addr, _ = load_exe(exe_path)
     out = bytearray(data)
     written = 0
@@ -185,7 +181,7 @@ def main() -> None:
         payloads[asset] = imgdat.lz_compress(
             imgdat.lz_replace_pixels(expanded, imgdat.lz_bitmap_pixels(
                 image, width, height)))
-    rebuilt = imgdat.rebuild_img(archive, payloads)
+    rebuilt = imgdat.rebuild_img_within(archive, payloads, len(archive))
     if len(rebuilt) > len(archive):
         raise SystemExit("redrawn font does not fit the archive")
 

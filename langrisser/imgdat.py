@@ -868,6 +868,28 @@ def rebuild_img(data: bytes, payloads: dict[int, bytes]) -> bytes:
     return bytes(out)
 
 
+def rebuild_img_within(data: bytes, payloads: dict[int, bytes],
+                       limit: int | None = None) -> bytes:
+    """Rebuild the archive so it still fits, repacking everything if it must.
+
+    Redrawing can cost room — Cyrillic in cells that used to be blank is real
+    data where there was almost none — and the file may not outgrow its ISO
+    extent. `lz_compress` parses optimally where the shipped streams do not,
+    so repacking the assets nobody edited buys about six per cent back.
+    """
+    limit = len(data) if limit is None else limit
+    out = rebuild_img(data, payloads)
+    if len(out) <= limit:
+        return out
+    dense = dict(payloads)
+    for ent in parse_toc(data):
+        payload = bytes(data[ent.offset : ent.end])
+        if ent.index in dense or not payload:
+            continue
+        dense[ent.index] = lz_compress(lz_decompress(payload))
+    return rebuild_img(data, dense)
+
+
 def replace_asset(data: bytearray, index: int, payload: bytes) -> None:
     ent, _ = get_asset(data, index)
     if len(payload) != ent.size:

@@ -79,7 +79,7 @@ def main() -> None:
 
     overrides = pack_overrides(lang.image_dir)
     payloads = redraw(data, overrides)
-    out = imgdat.rebuild_img(data, payloads)
+    out = imgdat.rebuild_img_within(data, payloads, len(data))
     if len(out) > len(data):
         raise SystemExit(
             f"rebuilt archive is {len(out)} bytes against the original "
