@@ -434,6 +434,28 @@ one PNG per asset plus contact sheets.
   `#63` and `#343` — every asset whose pixels are resident in VRAM while it is
   on screen.
 
+### The tile font
+
+The title menu is the exception, not the rule. The load screen is built from
+8 × 8 textured sprites (`GP0(0x74)`, three words behind an ordering-table tag)
+laid on the screen grid, and a 16 × 16 character is four of them written side
+by side in the texture: `LOAD`'s `L` is the tiles at `(u,v)` `(0xe0,0x50)`,
+`(0xe8,0x50)`, `(0xf0,0x50)` and `(0xf8,0x50)`, which reassemble into the
+ornate serif capital. Those tiles are **asset `#37`** at row 84, x 96 — the
+same asset that carries kanji — so the plate is not a picture of the word
+`LOAD` but that word set in a tile font.
+
+The save-slot line `データがありません` is the same mechanism, and its text is
+not a string in any file: encoded as glyph-plane slots it appears nowhere on
+the disc, as script bytes, as `u16` either endianness, or as low bytes, and
+`SCEN.DAT` holds no such record (it has `セーブデータがありません`, which is a
+different line and is already translated). So the sequence naming those tiles
+is still to be found; it lives in the tile font's own index space, not the
+plane's.
+
+Redrawing the tiles alone would not do: the ornate alphabet is shared, and the
+`A` and `O` of `LOAD` are the `A` and `O` of the `SCENARIO` wordmark.
+
 ### The round trips
 
 There are two, and a translation needs both. `--verify-text` decodes every
