@@ -1,10 +1,12 @@
-# Japanese UI string	Russian, one cell per original character
+# Japanese UI string (or @offset:length)	Russian, one cell per character
 データがありません	Не|т |да|нн|ых| | | | 
-兵士配属　　	Со|ст|ав| | | 
 シナリオ　　	Сц|ен|ар|ий| | 
 ENEMY　PHASE	Хо|д |вр|аг|а | | | | | | 
 TURN	Хо|д | | 
 SCENARIOTURN	Сц|ен|ар|ий| | | | |Хо|д | | 
 シナリオSCENARIOTURN	Сц|ен|ар|ий|Сц|ен|ар|ий| | | | |Хо|д | | 
-装備購入売却	Эк|ип|Ку|пи|Пр|од
 の続き	Пр|од| 
+@0x6a348:6	Со|ст|ав| | | 
+@0x6a34e:6	Ве|щи| | | | 
+@0x6a354:6	От|ря|ды| | | 
+@0x6a35a:6	Бо|й | | | | 

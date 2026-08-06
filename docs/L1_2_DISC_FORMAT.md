@@ -353,6 +353,13 @@ hard-coded `lui`/`addiu` pair, so `l12_uistrings` finds them by walking those
 pairs and keeping the ones a function that reaches the character writer refers
 to. Both executables carry the same sixteen.
 
+Character code 0 is `ア`, so a run of labels **cannot** be null-terminated
+and the engine reads fixed lengths instead. The pre-battle menu is one such
+run: four six-character cells end to end at `0x80079b48` in `LANG1.EXE` and
+`0x80079c50` in `LANG2.EXE` — `兵士配属`, `アイテム装備`, `指揮官配置`,
+`出撃`. No scan for strings finds it, which is why a pack may also address a
+record directly, as `@<file offset>:<characters>`.
+
 Two properties govern a translation:
 
 - **Length is fixed.** A string is often a table read by position: the options
@@ -363,8 +370,13 @@ Two properties govern a translation:
   two letters drawn side by side — the pair-glyph trick the plane already uses
   — and each distinct pair becomes one new character code, taken from the
   empty codes first and then from Japanese characters no surviving string
-  needs. `l12_build_ui` does the assignment, redraws the font assets and
-  rewrites the executables.
+  needs — **no**, only from the codes the font leaves blank. Reusing a drawn
+  glyph needs proof that nothing writes its code, and there is none to be
+  had: labels come from tables no scan finds, and the RAM dumps caught the
+  pre-battle menu drawing `置` and `属` after a pass had handed those codes to
+  Russian. The font leaves 26 cells empty, and 26 is the whole budget until
+  every user of a glyph is translated in one pass. `l12_build_ui` does the
+  assignment, redraws the font assets and rewrites the executables.
 
 Two earlier readings of these screens were wrong and are withdrawn: that they
 draw `FONT.DAT` at 4/3 scale (the tile font is genuinely 16 x 16, and matching

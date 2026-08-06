@@ -50,6 +50,22 @@ def read_pack(path: Path) -> dict[str, str]:
     return out
 
 
+EXPLICIT = "@"
+
+
+def explicit_record(key: str) -> tuple[int, int] | None:
+    """`@<file offset>:<characters>` - a record no scan for strings can find.
+
+    Character code 0 is `ア`, so a run of labels cannot be null-terminated and
+    the engine reads these by fixed length instead. The pre-battle menu is one
+    such run: four six-character cells laid end to end.
+    """
+    if not key.startswith(EXPLICIT):
+        return None
+    offset, _, length = key[1:].partition(":")
+    return int(offset, 0), int(length, 0)
+
+
 def cells_of(value: str) -> list[str]:
     return [c for c in value.split("|")]
 
@@ -99,8 +115,9 @@ def plan_codes(pack: dict[str, str], charmap: dict[int, str],
                strings) -> tuple[dict[str, int], list[str]]:
     """Assign a character code to every cell of Russian the pack asks for."""
     wanted: list[str] = []
-    for source in strings:
-        value = pack.get(decode(source.codes, charmap))
+    values = [pack.get(decode(s.codes, charmap)) for s in strings]
+    values += [v for k, v in pack.items() if explicit_record(k)]
+    for value in values:
         if value is None:
             continue
         for cell in cells_of(value):
@@ -158,6 +175,18 @@ def main() -> None:
                 f"the pack gives {len(cells)}")
         encoded = bytes(SPACE_CODE if not c.strip() else assignment[c] for c in cells)
         out[source.file_offset:source.file_offset + len(encoded)] = encoded
+        written += 1
+    for key, value in pack.items():
+        record = explicit_record(key)
+        if record is None:
+            continue
+        offset, length = record
+        cells = cells_of(value)
+        if len(cells) != length:
+            raise SystemExit(f"{key} holds {length} characters, "
+                             f"the pack gives {len(cells)}")
+        out[offset:offset + length] = bytes(
+            SPACE_CODE if not c.strip() else assignment[c] for c in cells)
         written += 1
 
     img_src = Path(args.img_dat) if args.img_dat else Path(
