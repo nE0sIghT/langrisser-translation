@@ -124,6 +124,11 @@ class LanguagePack:
         return dict(self._data.get("windows") or {})
 
     @property
+    def image_dir(self) -> Path:
+        """Redrawn `IMG.DAT` assets, one paletted PNG per asset index."""
+        return _path(self.root, str(self._data.get("image_dir") or "IMG"))  # type: ignore[return-value]
+
+    @property
     def font_assignments(self) -> Path:
         return _path(self.root, str(self._data.get("font_assignments") or "font_slot_assignments.csv"))  # type: ignore[return-value]
 

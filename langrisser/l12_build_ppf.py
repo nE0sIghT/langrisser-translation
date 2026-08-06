@@ -116,6 +116,13 @@ def main() -> None:
         injections[release.media_path("SCEN.DAT", game)] = out_scen
         # Both game directories hold their own copy of the same plane.
         injections[release.media_path("FONT.DAT", game)] = font_dat
+        # Screens that are painted rather than typeset. Each game's archive is
+        # its own, so this runs per game against that game's pack.
+        out_img = build / f"IMG.{game}.{lang.suffix}.DAT"
+        run("-m", "langrisser.l12_build_img",
+            "--lang", args.lang, "--game", game,
+            "--out-img-dat", out_img)
+        injections[release.media_path("IMG.DAT", game)] = out_img
 
     work_bin = Path(args.work_bin) if args.work_bin else build / f"{release.code}.{lang.suffix}.bin"
     written = writer_for(release).write(orig_bin, work_bin, injections)

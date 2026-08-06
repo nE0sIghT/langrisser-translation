@@ -616,6 +616,124 @@ def lz_decompress(payload: bytes) -> bytes:
             src += 1
 
 
+class _BitWriter:
+    def __init__(self):
+        self.out = bytearray()
+        self.acc = 0
+        self.count = 0
+
+    def put(self, value: int, width: int) -> None:
+        for shift in range(width - 1, -1, -1):
+            self.acc = ((self.acc << 1) | ((value >> shift) & 1)) & 0xFF
+            self.count += 1
+            if self.count == 8:
+                self.out.append(self.acc)
+                self.acc = self.count = 0
+
+    def finish(self) -> bytes:
+        if self.count:
+            self.out.append((self.acc << (8 - self.count)) & 0xFF)
+        return bytes(self.out)
+
+
+# (length, distance window, code, code width) for every copy form, cheapest first
+_LZ_COPIES = (
+    (1, LZ_SHORT_DIST_MAX, 0b00, 2),
+    (2, LZ_SHORT_DIST_MAX, 0b010, 3),
+    (3, LZ_SHORT_DIST_MAX, 0b0110, 4),
+    (2, LZ_LONG_DIST_MAX, 0b01110, 5),
+    (3, LZ_LONG_DIST_MAX, 0b011110, 6),
+    (4, LZ_LONG_DIST_MAX, 0b0111110, 7),
+)
+_LZ_RUN_CODE, _LZ_RUN_WIDTH = 0b01111110, 8
+_LZ_END_CODE, _LZ_END_WIDTH = 0b01111111, 8
+_LZ_RUN_MIN, _LZ_RUN_MAX = 5, 20
+
+
+def _lz_literal_width(byte: int) -> int:
+    if byte <= 0x0F:
+        return 3 + 4
+    if byte in LZ_SHORT_LITERALS:
+        return 5
+    return 2 + 8
+
+
+def _lz_nearest_matches(data: bytes, at: int, cap: int) -> dict[int, int]:
+    """Shortest distance that reproduces each length 1..cap at this position."""
+    nearest: dict[int, int] = {}
+    for dist in range(1, min(LZ_LONG_DIST_MAX, at) + 1):
+        src = at - dist
+        length = 0
+        while length < cap and data[src + length] == data[at + length]:
+            length += 1
+        for value in range(1, length + 1):
+            nearest.setdefault(value, dist)
+        if len(nearest) == cap:
+            break
+    return nearest
+
+
+def lz_compress(data: bytes) -> bytes:
+    """Pack bytes into the bitstream `lz_decompress` reads, parsing optimally.
+
+    Costs are exact bit widths, so the shortest-path choice over them is the
+    shortest stream this code can express.
+    """
+    size = len(data)
+    cost = [0] * (size + 1)
+    cost[size] = _LZ_END_WIDTH
+    choice: list[tuple] = [("literal", 1, 0)] * (size + 1)
+    for at in range(size - 1, -1, -1):
+        best = _lz_literal_width(data[at]) + cost[at + 1]
+        pick = ("literal", 1, 0)
+        cap = min(_LZ_RUN_MAX, size - at)
+        nearest = _lz_nearest_matches(data, at, cap)
+        for length, window, _code, width in _LZ_COPIES:
+            dist = nearest.get(length)
+            if dist is None or dist > window or at + length > size:
+                continue
+            total = width + (4 if window == LZ_SHORT_DIST_MAX else 8) + cost[at + length]
+            if total < best:
+                best, pick = total, ("copy", length, dist)
+        for length in range(_LZ_RUN_MIN, cap + 1):
+            dist = nearest.get(length)
+            if dist is None:
+                break
+            total = _LZ_RUN_WIDTH + 4 + 8 + cost[at + length]
+            if total < best:
+                best, pick = total, ("run", length, dist)
+        cost[at], choice[at] = best, pick
+
+    writer = _BitWriter()
+    at = 0
+    while at < size:
+        kind, length, dist = choice[at]
+        if kind == "literal":
+            byte = data[at]
+            if byte <= 0x0F:
+                writer.put(0b100, 3)
+                writer.put(byte, 4)
+            elif byte in LZ_SHORT_LITERALS:
+                writer.put(0b10100 | LZ_SHORT_LITERALS.index(byte), 5)
+            else:
+                writer.put(0b11, 2)
+                writer.put(byte, 8)
+        elif kind == "copy":
+            for clen, window, code, width in _LZ_COPIES:
+                if clen == length and dist <= window:
+                    writer.put(code, width)
+                    writer.put(dist & (0xF if window == LZ_SHORT_DIST_MAX else 0xFF),
+                               4 if window == LZ_SHORT_DIST_MAX else 8)
+                    break
+        else:
+            writer.put(_LZ_RUN_CODE, _LZ_RUN_WIDTH)
+            writer.put(length - _LZ_RUN_MIN, 4)
+            writer.put(dist & 0xFF, 8)
+        at += length
+    writer.put(_LZ_END_CODE, _LZ_END_WIDTH)
+    return writer.finish()
+
+
 LZ_BITMAP_KIND = 0
 LZ_CLUT_KIND = 1
 LZ_CLUT_ENTRIES = 16
@@ -651,26 +769,63 @@ def lz_bitmap(expanded: bytes):
     return width, height, expanded[head : head + width * height // 2], palette
 
 
+LZ_FALLBACK_PALETTE = [(24, 24, 32)] + [
+    (17 * i, min(255, 40 + 14 * i), min(255, 96 + 10 * i)) for i in range(1, 16)
+]
+
+
 def lz_bitmap_image(expanded: bytes, palette: list[tuple[int, int, int]] | None = None):
-    """Render an expanded asset; with no CLUT, index 0 is dark and the rest ramp."""
+    """An expanded asset as a paletted image whose pixel values are its indices.
+
+    Kind 0 has no CLUT of its own, so it is shown with a readable ramp; either
+    way the stored value is the 4bpp index, which is what an edited PNG has to
+    hand back.
+    """
     decoded = lz_bitmap(expanded)
     if decoded is None:
         return None
     width, height, pixels, own_palette = decoded
-    palette = palette or own_palette
-    if palette is None:
-        palette = [(24, 24, 32)] + [
-            (17 * i, min(255, 40 + 14 * i), min(255, 96 + 10 * i)) for i in range(1, 16)
-        ]
-    img = Image.new("RGB", (width, height))
-    put = img.putpixel
-    stride = width // 2
-    for y in range(height):
-        row = pixels[y * stride : (y + 1) * stride]
-        for x, byte in enumerate(row):
-            put((x * 2, y), palette[byte & 0xF])
-            put((x * 2 + 1, y), palette[byte >> 4])
+    palette = palette or own_palette or LZ_FALLBACK_PALETTE
+    img = Image.new("P", (width, height))
+    flat: list[int] = []
+    for value in palette:
+        flat.extend(value)
+    img.putpalette(flat + [0] * (768 - len(flat)))
+    indices = bytearray(width * height)
+    for i, byte in enumerate(pixels):
+        indices[i * 2] = byte & 0xF
+        indices[i * 2 + 1] = byte >> 4
+    img.frombytes(bytes(indices))
     return img
+
+
+def lz_bitmap_pixels(img: Image.Image, width: int, height: int) -> bytes:
+    """Pack a paletted image back into 4bpp rows, checking it still fits."""
+    if img.mode != "P":
+        raise ValueError(f"asset override must be a paletted PNG, got mode {img.mode}")
+    if (img.width, img.height) != (width, height):
+        raise ValueError(
+            f"asset override is {img.width}x{img.height}, expected {width}x{height}")
+    indices = img.tobytes()
+    over = sorted({value for value in indices if value > 0xF})
+    if over:
+        raise ValueError(f"asset override uses palette indices above 15: {over}")
+    packed = bytearray(len(indices) // 2)
+    for i in range(len(packed)):
+        packed[i] = indices[i * 2] | (indices[i * 2 + 1] << 4)
+    return bytes(packed)
+
+
+def lz_replace_pixels(expanded: bytes, pixels: bytes) -> bytes:
+    """Put new 4bpp rows into an expanded asset, keeping its header and CLUT."""
+    decoded = lz_bitmap(expanded)
+    if decoded is None:
+        raise ValueError("asset is not a 4bpp bitmap")
+    _, _, old, _ = decoded
+    if len(pixels) != len(old):
+        raise ValueError(f"pixel block is {len(pixels)} bytes, expected {len(old)}")
+    head = len(expanded) - len(old)
+    return expanded[:head] + pixels
 
 
 def get_asset(data: bytes, index: int) -> tuple[AssetEntry, bytes]:
@@ -679,6 +834,38 @@ def get_asset(data: bytes, index: int) -> tuple[AssetEntry, bytes]:
         raise IndexError(f"asset index {index} out of range 0..{len(entries)-1}")
     ent = entries[index]
     return ent, bytes(data[ent.offset : ent.end])
+
+
+def rebuild_img(data: bytes, payloads: dict[int, bytes]) -> bytes:
+    """Rewrite the archive with some assets replaced, re-laying the offset table.
+
+    Assets no longer have to keep their original length: the table is rebuilt
+    around them. The file must still fit its ISO extent, so the caller checks
+    the result against the original length.
+    """
+    entries = parse_toc(data)
+    unknown = sorted(set(payloads) - {ent.index for ent in entries})
+    if unknown:
+        raise IndexError(f"no such asset index: {unknown}")
+
+    table_size = entries[0].offset
+    slots = table_size // 4
+    out = bytearray(table_size)
+    offsets = []
+    for ent in entries:
+        payload = payloads.get(ent.index, bytes(data[ent.offset : ent.end]))
+        offsets.append(len(out))
+        out += payload
+        if len(out) % 4:
+            out += bytes(4 - len(out) % 4)
+    offsets.append(len(out))
+
+    if len(offsets) > slots:
+        raise ValueError(
+            f"offset table holds {slots} entries, rebuild needs {len(offsets)}")
+    for slot, offset in enumerate(offsets):
+        struct.pack_into("<I", out, slot * 4, offset)
+    return bytes(out)
 
 
 def replace_asset(data: bytearray, index: int, payload: bytes) -> None:
