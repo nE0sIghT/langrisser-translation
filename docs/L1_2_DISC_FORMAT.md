@@ -334,127 +334,42 @@ translated. An `.EXE` string costs no plane slot at all — it is drawn from a
 separate small font — so if a screen reads this copy, translating it is free of
 the pair-slot pressure that governs everything in `SCEN.DAT`.
 
-**Screens whose text is not in any string pool, and not in the plane either.**
-The title menu (`ｽﾀｰﾄ` / `▶ﾛｰﾄﾞ`), the load screen, the world-map header
-`シナリオ　１`, the status bar `SCENARIO 1 TURN 0` and the pre-battle menu
-(`兵士配属`, `アイテム装備`, `指揮官配置`, `出撃`, and the `指揮官` heading
-over the commander list) draw text none of the pools above contains.
+**Screens the engine typesets itself.** The title menu, the load screen, the
+world-map header `シナリオ　１`, the status bar `SCENARIO 1 TURN 0`, the
+pre-battle menu (`兵士配属`, `アイテム装備`, `指揮官配置`, `出撃`), the shop,
+the options screen and the unit command menu are all drawn with the tile font
+described above, not with `FONT.DAT`.
 
-What the dumps of the four screens (`work/ram{1..4}.bin`,
-`work/vram{1..4}.bin`) establish:
+`0x8001c248(surface, x, y, code)` expands one character code into the four
+8 x 8 tiles at `code * 4 + 0x100`; four tiles in a row of the texture unfold
+into a 16 x 16 character, four characters fit a 128-pixel row, and sixty-four
+fill one asset. Assets `#37`, `#38` and `#63` therefore hold codes 0-63,
+64-127 and 128-165; 166 upwards is empty. The set is recorded in
+`data/common/font_mapping/l1_2_ui_font_map.csv`.
 
-- They **are drawn from `FONT.DAT`**, at 4/3 scale. On a clean dump — 1×
-  native, nearest neighbour, 48 distinct colours in the menu window — the
-  glyphs stretch twelve source rows over sixteen screen rows, with rows
-  duplicated in the pattern that scaling gives. Sampling the framebuffer back
-  at 12 × 12 and matching against all 1536 tiles identifies them outright:
-  `兵` of `兵士配属` is slot 327, and the `指揮官` heading is slots 219 and
-  334. So these screens need no new glyph work; whatever the plane holds is
-  what they draw.
-- The tile numbers are **not in any string table**. Not in `SCEN.DAT` (every
-  chunk, every part), not in the executables, not in `IMG.DAT`, `CLASS.DAT`,
-  `FIGHT.DAT` or `MAP.DAT`, and not in RAM while the screen is up — searched as
-  the script's own encoding (`E5 E6 F7 62` for `指揮官`), as raw bytes, as
-  16-bit little- and big-endian, as 32-bit, as slot+0x0A, as `slot*18` (the
-  form Langrisser V stores), and as a run whose *differences* match the slots,
-  which would have found them under any base.
-- Langrisser V's own group scanner finds nothing either. `offsetgroups.find_groups`
-  — the `[u16 offset table][0xFFFF-terminated glyph runs]` model behind
-  `system_dump.py` — was run over both executables, every side file, `FONT.DAT`
-  and a RAM dump taken while the screen was up, relaxed to three-entry tables:
-  no group anywhere decodes as text. This engine does not store UI text the way
-  `SYSTEM.BIN` does.
-- Their bitmaps are **not a texture in VRAM** either: the on-screen `兵` appears
-  only in the two framebuffers, nowhere as 4bpp, 8bpp or 16bpp source data.
+The strings are literals in the executables, one byte per character,
+terminated by `0x00`, with **no offset table** — each is reached by a
+hard-coded `lui`/`addiu` pair, so `l12_uistrings` finds them by walking those
+pairs and keeping the ones a function that reaches the character writer refers
+to. Both executables carry the same sixteen.
 
-So the glyphs are the plane's, but the sequence that names them is produced by
-code rather than read from a table. Translating these screens is therefore a
-code patch, not a data edit — a different class of work from everything else
-here. Two earlier claims are withdrawn: that the screens are `IMG.DAT` artwork
-(reached by elimination, no asset shown), and that a second font is at work
-(read off a filtered, upscaled framebuffer).
+Two properties govern a translation:
 
-`langrisser/imgdat.py` now opens these files: the offset table ends where the
-first asset begins rather than at a fixed 0x800 sector, which is 0x568 here, so
-`LANG1.IMG.DAT` lists 345 assets against Langrisser V's 16.
+- **Length is fixed.** A string is often a table read by position: the options
+  screen is fifteen six-character labels in one 90-byte run and the cursor
+  lands on a fixed character column, so a cell may not move. A pack therefore
+  writes cells, one per original character.
+- **A cell is sixteen pixels.** Too narrow for a Russian word, so a cell holds
+  two letters drawn side by side — the pair-glyph trick the plane already uses
+  — and each distinct pair becomes one new character code, taken from the
+  empty codes first and then from Japanese characters no surviving string
+  needs. `l12_build_ui` does the assignment, redraws the font assets and
+  rewrites the executables.
 
-Their payloads are **compressed**, which Langrisser V's are not, so the type-8
-scanline decoder has nothing to work on here.
-
-### The IMG.DAT payload codec
-
-Reversed from `LANG1.EXE`. The unpacker is `unpack(dst, src)` at `0x80011ba4`,
-with `get_bit` at `0x80011990`, `read8` at `0x800119ec`, `read4` at
-`0x80011a54` and the copy loop at `0x80011acc`; the caller at `0x80011de4`
-expands into a fixed scratch buffer at `0x801cfc00`. It is a bitstream read
-MSB first over a fixed prefix code — no table in the file, no window
-pre-fill:
-
-| Code | Meaning |
-| --- | --- |
-| `11` | literal, next 8 bits |
-| `100` | literal, next 4 bits (`0x00`–`0x0f`) |
-| `10100` / `10101` | literal `0x10` / `0x30` |
-| `10110` / `10111` | literal `0x80` / `0xff` |
-| `00` | copy 1 byte, 4-bit distance |
-| `010` / `0110` | copy 2 / 3 bytes, 4-bit distance |
-| `01110` / `011110` / `0111110` | copy 2 / 3 / 4 bytes, 8-bit distance |
-| `01111110` | copy (4-bit + 5) bytes, 8-bit distance |
-| `01111111` | end of stream |
-
-A zero distance means the maximum — `0x10` for the 4-bit form, `0x100` for the
-8-bit one — and copies run forward one byte at a time, so they may overlap.
-Singling out `0x10`, `0x30`, `0x80` and `0xff` is what the artwork wants: they
-are the flat 4bpp byte pairs.
-
-Expanded assets are 4bpp bitmaps sized in eight-pixel blocks, in two kinds:
-
-| Kind | Header | Colours |
-| --- | --- | --- |
-| 0 | `u16 0, u16 0, u16 width/8, u16 height/8` | CLUT uploaded separately |
-| 1 | `u16 1, u16 0`, 16 × RGB555, `u16 width/8, u16 height/8` | own CLUT |
-
-`langrisser.imgdat.lz_decompress` reimplements the routine and reproduces the
-emulated original byte-for-byte on all 284 `LANG1` and 336 `LANG2` non-empty
-assets. `python3 -m langrisser.imgdat dump-lz <IMG.DAT> --out-dir <dir>` writes
-one PNG per asset plus contact sheets.
-
-### What the assets hold
-
-- **`#36` is the title/load menu.** 88 × 64, kind 1, and it carries
-  `PUSH START`, `©NCS corp.` and the framed box reading `スタート` /
-  `ロード` as **drawn artwork**, not as glyph runs. Both discs have it at the
-  same index. This restores — with the asset shown this time — the claim that
-  was withdrawn above for these two screens.
-- **`#0` and `#37`, `#38`, `#63`** are a second glyph sheet used by the UI:
-  `#0` carries `AT DF MP MV HP LV`, `TURN`, `SCENARIO`, two digit rows, hiragana
-  and katakana; the other three carry kanji. `#3` is a large `SCENARIO`
-  wordmark. These are separate from `FONT.DAT`.
-- The load screen resolves to `#0`, `#1`, `#2`, `#5`, `#6`, `#36`, `#37`, `#38`,
-  `#63` and `#343` — every asset whose pixels are resident in VRAM while it is
-  on screen.
-
-### The tile font
-
-The title menu is the exception, not the rule. The load screen is built from
-8 × 8 textured sprites (`GP0(0x74)`, three words behind an ordering-table tag)
-laid on the screen grid, and a 16 × 16 character is four of them written side
-by side in the texture: `LOAD`'s `L` is the tiles at `(u,v)` `(0xe0,0x50)`,
-`(0xe8,0x50)`, `(0xf0,0x50)` and `(0xf8,0x50)`, which reassemble into the
-ornate serif capital. Those tiles are **asset `#37`** at row 84, x 96 — the
-same asset that carries kanji — so the plate is not a picture of the word
-`LOAD` but that word set in a tile font.
-
-The save-slot line `データがありません` is the same mechanism, and its text is
-not a string in any file: encoded as glyph-plane slots it appears nowhere on
-the disc, as script bytes, as `u16` either endianness, or as low bytes, and
-`SCEN.DAT` holds no such record (it has `セーブデータがありません`, which is a
-different line and is already translated). So the sequence naming those tiles
-is still to be found; it lives in the tile font's own index space, not the
-plane's.
-
-Redrawing the tiles alone would not do: the ornate alphabet is shared, and the
-`A` and `O` of `LOAD` are the `A` and `O` of the `SCENARIO` wordmark.
+Two earlier readings of these screens were wrong and are withdrawn: that they
+draw `FONT.DAT` at 4/3 scale (the tile font is genuinely 16 x 16, and matching
+upscaled framebuffer samples against 1536 tiles produced coincidences), and
+that no table names their glyphs.
 
 ### The round trips
 

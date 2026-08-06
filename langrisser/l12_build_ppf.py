@@ -122,7 +122,19 @@ def main() -> None:
         run("-m", "langrisser.l12_build_img",
             "--lang", args.lang, "--game", game,
             "--out-img-dat", out_img)
-        injections[release.media_path("IMG.DAT", game)] = out_img
+        # Screens the engine typesets from its own tile font. The archive is
+        # threaded through, because the font lives in it and the pack's own
+        # redraws have already been applied to that copy.
+        exe_path = f"{release.game_root(game).rstrip('/')}.EXE"
+        src_exe = Path("work", game, "extracted", Path(exe_path).name)
+        out_exe = build / f"{Path(exe_path).stem}.{lang.suffix}.EXE"
+        out_ui = build / f"IMG.{game}.{lang.suffix}.ui.DAT"
+        run("-m", "langrisser.l12_build_ui",
+            "--lang", args.lang, "--game", game,
+            "--exe", src_exe, "--img-dat", out_img,
+            "--out-exe", out_exe, "--out-img-dat", out_ui)
+        injections[release.media_path("IMG.DAT", game)] = out_ui
+        injections[exe_path] = out_exe
 
     work_bin = Path(args.work_bin) if args.work_bin else build / f"{release.code}.{lang.suffix}.bin"
     written = writer_for(release).write(orig_bin, work_bin, injections)

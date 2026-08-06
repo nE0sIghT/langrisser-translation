@@ -24,6 +24,8 @@ from langrisser.scen import load_charmap_csv
 
 UI_FONT_MAP = Path("data/common/font_mapping/l1_2_ui_font_map.csv")
 TERMINATOR = 0x00
+SPACE_CODE = 112
+SPACE_CHAR = "\u3000"
 MIN_LENGTH = 2
 EXE_HEADER = 0x800
 
@@ -38,6 +40,13 @@ class UiString:
     @property
     def length(self) -> int:
         return len(self.codes)
+
+
+def load_ui_charmap() -> dict[int, str]:
+    """The tile font's character set, with the space the CSV reader trims."""
+    charmap = load_charmap_csv(UI_FONT_MAP)
+    charmap.setdefault(SPACE_CODE, SPACE_CHAR)
+    return charmap
 
 
 def load_exe(path: Path) -> tuple[bytes, int, int]:
@@ -156,7 +165,7 @@ def enclosing(starts: list[int], address: int) -> int:
 
 def harvest(path: Path, drawn_only: bool = True) -> list[UiString]:
     data, t_addr, t_size = load_exe(path)
-    charmap = load_charmap_csv(UI_FONT_MAP)
+    charmap = load_ui_charmap()
     limit = max(charmap)
     starts, _ = call_graph(data, t_addr, t_size)
     drawing = text_drawing_functions(data, t_addr, t_size) if drawn_only else None
@@ -187,7 +196,7 @@ def main() -> None:
                     help="Do not restrict to strings a text-drawing function reaches.")
     args = ap.parse_args()
 
-    charmap = load_charmap_csv(UI_FONT_MAP)
+    charmap = load_ui_charmap()
     for name in args.exe:
         path = Path(name)
         strings = [s for s in harvest(path, drawn_only=not args.all)
