@@ -24,7 +24,8 @@ from pathlib import Path
 from langrisser.game import add_game_args, game_from_args
 from langrisser.l12_phrases import rebuild as rebuild_phrases
 from langrisser.container import pad_chunk, rebuild_container_fixed_size
-from langrisser.l12_scen import (Reader, Writer, load_assignments,
+from langrisser.l12_scen import (NAME_PART, PHRASE_PART, Reader, Writer,
+                                 load_assignments,
                                  merged_plane, pack_chunk, read_chunks)
 from langrisser.scen import read_chunk_spans
 from langrisser.project import add_language_args, language_from_args
@@ -54,6 +55,15 @@ def read_pack(path: Path) -> dict[tuple[int, int], str]:
         if m and part is not None:
             out[(part, int(m.group(1)))] = m.group(2)
     return out
+
+
+def target_part(chunk, part: int) -> int:
+    """Where this chunk keeps the table a shared record belongs to."""
+    if part == NAME_PART:
+        return chunk.name_part
+    if part == PHRASE_PART:
+        return chunk.phrase_part
+    return part
 
 
 def main() -> None:
@@ -90,14 +100,19 @@ def main() -> None:
     # once, in `shared.txt`, and applied wherever the copy is really the same.
     # Langrisser II carries a second variant of some of them; a chunk holding
     # that one keeps its Japanese rather than being given the wrong strings.
+    #
+    # The ending chunks lay their parts out differently - the name table sits
+    # at part 3 there, the phrase table at part 6 - so a shared record is
+    # addressed by which table it belongs to rather than by a part number.
     shared_file = root / "shared.txt"
     shared = read_pack(shared_file) if shared_file.exists() else {}
     reference: dict[tuple[int, int], bytes] = {}
     if shared:
         first = next(iter(read_chunks(blob)))
         for pi, si in shared:
-            if pi < len(first.parts) and si < len(first.parts[pi]):
-                reference[(pi, si)] = first.parts[pi][si]
+            at = target_part(first, pi)
+            if at < len(first.parts) and si < len(first.parts[at]):
+                reference[(pi, si)] = first.parts[at][si]
 
     translated = applied = skipped = 0
     for chunk in read_chunks(bytes(blob)):
@@ -106,12 +121,13 @@ def main() -> None:
         translated += len(records)
         for key, text in shared.items():
             pi, si = key
-            if pi >= len(chunk.parts) or si >= len(chunk.parts[pi]):
+            at = target_part(chunk, pi)
+            if at >= len(chunk.parts) or si >= len(chunk.parts[at]):
                 continue
-            if chunk.parts[pi][si] != reference.get(key):
+            if chunk.parts[at][si] != reference.get(key):
                 skipped += 1
                 continue
-            records.setdefault(key, text)
+            records.setdefault((at, si), text)
         if not records:
             continue
         reader = Reader(font, chunk)
